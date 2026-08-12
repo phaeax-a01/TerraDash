@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 
 const WIDTH = 1440;
 const HEIGHT = 720;
@@ -7,7 +8,7 @@ const sourcePath = 'data/source/ne_50m_admin_0_countries.geojson';
 const EXPECTED_SOURCE_SHA256 =
   'd7e56812e94bdb374d95021940af98f6cace2cb96827f522e3a3561242406ccc';
 const SOURCE_URL =
-  'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.1/geojson/ne_50m_admin_0_countries.geojson';
+  'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/9380cca83db5f9aef52d5e762765100745f84b27/geojson/ne_50m_admin_0_countries.geojson';
 const sourceBytes = fs.readFileSync(sourcePath);
 const sourceSha256 = crypto
   .createHash('sha256')
@@ -19,6 +20,7 @@ if (sourceSha256 !== EXPECTED_SOURCE_SHA256)
   );
 const source = JSON.parse(sourceBytes);
 const catalog = JSON.parse(fs.readFileSync('data/catalog.json'));
+const overrides = JSON.parse(fs.readFileSync('data/geometry-overrides.json'));
 
 function sqDistance(point, start, end) {
   const dx = end[0] - start[0];
@@ -105,6 +107,24 @@ const features = source.features.map((feature) => {
     paths,
     anchor,
     bounds: bounds(points),
+    parts: paths.map((path, index) => {
+      const partPoints = pathPoints([path]);
+      return {
+        id: `${id}:part:${index}`,
+        paths: [path],
+        anchor: [
+          +(
+            partPoints.reduce((sum, point) => sum + point[0], 0) /
+            partPoints.length
+          ).toFixed(2),
+          +(
+            partPoints.reduce((sum, point) => sum + point[1], 0) /
+            partPoints.length
+          ).toFixed(2),
+        ],
+        bounds: bounds(partPoints),
+      };
+    }),
   };
 });
 const featuresByKey = new Map();
@@ -117,7 +137,8 @@ const locations = catalog.map((location) => {
     throw new Error(
       `No Natural Earth feature for ${location.iso3} (${location.name})`,
     );
-  const geometryRefs = matches.map((feature) => feature.id);
+  const geometryRefs =
+    overrides[location.id] ?? matches.map((feature) => feature.id);
   const points = matches.flatMap((feature) => pathPoints(feature.paths));
   const anchor = matches
     .map((feature) => feature.anchor)
@@ -143,10 +164,21 @@ const map = {
     disclaimer:
       'Boundaries are shown for gameplay visualization and do not imply endorsement of any boundary claim.',
   },
+  sourceFeatureIds: features.map((feature) => feature.id),
   features: Object.fromEntries(
-    features.map(({ id, paths, anchor, bounds }) => [
-      id,
-      { paths, anchor, bounds },
+    features.flatMap(({ id, paths, anchor, bounds, parts }) => [
+      [id, { paths, anchor, bounds }],
+      ...parts.map(
+        ({
+          id: partId,
+          paths: partPaths,
+          anchor: partAnchor,
+          bounds: partBounds,
+        }) => [
+          partId,
+          { paths: partPaths, anchor: partAnchor, bounds: partBounds },
+        ],
+      ),
     ]),
   ),
 };
@@ -174,7 +206,7 @@ fs.writeFileSync(
       sourceSha256: EXPECTED_SOURCE_SHA256,
       sourceUrl: SOURCE_URL,
       generatedAt: 'deterministic',
-      featureIds: features.map((feature) => feature.id),
+      featureIds: Object.keys(map.features),
       locations: Object.fromEntries(
         locations.map((x) => [x.id, x.geometryRefs]),
       ),
@@ -182,6 +214,18 @@ fs.writeFileSync(
     null,
     2,
   ) + '\n',
+);
+const prettier = process.platform === 'win32' ? 'prettier.cmd' : 'prettier';
+execFileSync(
+  prettier,
+  [
+    '--write',
+    'data/generated/catalog.json',
+    'data/generated/manifest.json',
+    'data/generated/map.json',
+    'data/generated/quiz.json',
+  ],
+  { stdio: 'ignore' },
 );
 console.log(
   `Generated ${locations.length} locations and ${features.length} source features.`,

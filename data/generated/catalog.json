@@ -1555,7 +1555,7 @@
     "id": "iso:PSE",
     "iso3": "PSE",
     "name": "State of Palestine",
-    "geometryRefs": ["ne:1159320899"],
+    "geometryRefs": ["ne:1159320899:part:0", "ne:1159320899:part:1"],
     "anchor": [861.17, 231.81],
     "bounds": [856.98, 230.16, 862.21, 235.17]
   }

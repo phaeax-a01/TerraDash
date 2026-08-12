@@ -27,4 +27,4 @@ The renderer preserves true paths and derives a screen-space minimum footprint o
 
 ## Provenance
 
-Natural Earth: <https://www.naturalearthdata.com/>; source product: <https://github.com/nvkelso/natural-earth-vector/tree/v5.1.1/geojson>.
+Natural Earth: <https://www.naturalearthdata.com/>; source product: <https://github.com/nvkelso/natural-earth-vector/tree/9380cca83db5f9aef52d5e762765100745f84b27/geojson>.

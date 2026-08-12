@@ -2,7 +2,7 @@ import { StrictMode, useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import map from '../data/generated/map.json';
 import catalog from '../data/generated/catalog.json';
-import { deriveFootprint, pathPoints, type Point } from './footprint';
+import { deriveComponentFootprints, type Point } from './footprint';
 import './styles.css';
 
 type Location = (typeof catalog)[number];
@@ -12,10 +12,11 @@ function MapView({ active }: { active: Location }) {
   const highlightedPaths = active.geometryRefs.flatMap(
     (id) => map.features[id as keyof typeof map.features]?.paths ?? [],
   );
-  const points = pathPoints(highlightedPaths);
   const scale = viewportWidth / map.width;
-  const footprint = deriveFootprint(
-    points.map(([x, y]) => [x * scale, y * scale] as Point),
+  const footprints = deriveComponentFootprints(
+    highlightedPaths,
+    scale,
+    map.width,
   );
   useEffect(() => {
     const frame = document.querySelector('.map-frame');
@@ -27,11 +28,6 @@ function MapView({ active }: { active: Location }) {
     observer.observe(frame);
     return () => observer.disconnect();
   }, []);
-  const circleCenter: Point = [
-    footprint.center[0] / scale,
-    footprint.center[1] / scale,
-  ];
-  const circleRadius = footprint.radius / scale;
   return (
     <svg
       className="world-map"
@@ -46,7 +42,10 @@ function MapView({ active }: { active: Location }) {
             key={id}
             aria-hidden="true"
             className={
-              active.geometryRefs.includes(id) ? 'country active' : 'country'
+              active.geometryRefs.includes(id) ||
+              active.geometryRefs.some((ref) => ref.startsWith(`${id}:part:`))
+                ? 'country active'
+                : 'country'
             }
           >
             {feature.paths.map((path, index) => (
@@ -55,15 +54,25 @@ function MapView({ active }: { active: Location }) {
           </g>
         ))}
       </g>
-      {footprint.kind === 'circle' && (
-        <circle
-          className="minimum-footprint"
-          cx={circleCenter[0]}
-          cy={circleCenter[1]}
-          r={circleRadius}
-          aria-hidden="true"
-        />
-      )}
+      {footprints
+        .filter((footprint) => footprint.kind === 'circle')
+        .map((footprint, index) => {
+          const circleCenter: Point = [
+            (((footprint.center[0] / scale) % map.width) + map.width) %
+              map.width,
+            footprint.center[1] / scale,
+          ];
+          return (
+            <circle
+              key={index}
+              className="minimum-footprint"
+              cx={circleCenter[0]}
+              cy={circleCenter[1]}
+              r={footprint.radius / scale}
+              aria-hidden="true"
+            />
+          );
+        })}
       <g className="active-outline" aria-hidden="true">
         {highlightedPaths.map((path, index) => (
           <path key={index} d={path} />

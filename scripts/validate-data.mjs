@@ -2,6 +2,7 @@ import fs from 'node:fs';
 const catalog = JSON.parse(fs.readFileSync('data/generated/catalog.json'));
 const quiz = JSON.parse(fs.readFileSync('data/generated/quiz.json'));
 const map = JSON.parse(fs.readFileSync('data/generated/map.json'));
+const overrides = JSON.parse(fs.readFileSync('data/geometry-overrides.json'));
 const source = JSON.parse(
   fs.readFileSync('data/source/ne_50m_admin_0_countries.geojson'),
 );
@@ -15,9 +16,9 @@ if (
   quiz.locationIds.some((id) => !ids.has(id))
 )
   throw new Error('Quiz does not resolve to catalog');
-if (Object.keys(map.features).length !== source.features.length)
+if (map.sourceFeatureIds.length !== source.features.length)
   throw new Error('Base layer does not include every source feature');
-if (new Set(Object.keys(map.features)).size !== source.features.length)
+if (new Set(map.sourceFeatureIds).size !== source.features.length)
   throw new Error('Base feature IDs are not stable and unique');
 for (const [featureId, feature] of Object.entries(map.features)) {
   if (!feature.paths.length || !feature.bounds || feature.bounds.length !== 4)
@@ -35,6 +36,16 @@ for (const item of catalog) {
   if (!item.bounds || item.bounds.some((value) => !Number.isFinite(value)))
     throw new Error(`Missing projected bounds for ${item.id}`);
 }
+for (const [locationId, refs] of Object.entries(overrides)) {
+  if (
+    !ids.has(locationId) ||
+    refs.length < 2 ||
+    refs.some((id) => !map.features[id])
+  )
+    throw new Error(`Invalid reviewed geometry override for ${locationId}`);
+}
+if ((overrides['iso:PSE'] ?? []).length !== 2)
+  throw new Error('Expected a reviewed plural-reference observer fixture');
 for (const fixture of ['iso:FRA', 'iso:USA', 'iso:FJI', 'iso:PSE', 'iso:VAT']) {
   if (!catalog.find((item) => item.id === fixture))
     throw new Error(`Missing fixture ${fixture}`);
