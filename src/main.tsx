@@ -3,15 +3,14 @@ import { createRoot } from 'react-dom/client';
 import map from '../data/generated/map.json';
 import catalog from '../data/generated/catalog.json';
 import { deriveComponentFootprints, type Point } from './footprint';
+import { highlightedGeometryPaths } from './mapGeometry';
 import './styles.css';
 
 type Location = (typeof catalog)[number];
 const demoIds = ['iso:FRA', 'iso:USA', 'iso:FJI', 'iso:PSE', 'iso:VAT'];
 function MapView({ active }: { active: Location }) {
   const [viewportWidth, setViewportWidth] = useState(map.width);
-  const highlightedPaths = active.geometryRefs.flatMap(
-    (id) => map.features[id as keyof typeof map.features]?.paths ?? [],
-  );
+  const highlightedPaths = highlightedGeometryPaths(active.geometryRefs);
   const scale = viewportWidth / map.width;
   const footprints = deriveComponentFootprints(
     highlightedPaths,
@@ -37,22 +36,22 @@ function MapView({ active }: { active: Location }) {
     >
       <rect width={map.width} height={map.height} className="ocean" />
       <g className="countries">
-        {Object.entries(map.features).map(([id, feature]) => (
-          <g
-            key={id}
-            aria-hidden="true"
-            className={
-              active.geometryRefs.includes(id) ||
-              active.geometryRefs.some((ref) => ref.startsWith(`${id}:part:`))
-                ? 'country active'
-                : 'country'
-            }
-          >
-            {feature.paths.map((path, index) => (
-              <path key={index} d={path} />
-            ))}
-          </g>
-        ))}
+        {map.sourceFeatureIds.map((id) => {
+          const feature = map.features[id as keyof typeof map.features];
+          return (
+            <g
+              key={id}
+              aria-hidden="true"
+              className={
+                active.geometryRefs.includes(id) ? 'country active' : 'country'
+              }
+            >
+              {feature.paths.map((path, index) => (
+                <path key={index} d={path} />
+              ))}
+            </g>
+          );
+        })}
       </g>
       {footprints
         .filter((footprint) => footprint.kind === 'circle')
@@ -73,6 +72,11 @@ function MapView({ active }: { active: Location }) {
             />
           );
         })}
+      <g className="active-fill" aria-hidden="true">
+        {highlightedPaths.map((path, index) => (
+          <path key={index} d={path} />
+        ))}
+      </g>
       <g className="active-outline" aria-hidden="true">
         {highlightedPaths.map((path, index) => (
           <path key={index} d={path} />

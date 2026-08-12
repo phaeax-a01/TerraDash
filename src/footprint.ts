@@ -28,22 +28,48 @@ export function unwrapComponent(points: Point[], width: number): Point[] {
   }
   return points.map(([x, y]) => [x < start ? x + width : x, y]);
 }
+export function componentSpan(path: string, width: number): number {
+  return Math.max(
+    ...pathPointComponents(path, width).map((points) => {
+      const xs = points.map(([x]) => x);
+      const ys = points.map(([, y]) => y);
+      const sorted = [...new Set(xs)].sort((a, b) => a - b);
+      const largestGap = Math.max(
+        ...sorted.map((x, index) => {
+          const next = sorted[index + 1] ?? sorted[0] + width;
+          return next - x;
+        }),
+      );
+      return Math.max(width - largestGap, Math.max(...ys) - Math.min(...ys));
+    }),
+    0,
+  );
+}
+export function pathPointComponents(path: string, width: number): Point[][] {
+  const components: Point[][] = [[]];
+  for (const point of pathPoints([path])) {
+    const previous = components.at(-1)!.at(-1);
+    if (previous && Math.abs(point[0] - previous[0]) > width / 2)
+      components.push([]);
+    components.at(-1)!.push(point);
+  }
+  return components.filter((points) => points.length > 0);
+}
 export function deriveComponentFootprints(
   paths: string[],
   scale: number,
   width: number,
   threshold = MIN_FOOTPRINT_PX,
 ): Footprint[] {
-  return paths.flatMap((path) => {
-    const points = unwrapComponent(pathPoints([path]), width);
-    if (!points.length) return [];
-    return [
-      deriveFootprint(
+  return paths.flatMap((path) =>
+    pathPointComponents(path, width).map((component) => {
+      const points = unwrapComponent(component, width);
+      return deriveFootprint(
         points.map(([x, y]) => [x * scale, y * scale]),
         threshold,
-      ),
-    ];
-  });
+      );
+    }),
+  );
 }
 export function deriveFootprint(
   points: Point[],

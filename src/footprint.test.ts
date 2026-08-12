@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import catalog from '../data/generated/catalog.json';
 import map from '../data/generated/map.json';
 import {
+  componentSpan,
   deriveComponentFootprints,
   deriveFootprint,
   pathPoints,
@@ -49,6 +50,7 @@ describe('deriveFootprint', () => {
     ['iso:FJI', false, false],
     ['iso:PSE', false, false],
     ['iso:VAT', false, false],
+    ['iso:ALB', true, false],
   ])(
     'uses local generated components for %s',
     (id, desktopPolygon, phonePolygon) => {
@@ -69,6 +71,14 @@ describe('deriveFootprint', () => {
       expect(
         desktop.every((footprint) => footprint.radius <= map.width / 2),
       ).toBe(true);
+      if (id === 'iso:FJI')
+        expect(
+          Math.max(...paths.map((path) => componentSpan(path, map.width))),
+        ).toBeLessThan(100);
+      if (id === 'iso:USA')
+        expect(
+          Math.max(...paths.map((path) => componentSpan(path, map.width))),
+        ).toBeLessThan(600);
       expect(paths).toEqual(
         item.geometryRefs.flatMap(
           (ref) => map.features[ref as keyof typeof map.features].paths,

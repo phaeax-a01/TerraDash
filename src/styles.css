@@ -94,6 +94,9 @@ select {
   stroke-width: 2.5;
   vector-effect: non-scaling-stroke;
 }
+.active-fill path {
+  fill: #f59e0b;
+}
 .minimum-footprint {
   fill: #f59e0b55;
   stroke: #fff;
