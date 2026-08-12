@@ -4,212 +4,21 @@ import crypto from 'node:crypto';
 const WIDTH = 1440;
 const HEIGHT = 720;
 const sourcePath = 'data/source/ne_50m_admin_0_countries.geojson';
-const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
+const EXPECTED_SOURCE_SHA256 =
+  'd7e56812e94bdb374d95021940af98f6cace2cb96827f522e3a3561242406ccc';
+const SOURCE_URL =
+  'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.1/geojson/ne_50m_admin_0_countries.geojson';
+const sourceBytes = fs.readFileSync(sourcePath);
 const sourceSha256 = crypto
   .createHash('sha256')
-  .update(fs.readFileSync(sourcePath))
+  .update(sourceBytes)
   .digest('hex');
-const rows = `AFG|Afghanistan
-ALB|Albania
-DZA|Algeria
-AND|Andorra
-AGO|Angola
-ATG|Antigua and Barbuda
-ARG|Argentina
-ARM|Armenia
-AUS|Australia
-AUT|Austria
-AZE|Azerbaijan
-BHS|Bahamas
-BHR|Bahrain
-BGD|Bangladesh
-BRB|Barbados
-BLR|Belarus
-BEL|Belgium
-BLZ|Belize
-BEN|Benin
-BTN|Bhutan
-BOL|Bolivia
-BIH|Bosnia and Herzegovina
-BWA|Botswana
-BRA|Brazil
-BRN|Brunei
-BGR|Bulgaria
-BFA|Burkina Faso
-BDI|Burundi
-CPV|Cabo Verde
-KHM|Cambodia
-CMR|Cameroon
-CAN|Canada
-CAF|Central African Republic
-TCD|Chad
-CHL|Chile
-CHN|China
-COL|Colombia
-COM|Comoros
-COG|Republic of the Congo
-COD|Democratic Republic of the Congo
-CRI|Costa Rica
-CIV|Côte d'Ivoire
-HRV|Croatia
-CUB|Cuba
-CYP|Cyprus
-CZE|Czechia
-DNK|Denmark
-DJI|Djibouti
-DMA|Dominica
-DOM|Dominican Republic
-ECU|Ecuador
-EGY|Egypt
-SLV|El Salvador
-GNQ|Equatorial Guinea
-ERI|Eritrea
-EST|Estonia
-SWZ|Eswatini
-ETH|Ethiopia
-FJI|Fiji
-FIN|Finland
-FRA|France
-GAB|Gabon
-GMB|Gambia
-GEO|Georgia
-DEU|Germany
-GHA|Ghana
-GRC|Greece
-GRD|Grenada
-GTM|Guatemala
-GIN|Guinea
-GNB|Guinea-Bissau
-GUY|Guyana
-HTI|Haiti
-HND|Honduras
-HUN|Hungary
-ISL|Iceland
-IND|India
-IDN|Indonesia
-IRN|Iran
-IRQ|Iraq
-IRL|Ireland
-ISR|Israel
-ITA|Italy
-JAM|Jamaica
-JPN|Japan
-JOR|Jordan
-KAZ|Kazakhstan
-KEN|Kenya
-KIR|Kiribati
-PRK|North Korea
-KOR|South Korea
-KWT|Kuwait
-KGZ|Kyrgyzstan
-LAO|Laos
-LVA|Latvia
-LBN|Lebanon
-LSO|Lesotho
-LBR|Liberia
-LBY|Libya
-LIE|Liechtenstein
-LTU|Lithuania
-LUX|Luxembourg
-MDG|Madagascar
-MWI|Malawi
-MYS|Malaysia
-MDV|Maldives
-MLI|Mali
-MLT|Malta
-MHL|Marshall Islands
-MRT|Mauritania
-MUS|Mauritius
-MEX|Mexico
-FSM|Micronesia
-MDA|Moldova
-MCO|Monaco
-MNG|Mongolia
-MNE|Montenegro
-MAR|Morocco
-MOZ|Mozambique
-MMR|Myanmar
-NAM|Namibia
-NRU|Nauru
-NPL|Nepal
-NLD|Netherlands
-NZL|New Zealand
-NIC|Nicaragua
-NER|Niger
-NGA|Nigeria
-MKD|North Macedonia
-NOR|Norway
-OMN|Oman
-PAK|Pakistan
-PLW|Palau
-PAN|Panama
-PNG|Papua New Guinea
-PRY|Paraguay
-PER|Peru
-PHL|Philippines
-POL|Poland
-PRT|Portugal
-QAT|Qatar
-ROU|Romania
-RUS|Russia
-RWA|Rwanda
-KNA|Saint Kitts and Nevis
-LCA|Saint Lucia
-VCT|Saint Vincent and the Grenadines
-WSM|Samoa
-SMR|San Marino
-STP|Sao Tome and Principe
-SAU|Saudi Arabia
-SEN|Senegal
-SRB|Serbia
-SYC|Seychelles
-SLE|Sierra Leone
-SGP|Singapore
-SVK|Slovakia
-SVN|Slovenia
-SLB|Solomon Islands
-SOM|Somalia
-ZAF|South Africa
-SSD|South Sudan
-ESP|Spain
-LKA|Sri Lanka
-SDN|Sudan
-SUR|Suriname
-SWE|Sweden
-CHE|Switzerland
-SYR|Syria
-TJK|Tajikistan
-TZA|Tanzania
-THA|Thailand
-TLS|Timor-Leste
-TGO|Togo
-TON|Tonga
-TTO|Trinidad and Tobago
-TUN|Tunisia
-TUR|Türkiye
-TKM|Turkmenistan
-TUV|Tuvalu
-UGA|Uganda
-UKR|Ukraine
-ARE|United Arab Emirates
-GBR|United Kingdom
-USA|United States
-URY|Uruguay
-UZB|Uzbekistan
-VUT|Vanuatu
-VEN|Venezuela
-VNM|Vietnam
-YEM|Yemen
-ZMB|Zambia
-ZWE|Zimbabwe
-VAT|Holy See
-PSE|Palestine`
-  .trim()
-  .split('\n')
-  .map((line) => {
-    const [iso3, name] = line.split('|');
-    return { id: `iso:${iso3}`, iso3, name, geometryRefs: [`iso:${iso3}`] };
-  });
+if (sourceSha256 !== EXPECTED_SOURCE_SHA256)
+  throw new Error(
+    `Natural Earth source checksum mismatch: expected ${EXPECTED_SOURCE_SHA256}, got ${sourceSha256}`,
+  );
+const source = JSON.parse(sourceBytes);
+const catalog = JSON.parse(fs.readFileSync('data/catalog.json'));
 
 function sqDistance(point, start, end) {
   const dx = end[0] - start[0];
@@ -253,8 +62,7 @@ function project([lon, lat]) {
   ];
 }
 function ringPath(ring) {
-  const projected = ring.map(project);
-  const simplified = simplify(projected, 0.55);
+  const simplified = simplify(ring.map(project), 0.55);
   return (
     simplified.map(([x, y], i) => `${i ? 'L' : 'M'}${x},${y}`).join('') + 'Z'
   );
@@ -264,32 +72,64 @@ function geometryPaths(geometry) {
     geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
   return polygons.flatMap((polygon) => polygon.map(ringPath));
 }
+function pathPoints(paths) {
+  return paths.flatMap((path) =>
+    [...path.matchAll(/[ML](-?[\d.]+),(-?[\d.]+)/g)].map(([, x, y]) => [
+      +x,
+      +y,
+    ]),
+  );
+}
+function bounds(points) {
+  const xs = points.map(([x]) => x);
+  const ys = points.map(([, y]) => y);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
 function featureKey(feature) {
   const p = feature.properties;
   return [p.ISO_A3, p.ADM0_A3, p.SOV_A3, p.GU_A3].filter(
     (value) => value && value !== '-99',
   );
 }
-const featureByIso = new Map();
-for (const feature of source.features)
-  for (const key of featureKey(feature))
-    if (!featureByIso.has(key)) featureByIso.set(key, feature);
-const locations = rows.map((location) => {
-  const feature = featureByIso.get(location.iso3);
-  if (!feature)
+const features = source.features.map((feature) => {
+  const paths = geometryPaths(feature.geometry);
+  const points = pathPoints(paths);
+  const id = `ne:${feature.properties.NE_ID}`;
+  const anchor =
+    feature.properties.LABEL_X != null && feature.properties.LABEL_Y != null
+      ? project([feature.properties.LABEL_X, feature.properties.LABEL_Y])
+      : [bounds(points)[0], bounds(points)[1]];
+  return {
+    id,
+    keys: featureKey(feature),
+    paths,
+    anchor,
+    bounds: bounds(points),
+  };
+});
+const featuresByKey = new Map();
+for (const feature of features)
+  for (const key of new Set(feature.keys))
+    featuresByKey.set(key, [...(featuresByKey.get(key) ?? []), feature]);
+const locations = catalog.map((location) => {
+  const matches = featuresByKey.get(location.iso3) ?? [];
+  if (!matches.length)
     throw new Error(
       `No Natural Earth feature for ${location.iso3} (${location.name})`,
     );
-  return {
-    ...location,
-    geometryRefs: [location.id],
-    paths: geometryPaths(feature.geometry),
-    anchor:
-      feature.properties.LABEL_X && feature.properties.LABEL_Y
-        ? project([feature.properties.LABEL_X, feature.properties.LABEL_Y])
-        : project(feature.bbox.slice(0, 2)),
-  };
+  const geometryRefs = matches.map((feature) => feature.id);
+  const points = matches.flatMap((feature) => pathPoints(feature.paths));
+  const anchor = matches
+    .map((feature) => feature.anchor)
+    .reduce((sum, point) => [sum[0] + point[0], sum[1] + point[1]], [0, 0])
+    .map((value) => +(value / matches.length).toFixed(2));
+  return { ...location, geometryRefs, anchor, bounds: bounds(points) };
 });
+if (
+  locations.length !== 195 ||
+  new Set(locations.map((x) => x.iso3)).size !== 195
+)
+  throw new Error('Catalog must contain exactly 195 unique ISO3 locations');
 const map = {
   width: WIDTH,
   height: HEIGHT,
@@ -297,17 +137,17 @@ const map = {
     product: 'Natural Earth Admin 0 countries',
     version: 'v5.1.1',
     scale: '1:50m',
-    url: 'https://github.com/nvkelso/natural-earth-vector/tree/v5.1.1/geojson',
-    sha256: sourceSha256,
+    url: SOURCE_URL,
+    sha256: EXPECTED_SOURCE_SHA256,
     license: 'Public domain',
     disclaimer:
       'Boundaries are shown for gameplay visualization and do not imply endorsement of any boundary claim.',
   },
-  paths: Object.fromEntries(
-    locations.map((location) => [location.id, location.paths]),
-  ),
-  anchors: Object.fromEntries(
-    locations.map((location) => [location.id, location.anchor]),
+  features: Object.fromEntries(
+    features.map(({ id, paths, anchor, bounds }) => [
+      id,
+      { paths, anchor, bounds },
+    ]),
   ),
 };
 fs.mkdirSync('data/generated', { recursive: true });
@@ -317,16 +157,12 @@ fs.writeFileSync(
 );
 fs.writeFileSync(
   'data/generated/catalog.json',
-  JSON.stringify(
-    locations.map(({ paths, anchor, ...location }) => location),
-    null,
-    2,
-  ) + '\n',
+  JSON.stringify(locations, null, 2) + '\n',
 );
 fs.writeFileSync(
   'data/generated/quiz.json',
   JSON.stringify(
-    { id: 'world-195', locationIds: locations.map((location) => location.id) },
+    { id: 'world-195', locationIds: locations.map((x) => x.id) },
     null,
     2,
   ) + '\n',
@@ -335,10 +171,12 @@ fs.writeFileSync(
   'data/generated/manifest.json',
   JSON.stringify(
     {
-      sourceSha256,
+      sourceSha256: EXPECTED_SOURCE_SHA256,
+      sourceUrl: SOURCE_URL,
       generatedAt: 'deterministic',
+      featureIds: features.map((feature) => feature.id),
       locations: Object.fromEntries(
-        locations.map((location) => [location.id, location.geometryRefs]),
+        locations.map((x) => [x.id, x.geometryRefs]),
       ),
     },
     null,
@@ -346,5 +184,5 @@ fs.writeFileSync(
   ) + '\n',
 );
 console.log(
-  `Generated ${locations.length} locations from ${source.features.length} Natural Earth features.`,
+  `Generated ${locations.length} locations and ${features.length} source features.`,
 );

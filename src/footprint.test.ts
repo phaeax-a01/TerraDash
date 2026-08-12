@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { deriveFootprint } from './footprint';
+import catalog from '../data/generated/catalog.json';
+import map from '../data/generated/map.json';
+import { pathPoints } from './footprint';
 describe('deriveFootprint', () => {
   it('uses true polygon at threshold', () =>
     expect(
@@ -21,4 +24,24 @@ describe('deriveFootprint', () => {
       [6, 6],
     ]);
   });
+  it.each(['iso:FRA', 'iso:USA', 'iso:FJI', 'iso:PSE', 'iso:VAT'])(
+    'uses generated geometry for %s at desktop and phone widths',
+    (id) => {
+      const item = catalog.find((entry) => entry.id === id)!;
+      const paths = item.geometryRefs.flatMap(
+        (ref) => map.features[ref as keyof typeof map.features].paths,
+      );
+      const points = pathPoints(paths);
+      expect(points.length).toBeGreaterThan(0);
+      const desktop = deriveFootprint(points.map(([x, y]) => [x, y]));
+      const phone = deriveFootprint(points.map(([x, y]) => [x / 4, y / 4]));
+      expect(desktop.center).not.toEqual([0, 0]);
+      expect(phone.radius).toBeGreaterThan(0);
+      expect(paths).toEqual(
+        item.geometryRefs.flatMap(
+          (ref) => map.features[ref as keyof typeof map.features].paths,
+        ),
+      );
+    },
+  );
 });

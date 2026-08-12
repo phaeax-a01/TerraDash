@@ -1,25 +1,37 @@
-import { StrictMode, useMemo, useState } from 'react';
+import { StrictMode, useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import map from '../data/generated/map.json';
 import catalog from '../data/generated/catalog.json';
-import { deriveFootprint } from './footprint';
+import { deriveFootprint, pathPoints, type Point } from './footprint';
 import './styles.css';
 
 type Location = (typeof catalog)[number];
 const demoIds = ['iso:FRA', 'iso:USA', 'iso:FJI', 'iso:PSE', 'iso:VAT'];
 function MapView({ active }: { active: Location }) {
-  const anchor = map.anchors[active.id as keyof typeof map.anchors] ?? [0, 0];
-  const allPoints =
-    active.id === 'iso:VAT'
-      ? ([
-          [anchor[0] - 1, anchor[1] - 1],
-          [anchor[0] + 1, anchor[1] + 1],
-        ] as [number, number][])
-      : ([
-          [0, 0],
-          [map.width, map.height],
-        ] as [number, number][]);
-  const footprint = deriveFootprint(allPoints);
+  const [viewportWidth, setViewportWidth] = useState(map.width);
+  const highlightedPaths = active.geometryRefs.flatMap(
+    (id) => map.features[id as keyof typeof map.features]?.paths ?? [],
+  );
+  const points = pathPoints(highlightedPaths);
+  const scale = viewportWidth / map.width;
+  const footprint = deriveFootprint(
+    points.map(([x, y]) => [x * scale, y * scale] as Point),
+  );
+  useEffect(() => {
+    const frame = document.querySelector('.map-frame');
+    if (!frame) return;
+    const update = () =>
+      setViewportWidth(frame.getBoundingClientRect().width || map.width);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
+  const circleCenter: Point = [
+    footprint.center[0] / scale,
+    footprint.center[1] / scale,
+  ];
+  const circleRadius = footprint.radius / scale;
   return (
     <svg
       className="world-map"
@@ -29,13 +41,15 @@ function MapView({ active }: { active: Location }) {
     >
       <rect width={map.width} height={map.height} className="ocean" />
       <g className="countries">
-        {Object.entries(map.paths).map(([id, paths]) => (
+        {Object.entries(map.features).map(([id, feature]) => (
           <g
             key={id}
             aria-hidden="true"
-            className={id === active.id ? 'country active' : 'country'}
+            className={
+              active.geometryRefs.includes(id) ? 'country active' : 'country'
+            }
           >
-            {paths.map((path: string, index: number) => (
+            {feature.paths.map((path, index) => (
               <path key={index} d={path} />
             ))}
           </g>
@@ -44,18 +58,16 @@ function MapView({ active }: { active: Location }) {
       {footprint.kind === 'circle' && (
         <circle
           className="minimum-footprint"
-          cx={footprint.center[0]}
-          cy={footprint.center[1]}
-          r={footprint.radius}
+          cx={circleCenter[0]}
+          cy={circleCenter[1]}
+          r={circleRadius}
           aria-hidden="true"
         />
       )}
       <g className="active-outline" aria-hidden="true">
-        {map.paths[active.id as keyof typeof map.paths].map(
-          (path: string, index: number) => (
-            <path key={index} d={path} />
-          ),
-        )}
+        {highlightedPaths.map((path, index) => (
+          <path key={index} d={path} />
+        ))}
       </g>
     </svg>
   );

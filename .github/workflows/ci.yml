@@ -11,6 +11,8 @@ jobs:
       - run: npm ci
       - run: npm run format
       - run: npm run lint
+      - run: npm run generate
+      - run: git diff --exit-code -- data/generated
       - run: npm run validate:data
       - run: npm test
       - run: npm run build

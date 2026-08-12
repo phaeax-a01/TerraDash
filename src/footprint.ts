@@ -6,6 +6,14 @@ export type Footprint = {
   radius: number;
 };
 export const MIN_FOOTPRINT_PX = 10;
+export function pathPoints(paths: string[]): Point[] {
+  return paths.flatMap((path) =>
+    [...path.matchAll(/[ML](-?[\d.]+),(-?[\d.]+)/g)].map(([, x, y]) => [
+      +x,
+      +y,
+    ]),
+  );
+}
 export function deriveFootprint(
   points: Point[],
   threshold = MIN_FOOTPRINT_PX,
