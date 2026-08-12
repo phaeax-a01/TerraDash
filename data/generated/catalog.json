@@ -1,0 +1,1172 @@
+[
+  {
+    "id": "iso:AFG",
+    "iso3": "AFG",
+    "name": "Afghanistan",
+    "geometryRefs": ["iso:AFG"]
+  },
+  {
+    "id": "iso:ALB",
+    "iso3": "ALB",
+    "name": "Albania",
+    "geometryRefs": ["iso:ALB"]
+  },
+  {
+    "id": "iso:DZA",
+    "iso3": "DZA",
+    "name": "Algeria",
+    "geometryRefs": ["iso:DZA"]
+  },
+  {
+    "id": "iso:AND",
+    "iso3": "AND",
+    "name": "Andorra",
+    "geometryRefs": ["iso:AND"]
+  },
+  {
+    "id": "iso:AGO",
+    "iso3": "AGO",
+    "name": "Angola",
+    "geometryRefs": ["iso:AGO"]
+  },
+  {
+    "id": "iso:ATG",
+    "iso3": "ATG",
+    "name": "Antigua and Barbuda",
+    "geometryRefs": ["iso:ATG"]
+  },
+  {
+    "id": "iso:ARG",
+    "iso3": "ARG",
+    "name": "Argentina",
+    "geometryRefs": ["iso:ARG"]
+  },
+  {
+    "id": "iso:ARM",
+    "iso3": "ARM",
+    "name": "Armenia",
+    "geometryRefs": ["iso:ARM"]
+  },
+  {
+    "id": "iso:AUS",
+    "iso3": "AUS",
+    "name": "Australia",
+    "geometryRefs": ["iso:AUS"]
+  },
+  {
+    "id": "iso:AUT",
+    "iso3": "AUT",
+    "name": "Austria",
+    "geometryRefs": ["iso:AUT"]
+  },
+  {
+    "id": "iso:AZE",
+    "iso3": "AZE",
+    "name": "Azerbaijan",
+    "geometryRefs": ["iso:AZE"]
+  },
+  {
+    "id": "iso:BHS",
+    "iso3": "BHS",
+    "name": "Bahamas",
+    "geometryRefs": ["iso:BHS"]
+  },
+  {
+    "id": "iso:BHR",
+    "iso3": "BHR",
+    "name": "Bahrain",
+    "geometryRefs": ["iso:BHR"]
+  },
+  {
+    "id": "iso:BGD",
+    "iso3": "BGD",
+    "name": "Bangladesh",
+    "geometryRefs": ["iso:BGD"]
+  },
+  {
+    "id": "iso:BRB",
+    "iso3": "BRB",
+    "name": "Barbados",
+    "geometryRefs": ["iso:BRB"]
+  },
+  {
+    "id": "iso:BLR",
+    "iso3": "BLR",
+    "name": "Belarus",
+    "geometryRefs": ["iso:BLR"]
+  },
+  {
+    "id": "iso:BEL",
+    "iso3": "BEL",
+    "name": "Belgium",
+    "geometryRefs": ["iso:BEL"]
+  },
+  {
+    "id": "iso:BLZ",
+    "iso3": "BLZ",
+    "name": "Belize",
+    "geometryRefs": ["iso:BLZ"]
+  },
+  {
+    "id": "iso:BEN",
+    "iso3": "BEN",
+    "name": "Benin",
+    "geometryRefs": ["iso:BEN"]
+  },
+  {
+    "id": "iso:BTN",
+    "iso3": "BTN",
+    "name": "Bhutan",
+    "geometryRefs": ["iso:BTN"]
+  },
+  {
+    "id": "iso:BOL",
+    "iso3": "BOL",
+    "name": "Bolivia",
+    "geometryRefs": ["iso:BOL"]
+  },
+  {
+    "id": "iso:BIH",
+    "iso3": "BIH",
+    "name": "Bosnia and Herzegovina",
+    "geometryRefs": ["iso:BIH"]
+  },
+  {
+    "id": "iso:BWA",
+    "iso3": "BWA",
+    "name": "Botswana",
+    "geometryRefs": ["iso:BWA"]
+  },
+  {
+    "id": "iso:BRA",
+    "iso3": "BRA",
+    "name": "Brazil",
+    "geometryRefs": ["iso:BRA"]
+  },
+  {
+    "id": "iso:BRN",
+    "iso3": "BRN",
+    "name": "Brunei",
+    "geometryRefs": ["iso:BRN"]
+  },
+  {
+    "id": "iso:BGR",
+    "iso3": "BGR",
+    "name": "Bulgaria",
+    "geometryRefs": ["iso:BGR"]
+  },
+  {
+    "id": "iso:BFA",
+    "iso3": "BFA",
+    "name": "Burkina Faso",
+    "geometryRefs": ["iso:BFA"]
+  },
+  {
+    "id": "iso:BDI",
+    "iso3": "BDI",
+    "name": "Burundi",
+    "geometryRefs": ["iso:BDI"]
+  },
+  {
+    "id": "iso:CPV",
+    "iso3": "CPV",
+    "name": "Cabo Verde",
+    "geometryRefs": ["iso:CPV"]
+  },
+  {
+    "id": "iso:KHM",
+    "iso3": "KHM",
+    "name": "Cambodia",
+    "geometryRefs": ["iso:KHM"]
+  },
+  {
+    "id": "iso:CMR",
+    "iso3": "CMR",
+    "name": "Cameroon",
+    "geometryRefs": ["iso:CMR"]
+  },
+  {
+    "id": "iso:CAN",
+    "iso3": "CAN",
+    "name": "Canada",
+    "geometryRefs": ["iso:CAN"]
+  },
+  {
+    "id": "iso:CAF",
+    "iso3": "CAF",
+    "name": "Central African Republic",
+    "geometryRefs": ["iso:CAF"]
+  },
+  {
+    "id": "iso:TCD",
+    "iso3": "TCD",
+    "name": "Chad",
+    "geometryRefs": ["iso:TCD"]
+  },
+  {
+    "id": "iso:CHL",
+    "iso3": "CHL",
+    "name": "Chile",
+    "geometryRefs": ["iso:CHL"]
+  },
+  {
+    "id": "iso:CHN",
+    "iso3": "CHN",
+    "name": "China",
+    "geometryRefs": ["iso:CHN"]
+  },
+  {
+    "id": "iso:COL",
+    "iso3": "COL",
+    "name": "Colombia",
+    "geometryRefs": ["iso:COL"]
+  },
+  {
+    "id": "iso:COM",
+    "iso3": "COM",
+    "name": "Comoros",
+    "geometryRefs": ["iso:COM"]
+  },
+  {
+    "id": "iso:COG",
+    "iso3": "COG",
+    "name": "Republic of the Congo",
+    "geometryRefs": ["iso:COG"]
+  },
+  {
+    "id": "iso:COD",
+    "iso3": "COD",
+    "name": "Democratic Republic of the Congo",
+    "geometryRefs": ["iso:COD"]
+  },
+  {
+    "id": "iso:CRI",
+    "iso3": "CRI",
+    "name": "Costa Rica",
+    "geometryRefs": ["iso:CRI"]
+  },
+  {
+    "id": "iso:CIV",
+    "iso3": "CIV",
+    "name": "Côte d'Ivoire",
+    "geometryRefs": ["iso:CIV"]
+  },
+  {
+    "id": "iso:HRV",
+    "iso3": "HRV",
+    "name": "Croatia",
+    "geometryRefs": ["iso:HRV"]
+  },
+  {
+    "id": "iso:CUB",
+    "iso3": "CUB",
+    "name": "Cuba",
+    "geometryRefs": ["iso:CUB"]
+  },
+  {
+    "id": "iso:CYP",
+    "iso3": "CYP",
+    "name": "Cyprus",
+    "geometryRefs": ["iso:CYP"]
+  },
+  {
+    "id": "iso:CZE",
+    "iso3": "CZE",
+    "name": "Czechia",
+    "geometryRefs": ["iso:CZE"]
+  },
+  {
+    "id": "iso:DNK",
+    "iso3": "DNK",
+    "name": "Denmark",
+    "geometryRefs": ["iso:DNK"]
+  },
+  {
+    "id": "iso:DJI",
+    "iso3": "DJI",
+    "name": "Djibouti",
+    "geometryRefs": ["iso:DJI"]
+  },
+  {
+    "id": "iso:DMA",
+    "iso3": "DMA",
+    "name": "Dominica",
+    "geometryRefs": ["iso:DMA"]
+  },
+  {
+    "id": "iso:DOM",
+    "iso3": "DOM",
+    "name": "Dominican Republic",
+    "geometryRefs": ["iso:DOM"]
+  },
+  {
+    "id": "iso:ECU",
+    "iso3": "ECU",
+    "name": "Ecuador",
+    "geometryRefs": ["iso:ECU"]
+  },
+  {
+    "id": "iso:EGY",
+    "iso3": "EGY",
+    "name": "Egypt",
+    "geometryRefs": ["iso:EGY"]
+  },
+  {
+    "id": "iso:SLV",
+    "iso3": "SLV",
+    "name": "El Salvador",
+    "geometryRefs": ["iso:SLV"]
+  },
+  {
+    "id": "iso:GNQ",
+    "iso3": "GNQ",
+    "name": "Equatorial Guinea",
+    "geometryRefs": ["iso:GNQ"]
+  },
+  {
+    "id": "iso:ERI",
+    "iso3": "ERI",
+    "name": "Eritrea",
+    "geometryRefs": ["iso:ERI"]
+  },
+  {
+    "id": "iso:EST",
+    "iso3": "EST",
+    "name": "Estonia",
+    "geometryRefs": ["iso:EST"]
+  },
+  {
+    "id": "iso:SWZ",
+    "iso3": "SWZ",
+    "name": "Eswatini",
+    "geometryRefs": ["iso:SWZ"]
+  },
+  {
+    "id": "iso:ETH",
+    "iso3": "ETH",
+    "name": "Ethiopia",
+    "geometryRefs": ["iso:ETH"]
+  },
+  {
+    "id": "iso:FJI",
+    "iso3": "FJI",
+    "name": "Fiji",
+    "geometryRefs": ["iso:FJI"]
+  },
+  {
+    "id": "iso:FIN",
+    "iso3": "FIN",
+    "name": "Finland",
+    "geometryRefs": ["iso:FIN"]
+  },
+  {
+    "id": "iso:FRA",
+    "iso3": "FRA",
+    "name": "France",
+    "geometryRefs": ["iso:FRA"]
+  },
+  {
+    "id": "iso:GAB",
+    "iso3": "GAB",
+    "name": "Gabon",
+    "geometryRefs": ["iso:GAB"]
+  },
+  {
+    "id": "iso:GMB",
+    "iso3": "GMB",
+    "name": "Gambia",
+    "geometryRefs": ["iso:GMB"]
+  },
+  {
+    "id": "iso:GEO",
+    "iso3": "GEO",
+    "name": "Georgia",
+    "geometryRefs": ["iso:GEO"]
+  },
+  {
+    "id": "iso:DEU",
+    "iso3": "DEU",
+    "name": "Germany",
+    "geometryRefs": ["iso:DEU"]
+  },
+  {
+    "id": "iso:GHA",
+    "iso3": "GHA",
+    "name": "Ghana",
+    "geometryRefs": ["iso:GHA"]
+  },
+  {
+    "id": "iso:GRC",
+    "iso3": "GRC",
+    "name": "Greece",
+    "geometryRefs": ["iso:GRC"]
+  },
+  {
+    "id": "iso:GRD",
+    "iso3": "GRD",
+    "name": "Grenada",
+    "geometryRefs": ["iso:GRD"]
+  },
+  {
+    "id": "iso:GTM",
+    "iso3": "GTM",
+    "name": "Guatemala",
+    "geometryRefs": ["iso:GTM"]
+  },
+  {
+    "id": "iso:GIN",
+    "iso3": "GIN",
+    "name": "Guinea",
+    "geometryRefs": ["iso:GIN"]
+  },
+  {
+    "id": "iso:GNB",
+    "iso3": "GNB",
+    "name": "Guinea-Bissau",
+    "geometryRefs": ["iso:GNB"]
+  },
+  {
+    "id": "iso:GUY",
+    "iso3": "GUY",
+    "name": "Guyana",
+    "geometryRefs": ["iso:GUY"]
+  },
+  {
+    "id": "iso:HTI",
+    "iso3": "HTI",
+    "name": "Haiti",
+    "geometryRefs": ["iso:HTI"]
+  },
+  {
+    "id": "iso:HND",
+    "iso3": "HND",
+    "name": "Honduras",
+    "geometryRefs": ["iso:HND"]
+  },
+  {
+    "id": "iso:HUN",
+    "iso3": "HUN",
+    "name": "Hungary",
+    "geometryRefs": ["iso:HUN"]
+  },
+  {
+    "id": "iso:ISL",
+    "iso3": "ISL",
+    "name": "Iceland",
+    "geometryRefs": ["iso:ISL"]
+  },
+  {
+    "id": "iso:IND",
+    "iso3": "IND",
+    "name": "India",
+    "geometryRefs": ["iso:IND"]
+  },
+  {
+    "id": "iso:IDN",
+    "iso3": "IDN",
+    "name": "Indonesia",
+    "geometryRefs": ["iso:IDN"]
+  },
+  {
+    "id": "iso:IRN",
+    "iso3": "IRN",
+    "name": "Iran",
+    "geometryRefs": ["iso:IRN"]
+  },
+  {
+    "id": "iso:IRQ",
+    "iso3": "IRQ",
+    "name": "Iraq",
+    "geometryRefs": ["iso:IRQ"]
+  },
+  {
+    "id": "iso:IRL",
+    "iso3": "IRL",
+    "name": "Ireland",
+    "geometryRefs": ["iso:IRL"]
+  },
+  {
+    "id": "iso:ISR",
+    "iso3": "ISR",
+    "name": "Israel",
+    "geometryRefs": ["iso:ISR"]
+  },
+  {
+    "id": "iso:ITA",
+    "iso3": "ITA",
+    "name": "Italy",
+    "geometryRefs": ["iso:ITA"]
+  },
+  {
+    "id": "iso:JAM",
+    "iso3": "JAM",
+    "name": "Jamaica",
+    "geometryRefs": ["iso:JAM"]
+  },
+  {
+    "id": "iso:JPN",
+    "iso3": "JPN",
+    "name": "Japan",
+    "geometryRefs": ["iso:JPN"]
+  },
+  {
+    "id": "iso:JOR",
+    "iso3": "JOR",
+    "name": "Jordan",
+    "geometryRefs": ["iso:JOR"]
+  },
+  {
+    "id": "iso:KAZ",
+    "iso3": "KAZ",
+    "name": "Kazakhstan",
+    "geometryRefs": ["iso:KAZ"]
+  },
+  {
+    "id": "iso:KEN",
+    "iso3": "KEN",
+    "name": "Kenya",
+    "geometryRefs": ["iso:KEN"]
+  },
+  {
+    "id": "iso:KIR",
+    "iso3": "KIR",
+    "name": "Kiribati",
+    "geometryRefs": ["iso:KIR"]
+  },
+  {
+    "id": "iso:PRK",
+    "iso3": "PRK",
+    "name": "North Korea",
+    "geometryRefs": ["iso:PRK"]
+  },
+  {
+    "id": "iso:KOR",
+    "iso3": "KOR",
+    "name": "South Korea",
+    "geometryRefs": ["iso:KOR"]
+  },
+  {
+    "id": "iso:KWT",
+    "iso3": "KWT",
+    "name": "Kuwait",
+    "geometryRefs": ["iso:KWT"]
+  },
+  {
+    "id": "iso:KGZ",
+    "iso3": "KGZ",
+    "name": "Kyrgyzstan",
+    "geometryRefs": ["iso:KGZ"]
+  },
+  {
+    "id": "iso:LAO",
+    "iso3": "LAO",
+    "name": "Laos",
+    "geometryRefs": ["iso:LAO"]
+  },
+  {
+    "id": "iso:LVA",
+    "iso3": "LVA",
+    "name": "Latvia",
+    "geometryRefs": ["iso:LVA"]
+  },
+  {
+    "id": "iso:LBN",
+    "iso3": "LBN",
+    "name": "Lebanon",
+    "geometryRefs": ["iso:LBN"]
+  },
+  {
+    "id": "iso:LSO",
+    "iso3": "LSO",
+    "name": "Lesotho",
+    "geometryRefs": ["iso:LSO"]
+  },
+  {
+    "id": "iso:LBR",
+    "iso3": "LBR",
+    "name": "Liberia",
+    "geometryRefs": ["iso:LBR"]
+  },
+  {
+    "id": "iso:LBY",
+    "iso3": "LBY",
+    "name": "Libya",
+    "geometryRefs": ["iso:LBY"]
+  },
+  {
+    "id": "iso:LIE",
+    "iso3": "LIE",
+    "name": "Liechtenstein",
+    "geometryRefs": ["iso:LIE"]
+  },
+  {
+    "id": "iso:LTU",
+    "iso3": "LTU",
+    "name": "Lithuania",
+    "geometryRefs": ["iso:LTU"]
+  },
+  {
+    "id": "iso:LUX",
+    "iso3": "LUX",
+    "name": "Luxembourg",
+    "geometryRefs": ["iso:LUX"]
+  },
+  {
+    "id": "iso:MDG",
+    "iso3": "MDG",
+    "name": "Madagascar",
+    "geometryRefs": ["iso:MDG"]
+  },
+  {
+    "id": "iso:MWI",
+    "iso3": "MWI",
+    "name": "Malawi",
+    "geometryRefs": ["iso:MWI"]
+  },
+  {
+    "id": "iso:MYS",
+    "iso3": "MYS",
+    "name": "Malaysia",
+    "geometryRefs": ["iso:MYS"]
+  },
+  {
+    "id": "iso:MDV",
+    "iso3": "MDV",
+    "name": "Maldives",
+    "geometryRefs": ["iso:MDV"]
+  },
+  {
+    "id": "iso:MLI",
+    "iso3": "MLI",
+    "name": "Mali",
+    "geometryRefs": ["iso:MLI"]
+  },
+  {
+    "id": "iso:MLT",
+    "iso3": "MLT",
+    "name": "Malta",
+    "geometryRefs": ["iso:MLT"]
+  },
+  {
+    "id": "iso:MHL",
+    "iso3": "MHL",
+    "name": "Marshall Islands",
+    "geometryRefs": ["iso:MHL"]
+  },
+  {
+    "id": "iso:MRT",
+    "iso3": "MRT",
+    "name": "Mauritania",
+    "geometryRefs": ["iso:MRT"]
+  },
+  {
+    "id": "iso:MUS",
+    "iso3": "MUS",
+    "name": "Mauritius",
+    "geometryRefs": ["iso:MUS"]
+  },
+  {
+    "id": "iso:MEX",
+    "iso3": "MEX",
+    "name": "Mexico",
+    "geometryRefs": ["iso:MEX"]
+  },
+  {
+    "id": "iso:FSM",
+    "iso3": "FSM",
+    "name": "Micronesia",
+    "geometryRefs": ["iso:FSM"]
+  },
+  {
+    "id": "iso:MDA",
+    "iso3": "MDA",
+    "name": "Moldova",
+    "geometryRefs": ["iso:MDA"]
+  },
+  {
+    "id": "iso:MCO",
+    "iso3": "MCO",
+    "name": "Monaco",
+    "geometryRefs": ["iso:MCO"]
+  },
+  {
+    "id": "iso:MNG",
+    "iso3": "MNG",
+    "name": "Mongolia",
+    "geometryRefs": ["iso:MNG"]
+  },
+  {
+    "id": "iso:MNE",
+    "iso3": "MNE",
+    "name": "Montenegro",
+    "geometryRefs": ["iso:MNE"]
+  },
+  {
+    "id": "iso:MAR",
+    "iso3": "MAR",
+    "name": "Morocco",
+    "geometryRefs": ["iso:MAR"]
+  },
+  {
+    "id": "iso:MOZ",
+    "iso3": "MOZ",
+    "name": "Mozambique",
+    "geometryRefs": ["iso:MOZ"]
+  },
+  {
+    "id": "iso:MMR",
+    "iso3": "MMR",
+    "name": "Myanmar",
+    "geometryRefs": ["iso:MMR"]
+  },
+  {
+    "id": "iso:NAM",
+    "iso3": "NAM",
+    "name": "Namibia",
+    "geometryRefs": ["iso:NAM"]
+  },
+  {
+    "id": "iso:NRU",
+    "iso3": "NRU",
+    "name": "Nauru",
+    "geometryRefs": ["iso:NRU"]
+  },
+  {
+    "id": "iso:NPL",
+    "iso3": "NPL",
+    "name": "Nepal",
+    "geometryRefs": ["iso:NPL"]
+  },
+  {
+    "id": "iso:NLD",
+    "iso3": "NLD",
+    "name": "Netherlands",
+    "geometryRefs": ["iso:NLD"]
+  },
+  {
+    "id": "iso:NZL",
+    "iso3": "NZL",
+    "name": "New Zealand",
+    "geometryRefs": ["iso:NZL"]
+  },
+  {
+    "id": "iso:NIC",
+    "iso3": "NIC",
+    "name": "Nicaragua",
+    "geometryRefs": ["iso:NIC"]
+  },
+  {
+    "id": "iso:NER",
+    "iso3": "NER",
+    "name": "Niger",
+    "geometryRefs": ["iso:NER"]
+  },
+  {
+    "id": "iso:NGA",
+    "iso3": "NGA",
+    "name": "Nigeria",
+    "geometryRefs": ["iso:NGA"]
+  },
+  {
+    "id": "iso:MKD",
+    "iso3": "MKD",
+    "name": "North Macedonia",
+    "geometryRefs": ["iso:MKD"]
+  },
+  {
+    "id": "iso:NOR",
+    "iso3": "NOR",
+    "name": "Norway",
+    "geometryRefs": ["iso:NOR"]
+  },
+  {
+    "id": "iso:OMN",
+    "iso3": "OMN",
+    "name": "Oman",
+    "geometryRefs": ["iso:OMN"]
+  },
+  {
+    "id": "iso:PAK",
+    "iso3": "PAK",
+    "name": "Pakistan",
+    "geometryRefs": ["iso:PAK"]
+  },
+  {
+    "id": "iso:PLW",
+    "iso3": "PLW",
+    "name": "Palau",
+    "geometryRefs": ["iso:PLW"]
+  },
+  {
+    "id": "iso:PAN",
+    "iso3": "PAN",
+    "name": "Panama",
+    "geometryRefs": ["iso:PAN"]
+  },
+  {
+    "id": "iso:PNG",
+    "iso3": "PNG",
+    "name": "Papua New Guinea",
+    "geometryRefs": ["iso:PNG"]
+  },
+  {
+    "id": "iso:PRY",
+    "iso3": "PRY",
+    "name": "Paraguay",
+    "geometryRefs": ["iso:PRY"]
+  },
+  {
+    "id": "iso:PER",
+    "iso3": "PER",
+    "name": "Peru",
+    "geometryRefs": ["iso:PER"]
+  },
+  {
+    "id": "iso:PHL",
+    "iso3": "PHL",
+    "name": "Philippines",
+    "geometryRefs": ["iso:PHL"]
+  },
+  {
+    "id": "iso:POL",
+    "iso3": "POL",
+    "name": "Poland",
+    "geometryRefs": ["iso:POL"]
+  },
+  {
+    "id": "iso:PRT",
+    "iso3": "PRT",
+    "name": "Portugal",
+    "geometryRefs": ["iso:PRT"]
+  },
+  {
+    "id": "iso:QAT",
+    "iso3": "QAT",
+    "name": "Qatar",
+    "geometryRefs": ["iso:QAT"]
+  },
+  {
+    "id": "iso:ROU",
+    "iso3": "ROU",
+    "name": "Romania",
+    "geometryRefs": ["iso:ROU"]
+  },
+  {
+    "id": "iso:RUS",
+    "iso3": "RUS",
+    "name": "Russia",
+    "geometryRefs": ["iso:RUS"]
+  },
+  {
+    "id": "iso:RWA",
+    "iso3": "RWA",
+    "name": "Rwanda",
+    "geometryRefs": ["iso:RWA"]
+  },
+  {
+    "id": "iso:KNA",
+    "iso3": "KNA",
+    "name": "Saint Kitts and Nevis",
+    "geometryRefs": ["iso:KNA"]
+  },
+  {
+    "id": "iso:LCA",
+    "iso3": "LCA",
+    "name": "Saint Lucia",
+    "geometryRefs": ["iso:LCA"]
+  },
+  {
+    "id": "iso:VCT",
+    "iso3": "VCT",
+    "name": "Saint Vincent and the Grenadines",
+    "geometryRefs": ["iso:VCT"]
+  },
+  {
+    "id": "iso:WSM",
+    "iso3": "WSM",
+    "name": "Samoa",
+    "geometryRefs": ["iso:WSM"]
+  },
+  {
+    "id": "iso:SMR",
+    "iso3": "SMR",
+    "name": "San Marino",
+    "geometryRefs": ["iso:SMR"]
+  },
+  {
+    "id": "iso:STP",
+    "iso3": "STP",
+    "name": "Sao Tome and Principe",
+    "geometryRefs": ["iso:STP"]
+  },
+  {
+    "id": "iso:SAU",
+    "iso3": "SAU",
+    "name": "Saudi Arabia",
+    "geometryRefs": ["iso:SAU"]
+  },
+  {
+    "id": "iso:SEN",
+    "iso3": "SEN",
+    "name": "Senegal",
+    "geometryRefs": ["iso:SEN"]
+  },
+  {
+    "id": "iso:SRB",
+    "iso3": "SRB",
+    "name": "Serbia",
+    "geometryRefs": ["iso:SRB"]
+  },
+  {
+    "id": "iso:SYC",
+    "iso3": "SYC",
+    "name": "Seychelles",
+    "geometryRefs": ["iso:SYC"]
+  },
+  {
+    "id": "iso:SLE",
+    "iso3": "SLE",
+    "name": "Sierra Leone",
+    "geometryRefs": ["iso:SLE"]
+  },
+  {
+    "id": "iso:SGP",
+    "iso3": "SGP",
+    "name": "Singapore",
+    "geometryRefs": ["iso:SGP"]
+  },
+  {
+    "id": "iso:SVK",
+    "iso3": "SVK",
+    "name": "Slovakia",
+    "geometryRefs": ["iso:SVK"]
+  },
+  {
+    "id": "iso:SVN",
+    "iso3": "SVN",
+    "name": "Slovenia",
+    "geometryRefs": ["iso:SVN"]
+  },
+  {
+    "id": "iso:SLB",
+    "iso3": "SLB",
+    "name": "Solomon Islands",
+    "geometryRefs": ["iso:SLB"]
+  },
+  {
+    "id": "iso:SOM",
+    "iso3": "SOM",
+    "name": "Somalia",
+    "geometryRefs": ["iso:SOM"]
+  },
+  {
+    "id": "iso:ZAF",
+    "iso3": "ZAF",
+    "name": "South Africa",
+    "geometryRefs": ["iso:ZAF"]
+  },
+  {
+    "id": "iso:SSD",
+    "iso3": "SSD",
+    "name": "South Sudan",
+    "geometryRefs": ["iso:SSD"]
+  },
+  {
+    "id": "iso:ESP",
+    "iso3": "ESP",
+    "name": "Spain",
+    "geometryRefs": ["iso:ESP"]
+  },
+  {
+    "id": "iso:LKA",
+    "iso3": "LKA",
+    "name": "Sri Lanka",
+    "geometryRefs": ["iso:LKA"]
+  },
+  {
+    "id": "iso:SDN",
+    "iso3": "SDN",
+    "name": "Sudan",
+    "geometryRefs": ["iso:SDN"]
+  },
+  {
+    "id": "iso:SUR",
+    "iso3": "SUR",
+    "name": "Suriname",
+    "geometryRefs": ["iso:SUR"]
+  },
+  {
+    "id": "iso:SWE",
+    "iso3": "SWE",
+    "name": "Sweden",
+    "geometryRefs": ["iso:SWE"]
+  },
+  {
+    "id": "iso:CHE",
+    "iso3": "CHE",
+    "name": "Switzerland",
+    "geometryRefs": ["iso:CHE"]
+  },
+  {
+    "id": "iso:SYR",
+    "iso3": "SYR",
+    "name": "Syria",
+    "geometryRefs": ["iso:SYR"]
+  },
+  {
+    "id": "iso:TJK",
+    "iso3": "TJK",
+    "name": "Tajikistan",
+    "geometryRefs": ["iso:TJK"]
+  },
+  {
+    "id": "iso:TZA",
+    "iso3": "TZA",
+    "name": "Tanzania",
+    "geometryRefs": ["iso:TZA"]
+  },
+  {
+    "id": "iso:THA",
+    "iso3": "THA",
+    "name": "Thailand",
+    "geometryRefs": ["iso:THA"]
+  },
+  {
+    "id": "iso:TLS",
+    "iso3": "TLS",
+    "name": "Timor-Leste",
+    "geometryRefs": ["iso:TLS"]
+  },
+  {
+    "id": "iso:TGO",
+    "iso3": "TGO",
+    "name": "Togo",
+    "geometryRefs": ["iso:TGO"]
+  },
+  {
+    "id": "iso:TON",
+    "iso3": "TON",
+    "name": "Tonga",
+    "geometryRefs": ["iso:TON"]
+  },
+  {
+    "id": "iso:TTO",
+    "iso3": "TTO",
+    "name": "Trinidad and Tobago",
+    "geometryRefs": ["iso:TTO"]
+  },
+  {
+    "id": "iso:TUN",
+    "iso3": "TUN",
+    "name": "Tunisia",
+    "geometryRefs": ["iso:TUN"]
+  },
+  {
+    "id": "iso:TUR",
+    "iso3": "TUR",
+    "name": "Türkiye",
+    "geometryRefs": ["iso:TUR"]
+  },
+  {
+    "id": "iso:TKM",
+    "iso3": "TKM",
+    "name": "Turkmenistan",
+    "geometryRefs": ["iso:TKM"]
+  },
+  {
+    "id": "iso:TUV",
+    "iso3": "TUV",
+    "name": "Tuvalu",
+    "geometryRefs": ["iso:TUV"]
+  },
+  {
+    "id": "iso:UGA",
+    "iso3": "UGA",
+    "name": "Uganda",
+    "geometryRefs": ["iso:UGA"]
+  },
+  {
+    "id": "iso:UKR",
+    "iso3": "UKR",
+    "name": "Ukraine",
+    "geometryRefs": ["iso:UKR"]
+  },
+  {
+    "id": "iso:ARE",
+    "iso3": "ARE",
+    "name": "United Arab Emirates",
+    "geometryRefs": ["iso:ARE"]
+  },
+  {
+    "id": "iso:GBR",
+    "iso3": "GBR",
+    "name": "United Kingdom",
+    "geometryRefs": ["iso:GBR"]
+  },
+  {
+    "id": "iso:USA",
+    "iso3": "USA",
+    "name": "United States",
+    "geometryRefs": ["iso:USA"]
+  },
+  {
+    "id": "iso:URY",
+    "iso3": "URY",
+    "name": "Uruguay",
+    "geometryRefs": ["iso:URY"]
+  },
+  {
+    "id": "iso:UZB",
+    "iso3": "UZB",
+    "name": "Uzbekistan",
+    "geometryRefs": ["iso:UZB"]
+  },
+  {
+    "id": "iso:VUT",
+    "iso3": "VUT",
+    "name": "Vanuatu",
+    "geometryRefs": ["iso:VUT"]
+  },
+  {
+    "id": "iso:VEN",
+    "iso3": "VEN",
+    "name": "Venezuela",
+    "geometryRefs": ["iso:VEN"]
+  },
+  {
+    "id": "iso:VNM",
+    "iso3": "VNM",
+    "name": "Vietnam",
+    "geometryRefs": ["iso:VNM"]
+  },
+  {
+    "id": "iso:YEM",
+    "iso3": "YEM",
+    "name": "Yemen",
+    "geometryRefs": ["iso:YEM"]
+  },
+  {
+    "id": "iso:ZMB",
+    "iso3": "ZMB",
+    "name": "Zambia",
+    "geometryRefs": ["iso:ZMB"]
+  },
+  {
+    "id": "iso:ZWE",
+    "iso3": "ZWE",
+    "name": "Zimbabwe",
+    "geometryRefs": ["iso:ZWE"]
+  },
+  {
+    "id": "iso:VAT",
+    "iso3": "VAT",
+    "name": "Holy See",
+    "geometryRefs": ["iso:VAT"]
+  },
+  {
+    "id": "iso:PSE",
+    "iso3": "PSE",
+    "name": "Palestine",
+    "geometryRefs": ["iso:PSE"]
+  }
+]
