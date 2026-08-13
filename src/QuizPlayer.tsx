@@ -44,6 +44,8 @@ export function QuizPlayer({
   const currentId =
     state.phase === 'active' ? state.order[state.currentIndex] : undefined;
   const currentLocation = catalog.find((location) => location.id === currentId);
+  const attemptsRemaining = 3 - state.attempts;
+  const attemptStateClass = `attempts-remaining-${attemptsRemaining}`;
 
   useEffect(() => {
     if (state.phase !== 'active') return;
@@ -204,7 +206,10 @@ export function QuizPlayer({
   }
 
   return (
-    <section className="player-card" aria-labelledby="quiz-title">
+    <section
+      className={`player-card active-player ${attemptStateClass}`}
+      aria-labelledby="quiz-title"
+    >
       <div className="quiz-header">
         <div>
           <p className="eyebrow">TERRADASH · QUIZ</p>
@@ -218,11 +223,15 @@ export function QuizPlayer({
         </p>
       </div>
       {currentLocation && (
-        <div className="map-slot">{renderMap(currentLocation)}</div>
+        <div className="map-slot full-bleed-map">
+          {renderMap(currentLocation)}
+        </div>
       )}
       <div className="quiz-status" aria-live="polite">
-        {formatElapsed(state.elapsedMs)} · {3 - state.attempts} attempts
-        remaining
+        {formatElapsed(state.elapsedMs)} ·{' '}
+        <span className={`attempts-remaining-label ${attemptStateClass}`}>
+          {attemptsRemaining} attempts remaining
+        </span>
       </div>
       <form
         onSubmit={(event) => {

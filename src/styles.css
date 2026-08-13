@@ -67,10 +67,41 @@ h2 {
 .map-slot {
   margin: 1rem 0;
 }
+.active-player {
+  padding-left: 0;
+  padding-right: 0;
+}
+.active-player > :not(.full-bleed-map) {
+  width: calc(100% - 2 * clamp(1rem, 3vw, 2rem));
+  margin-right: auto;
+  margin-left: auto;
+}
+.full-bleed-map {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
 .quiz-status {
   color: #dbeafe;
   font-variant-numeric: tabular-nums;
   margin: 0.75rem 0;
+}
+.active-player.attempts-remaining-3 {
+  --attempt-color: #34d399;
+  --attempt-color-soft: #34d39955;
+  --attempt-outline: #a7f3d0;
+}
+.active-player.attempts-remaining-2 {
+  --attempt-color: #facc15;
+  --attempt-color-soft: #facc1555;
+  --attempt-outline: #fef08a;
+}
+.active-player.attempts-remaining-1 {
+  --attempt-color: #f87171;
+  --attempt-color-soft: #f8717155;
+  --attempt-outline: #fecaca;
+}
+.attempts-remaining-label {
+  color: var(--attempt-color);
 }
 label {
   color: #a9b8cc;
@@ -153,6 +184,11 @@ input {
   border-radius: 0.75rem;
   box-shadow: 0 1rem 4rem #0005;
 }
+.full-bleed-map .map-frame {
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+}
 .world-map {
   display: block;
   width: 100%;
@@ -168,20 +204,20 @@ input {
   vector-effect: non-scaling-stroke;
 }
 .country.active path {
-  fill: #f59e0b;
+  fill: var(--attempt-color, #f59e0b);
 }
 .active-outline path {
   fill: none;
-  stroke: #fff;
+  stroke: var(--attempt-outline, #fff);
   stroke-width: 2.5;
   vector-effect: non-scaling-stroke;
 }
 .active-fill path {
-  fill: #f59e0b;
+  fill: var(--attempt-color, #f59e0b);
 }
 .minimum-footprint {
-  fill: #f59e0b55;
-  stroke: #fff;
+  fill: var(--attempt-color-soft, #f59e0b55);
+  stroke: var(--attempt-outline, #fff);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
   stroke-dasharray: 4 3;
