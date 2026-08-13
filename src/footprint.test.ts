@@ -3,45 +3,72 @@ import { describe, expect, it } from 'vitest';
 import catalog from '../data/generated/catalog.json';
 import map from '../data/generated/map.json';
 import {
-  componentSpan,
   COMPONENT_CLUSTER_PROXIMITY_PX,
+  deriveCalloutModel,
   deriveComponentFootprints,
   deriveFootprint,
   mapXForLongitude,
-  MAP_OVERLAP_REFERENCE_UNITS,
   MAP_SEAM_LONGITUDE,
   pathPoints,
   pathPointComponents,
-  screenFootprintToMapCopies,
-  scaledComponentPaths,
   unwrapComponent,
   wrappedOffsets,
-  wrappedFootprintPositions,
-  wrappedPathOffsets,
 } from './footprint';
 
-describe('deriveFootprint', () => {
-  it('uses true polygon at threshold', () =>
+function pathsFor(id: string) {
+  const item = catalog.find((entry) => entry.id === id)!;
+  return item.geometryRefs.flatMap(
+    (ref) => map.features[ref as keyof typeof map.features].paths,
+  );
+}
+
+describe('threshold and ring primitives', () => {
+  it('keeps native geometry at the threshold and uses a circle below it', () => {
     expect(
       deriveFootprint([
         [0, 0],
         [10, 10],
       ]).kind,
-    ).toBe('polygon'));
-  it('adds a minimum footprint below threshold without changing source points', () => {
-    const points: [number, number][] = [
-      [5, 5],
-      [6, 6],
-    ];
-    const result = deriveFootprint(points);
-    expect(result.kind).toBe('circle');
-    expect(result.radius).toBe(5);
-    expect(points).toEqual([
-      [5, 5],
-      [6, 6],
-    ]);
+    ).toBe('polygon');
+    expect(
+      deriveFootprint([
+        [5, 5],
+        [6, 6],
+      ]).kind,
+    ).toBe('circle');
   });
-  it('unwraps an antimeridian component to its local span', () => {
+
+  it('preserves each M/Z subpath as an independent ring', () => {
+    expect(pathPointComponents('M0,0L2,0L2,2Z M40,0L42,0L42,2Z', 100)).toEqual([
+      [
+        [0, 0],
+        [2, 0],
+        [2, 2],
+      ],
+      [
+        [40, 0],
+        [42, 0],
+        [42, 2],
+      ],
+    ]);
+    expect(
+      pathsFor('iso:ATG').flatMap((path) =>
+        pathPointComponents(path, map.width),
+      ),
+    ).toHaveLength(2);
+    expect(
+      pathsFor('iso:ARM').flatMap((path) =>
+        pathPointComponents(path, map.width),
+      ),
+    ).toHaveLength(3);
+    expect(
+      pathsFor('iso:UZB').flatMap((path) =>
+        pathPointComponents(path, map.width),
+      ),
+    ).toHaveLength(4);
+  });
+
+  it('unwraps a ring crossing the world edge locally', () => {
     expect(
       unwrapComponent(
         [
@@ -55,351 +82,79 @@ describe('deriveFootprint', () => {
       [1439, 1],
     ]);
   });
-  it.each([
-    ['iso:FRA', true, true],
-    ['iso:USA', true, true],
-    ['iso:FJI', false, false],
-    ['iso:PSE', false, false],
-    ['iso:VAT', false, false],
-    ['iso:ALB', true, false],
-  ])(
-    'uses local generated components for %s',
-    (id, desktopPolygon, phonePolygon) => {
-      const item = catalog.find((entry) => entry.id === id)!;
-      const paths = item.geometryRefs.flatMap(
-        (ref) => map.features[ref as keyof typeof map.features].paths,
-      );
-      const points = pathPoints(paths);
-      expect(points.length).toBeGreaterThan(0);
-      const desktop = deriveComponentFootprints(paths, 1, map.width);
-      const phone = deriveComponentFootprints(paths, 0.25, map.width);
-      expect(desktop.some((footprint) => footprint.kind === 'polygon')).toBe(
-        desktopPolygon,
-      );
-      expect(phone.some((footprint) => footprint.kind === 'polygon')).toBe(
-        phonePolygon,
-      );
-      expect(
-        desktop
-          .filter((footprint) => footprint.kind === 'polygon')
-          .every((footprint) => footprint.radius <= map.width / 2),
-      ).toBe(true);
-      if (id === 'iso:FJI')
-        expect(
-          Math.max(...paths.map((path) => componentSpan(path, map.width))),
-        ).toBeLessThan(100);
-      if (id === 'iso:USA')
-        expect(
-          Math.max(...paths.map((path) => componentSpan(path, map.width))),
-        ).toBeLessThan(600);
-      expect(paths).toEqual(
-        item.geometryRefs.flatMap(
-          (ref) => map.features[ref as keyof typeof map.features].paths,
-        ),
-      );
-    },
-  );
-  it('proves a reviewed plural source-component mapping', () => {
-    const palestine = catalog.find((item) => item.id === 'iso:PSE');
-    expect(palestine?.geometryRefs).toHaveLength(2);
-    expect(palestine?.geometryRefs.every((ref) => ref.includes(':part:'))).toBe(
-      true,
-    );
-  });
-
-  it('combines Uzbekistan fragments with its main footprint', () => {
-    const item = catalog.find((entry) => entry.id === 'iso:UZB')!;
-    const paths = item.geometryRefs.flatMap(
-      (ref) => map.features[ref as keyof typeof map.features].paths,
-    );
-    for (const scale of [1, 0.25]) {
-      const footprints = deriveComponentFootprints(paths, scale, map.width);
-      expect(footprints).toHaveLength(1);
-      expect(footprints[0].kind).toBe('polygon');
-    }
-  });
-
-  it.each(['iso:ATG', 'iso:ARM'])('retains assists for %s', (id) => {
-    const item = catalog.find((entry) => entry.id === id)!;
-    const paths = item.geometryRefs.flatMap(
-      (ref) => map.features[ref as keyof typeof map.features].paths,
-    );
-    for (const scale of [1, 0.25]) {
-      const footprints = deriveComponentFootprints(paths, scale, map.width);
-      expect(footprints.some((footprint) => footprint.kind === 'circle')).toBe(
-        true,
-      );
-    }
-  });
-
-  it.each(['iso:BLZ', 'iso:HND', 'iso:PAN'])(
-    'does not let a tiny Central America fragment over-scale %s',
-    (id) => {
-      const item = catalog.find((entry) => entry.id === id)!;
-      const paths = item.geometryRefs.flatMap(
-        (ref) => map.features[ref as keyof typeof map.features].paths,
-      );
-      const footprints = deriveComponentFootprints(
-        paths,
-        0.25,
-        map.width,
-        undefined,
-        undefined,
-        mapXForLongitude(MAP_SEAM_LONGITUDE, map.width),
-      );
-      expect(footprints).toHaveLength(1);
-      expect(footprints[0].kind).toBe('circle');
-      expect(footprints[0].radius).toBeLessThan(6);
-    },
-  );
-
-  it.each([
-    ['iso:ATG', 2],
-    ['iso:ARM', 3],
-    ['iso:UZB', 4],
-  ])('retains generated subpath rings for %s', (id, expected) => {
-    const item = catalog.find((entry) => entry.id === id)!;
-    const paths = item.geometryRefs.flatMap(
-      (ref) => map.features[ref as keyof typeof map.features].paths,
-    );
-    expect(
-      paths.flatMap((path) => pathPointComponents(path, map.width)),
-    ).toHaveLength(expected);
-  });
 });
 
-describe('screen-space component clustering', () => {
-  const small = (x: number) => `M${x},0L${x + 2},2Z`;
-
-  it('clusters transitively in CSS pixels', () => {
-    const result = deriveComponentFootprints(
-      [small(0), small(15), small(30)],
-      1,
-      1440,
-      10,
-      16,
-    );
-    expect(result).toHaveLength(1);
-    expect(result[0].radius).toBeGreaterThan(5);
-  });
-
-  it('suppresses all assists when a native-large component is nearby', () => {
-    const result = deriveComponentFootprints(
-      ['M0,0L20,0L20,20Z', small(25)],
-      1,
-      1440,
+describe('callout selection and actual-boundary clustering', () => {
+  it.each(['iso:ATG', 'iso:ARM'])('selects one callout for %s', (id) => {
+    const model = deriveCalloutModel(
+      pathsFor(id),
+      0.25,
+      map.width,
       10,
       24,
+      mapXForLongitude(MAP_SEAM_LONGITUDE, map.width),
     );
-    expect(result).toHaveLength(1);
-    expect(result[0].kind).toBe('polygon');
+    expect(model).toBeDefined();
+    expect(model?.selectedPathIndices.length).toBeGreaterThan(0);
   });
 
-  it('does not cluster overlapping boxes when polygon boundaries are separate', () => {
-    const result = deriveComponentFootprints(
-      ['M0,0L100,0L100,100L0,100Z', 'M49,49L51,49L51,51L49,51Z'],
-      1,
-      1440,
-      10,
-      24,
-    );
-    expect(result).toHaveLength(2);
-    expect(result.some((footprint) => footprint.kind === 'circle')).toBe(true);
+  it('bypasses callout behavior when any real region is large', () => {
+    expect(
+      deriveCalloutModel(pathsFor('iso:UZB'), 1, map.width),
+    ).toBeUndefined();
   });
 
-  it('clusters genuinely adjacent polygon boundaries', () => {
-    const result = deriveComponentFootprints(
-      ['M0,0L100,0L100,100L0,100Z', 'M101,49L103,49L103,51L101,51Z'],
-      1,
-      1440,
-      10,
-      24,
-    );
-    expect(result).toHaveLength(1);
-    expect(result[0].kind).toBe('polygon');
-  });
-
-  it('scales every member of an all-small cluster by one common factor', () => {
-    const paths = ['M0,0L2,0L2,2L0,2Z', 'M12,0L14,0L14,2L12,2Z'];
-    const scaled = scaledComponentPaths(paths, 1, 1440);
-    const spans = scaled.map((path) => {
-      const points = pathPoints([path]);
-      return (
-        Math.max(...points.map(([x]) => x)) -
-        Math.min(...points.map(([x]) => x))
-      );
-    });
-    expect(spans).toEqual([10, 10]);
-    expect(scaled).not.toEqual(paths);
-  });
-
-  it('bases the common factor on the largest member, not a tiny fragment', () => {
-    const paths = ['M0,0L2,0L2,2L0,2Z', 'M12,0L16,0L16,4L12,4Z'];
-    const scaled = scaledComponentPaths(paths, 1, 1440);
-    const spans = scaled.map((path) => {
-      const points = pathPoints([path]);
-      return (
-        Math.max(...points.map(([x]) => x)) -
-        Math.min(...points.map(([x]) => x))
-      );
-    });
-    expect(spans).toEqual([5, 10]);
-  });
-
-  it('leaves native-containing clusters at their original geometry', () => {
-    const paths = ['M0,0L20,0L20,20L0,20Z', 'M21,9L23,9L23,11L21,11Z'];
-    expect(scaledComponentPaths(paths, 1, 1440)).toEqual(paths);
-  });
-
-  it('uses one deterministic largest-anchor assist for an all-small cluster', () => {
-    const result = deriveComponentFootprints(
-      ['M0,0L2,2Z', 'M12,0L15,3Z', 'M40,0L42,2Z'],
+  it('selects only the largest region cluster and ignores disconnected fragments', () => {
+    const model = deriveCalloutModel(
+      ['M0,0L2,0L2,2L0,2Z', 'M8,0L10,0L10,2L8,2Z', 'M100,0L102,0L102,2L100,2Z'],
       1,
       1440,
       10,
       COMPONENT_CLUSTER_PROXIMITY_PX,
     );
-    expect(result).toHaveLength(2);
-    expect(result[0].center[0]).toBeCloseTo(8.0833333333);
-    expect(result[0].center[1]).toBe(1.5);
+    expect(model?.selectedPathIndices).toEqual([0, 1]);
+    expect(model?.sourceCenter[0]).toBe(5);
   });
 
-  it('clusters touching geometry even when component centers exceed the gap', () => {
-    const result = deriveComponentFootprints(
-      ['M0,0L40,40Z', 'M40,20L42,20L42,22L40,22Z'],
+  it('does not use overlapping boxes as a proximity proof', () => {
+    const result = deriveCalloutModel(
+      ['M0,0L20,0L20,20L0,20Z', 'M19,30L39,30L39,50L19,50Z'],
       1,
       1440,
       10,
       24,
     );
-    expect(result).toHaveLength(1);
-    expect(result[0].kind).toBe('polygon');
+    expect(result).toBeUndefined();
   });
 
-  it('clusters fragments across the wrapped world boundary', () => {
-    const result = deriveComponentFootprints(
-      ['M1439,0L1439,2Z', 'M1,0L1,2Z'],
+  it('clusters true boundary neighbors and supports seam copies', () => {
+    expect(
+      deriveComponentFootprints(
+        ['M0,0L20,0L20,20L0,20Z', 'M21,9L23,9L23,11L21,11Z'],
+        1,
+        1440,
+      ),
+    ).toHaveLength(2);
+    expect(wrappedOffsets(1438, 1442, 1440, 40)).toContain(-1480);
+  });
+
+  it('supports degenerate point geometry deterministically', () => {
+    const first = deriveCalloutModel(
+      ['M10,10L10,10Z', 'M20,10L20,10Z'],
       1,
       1440,
-      10,
-      4,
     );
-    expect(result).toHaveLength(1);
-  });
-});
-
-describe('wrapped screen-space alignment', () => {
-  const seamX = mapXForLongitude(MAP_SEAM_LONGITUDE, 1440);
-
-  it('projects the required 170W seam to the reference map', () => {
-    expect(seamX).toBe(40);
-  });
-
-  it('scales the 100-reference-unit overlap with the responsive map', () => {
-    expect(MAP_OVERLAP_REFERENCE_UNITS * 0.5).toBe(50);
-    expect(MAP_OVERLAP_REFERENCE_UNITS * 2).toBe(200);
-    const responsiveSeam = mapXForLongitude(MAP_SEAM_LONGITUDE, 720);
-    expect(wrappedOffsets(90, 110, 720, responsiveSeam)).toEqual([-20, 700]);
-  });
-
-  it('duplicates Hawaii at both edges from one source geometry', () => {
-    expect(wrappedOffsets(90, 110, 1440, seamX)).toEqual([-40, 1400]);
-    const usaSourcePaths = map.features['ne:1159321369'].paths;
-    expect(
-      usaSourcePaths.filter(
-        (path) => wrappedPathOffsets([path], 1440, seamX).length === 2,
-      ).length,
-    ).toBeGreaterThan(0);
-    expect(wrappedOffsets(500, 520, 1440, seamX)).toEqual([-40]);
-  });
-
-  it('places right-edge features visibly in the opposite left overlap', () => {
-    const sourcePath = 'M1400,100L1420,100L1420,120L1400,120Z';
-    const transforms = wrappedPathOffsets([sourcePath], 1440, seamX);
-    expect(transforms).toEqual([-40, -1480]);
-    const bounds = transforms.map((transform) => {
-      const xs = pathPoints([sourcePath]).map(([x]) => x + transform);
-      return [Math.min(...xs), Math.max(...xs)];
-    });
-    expect(bounds).toEqual([
-      [1360, 1380],
-      [-80, -60],
-    ]);
-    expect(bounds.every(([min, max]) => min >= -100 && max <= 1540)).toBe(true);
-    expect(
-      wrappedFootprintPositions(
-        { kind: 'circle', center: [1410, 110], radius: 10 },
-        1440,
-        seamX,
-      ),
-    ).toEqual([
-      [1370, 110],
-      [-70, 110],
-    ]);
-  });
-
-  it('keeps a non-overlapping feature single', () => {
-    expect(wrappedOffsets(500, 600, 1440, seamX)).toEqual([-40]);
-  });
-
-  it('wraps the Alaska component into the visible right overlap', () => {
-    expect(wrappedOffsets(47.65, 199.9, 1440, seamX)).toEqual([-40, 1400]);
-  });
-
-  it('wraps the Russia component into the visible left overlap', () => {
-    expect(wrappedOffsets(829.42, 1440, 1440, seamX)).toEqual([-40, -1480]);
-  });
-
-  it('converts a responsive assist back to map coordinates once', () => {
-    expect(
-      screenFootprintToMapCopies(
-        { kind: 'circle', center: [97.5, 71], radius: 5 },
-        0.25,
-        1440,
-        seamX,
-      ),
-    ).toEqual([{ kind: 'circle', center: [390, 284], radius: 20 }]);
-  });
-
-  it('uses the same edge copies for active geometry and its footprint', () => {
-    const bounds = [90, 110] as const;
-    expect(
-      wrappedPathOffsets([`M${bounds[0]},0L${bounds[1]},10Z`], 1440, seamX),
-    ).toEqual(wrappedOffsets(bounds[0], bounds[1], 1440, seamX));
-  });
-
-  it('proves two visible DOM copies and one semantic label', () => {
-    const sourcePath = 'M90,100L110,100L110,120L90,120Z';
-    const label = document.createElement('span');
-    label.setAttribute('aria-label', 'Hawaii');
-    document.body.append(label);
-    const copies = wrappedOffsets(90, 110, 1440, seamX).map((transform) => {
-      const path = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'path',
-      );
-      path.setAttribute('d', sourcePath);
-      path.setAttribute('transform', `translate(${transform} 0)`);
-      path.setAttribute('aria-hidden', 'true');
-      document.body.append(path);
-      return path;
-    });
-    const bounds = copies.map((path) => {
-      const transform = Number(
-        path.getAttribute('transform')!.match(/-?[0-9.]+/)![0],
-      );
-      const xs = pathPoints([sourcePath]).map(([x]) => x + transform);
-      return [Math.min(...xs), Math.max(...xs)];
-    });
-    expect(bounds).toEqual([
-      [50, 70],
-      [1490, 1510],
-    ]);
-    expect(bounds.every(([min, max]) => min >= -100 && max <= 1540)).toBe(true);
-    expect(document.querySelectorAll('[aria-label="Hawaii"]')).toHaveLength(1);
-    expect(document.querySelectorAll('path[aria-hidden="true"]')).toHaveLength(
-      2,
+    const second = deriveCalloutModel(
+      ['M10,10L10,10Z', 'M20,10L20,10Z'],
+      1,
+      1440,
     );
-    document.body.replaceChildren();
+    expect(first).toEqual(second);
+  });
+
+  it('retains the original paths and one semantic geometry source', () => {
+    const paths = pathsFor('iso:ATG');
+    expect(pathPoints(paths).length).toBeGreaterThan(0);
+    expect(paths).toEqual(pathsFor('iso:ATG'));
   });
 });

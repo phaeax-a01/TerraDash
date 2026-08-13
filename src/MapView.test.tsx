@@ -3,12 +3,10 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import catalog from '../data/generated/catalog.json';
-import map from '../data/generated/map.json';
 import { highlightedGeometryPaths } from './mapGeometry';
 import { MapView } from './main';
 
 let root: ReturnType<typeof createRoot> | undefined;
-
 class TestResizeObserver {
   observe() {}
   disconnect() {}
@@ -19,10 +17,7 @@ afterEach(() => {
   root = undefined;
   document.body.replaceChildren();
 });
-
-beforeEach(() => {
-  vi.stubGlobal('ResizeObserver', TestResizeObserver);
-});
+beforeEach(() => vi.stubGlobal('ResizeObserver', TestResizeObserver));
 
 function renderLocation(id: string) {
   const active = catalog.find((entry) => entry.id === id)!;
@@ -30,14 +25,12 @@ function renderLocation(id: string) {
   frame.className = 'map-frame';
   document.body.append(frame);
   root = createRoot(frame);
-  act(() => {
-    root!.render(<MapView active={active} />);
-  });
+  act(() => root!.render(<MapView active={active} />));
   return frame;
 }
 
-describe('MapView minimum geometry rendering', () => {
-  it('enlarges separated all-small geometry and renders one enclosing assist', () => {
+describe('MapView small-region callout rendering', () => {
+  it('keeps the source geometry unchanged and renders one contextual callout', () => {
     const frame = renderLocation('iso:ATG');
     const source = highlightedGeometryPaths(
       catalog.find((entry) => entry.id === 'iso:ATG')!.geometryRefs,
@@ -45,26 +38,23 @@ describe('MapView minimum geometry rendering', () => {
     const rendered = [...frame.querySelectorAll('.active-fill path')].map(
       (path) => path.getAttribute('d'),
     );
-    expect(rendered).not.toEqual(source);
-    expect(frame.querySelectorAll('.minimum-footprint')).toHaveLength(1);
+    expect(rendered).toEqual(source);
+    expect(frame.querySelectorAll('.callout-source')).toHaveLength(1);
+    expect(frame.querySelectorAll('.callout-cutout')).toHaveLength(1);
+    expect(frame.querySelectorAll('.callout-leader')).toHaveLength(2);
     expect(
-      Number(frame.querySelector('.minimum-footprint')?.getAttribute('r')),
-    ).toBeGreaterThanOrEqual(5);
+      frame.querySelectorAll('.callout-context .country path').length,
+    ).toBeGreaterThan(source.length);
+    expect(
+      frame.querySelector('.map-callout')?.getAttribute('aria-hidden'),
+    ).toBe('true');
+    expect(frame.querySelectorAll('[aria-label]').length).toBe(1);
   });
 
-  it('keeps native-containing geometry unchanged and emits no assist', () => {
+  it('bypasses callout graphics for a country with a large region', () => {
     const frame = renderLocation('iso:UZB');
-    const source = highlightedGeometryPaths(
-      catalog.find((entry) => entry.id === 'iso:UZB')!.geometryRefs,
-    );
-    const rendered = [...frame.querySelectorAll('.active-fill path')].map(
-      (path) => path.getAttribute('d'),
-    );
-    expect(rendered).toEqual(source);
-    expect(frame.querySelectorAll('.minimum-footprint')).toHaveLength(0);
-    expect(frame.querySelector('svg')?.getAttribute('aria-label')).toContain(
-      'selected location',
-    );
-    expect(map.width).toBeGreaterThan(0);
+    expect(frame.querySelector('.map-callout')).toBeNull();
+    expect(frame.querySelectorAll('.callout-source')).toHaveLength(0);
+    expect(frame.querySelectorAll('[aria-label]')).toHaveLength(1);
   });
 });

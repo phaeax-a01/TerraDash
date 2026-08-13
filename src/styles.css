@@ -217,12 +217,42 @@ input {
 .active-fill path {
   fill: var(--attempt-color, #f59e0b);
 }
-.minimum-footprint {
+.map-callout {
+  pointer-events: none;
+}
+.callout-context .country path {
+  fill: #35506e;
+  stroke: #14263d;
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+.callout-context .country.active path {
+  fill: var(--attempt-color, #f59e0b);
+  stroke: var(--attempt-outline, #fff);
+}
+.callout-selected path {
+  fill: var(--attempt-color, #f59e0b);
+  stroke: var(--attempt-outline, #fff);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+.callout-cutout {
+  fill: none;
+  stroke: var(--attempt-outline, #fff);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+.callout-source {
   fill: var(--attempt-color-soft, #f59e0b55);
   stroke: var(--attempt-outline, #fff);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
   stroke-dasharray: 4 3;
+}
+.callout-leader {
+  stroke: var(--attempt-outline, #fff);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 .disclaimer {
   color: #71839c;

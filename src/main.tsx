@@ -3,13 +3,13 @@ import { createRoot } from 'react-dom/client';
 import map from '../data/generated/map.json';
 import catalog from '../data/generated/catalog.json';
 import {
-  deriveComponentFootprints,
+  deriveCalloutModel,
   MAP_OVERLAP_REFERENCE_UNITS,
   MAP_SEAM_LONGITUDE,
   mapXForLongitude,
-  screenFootprintToMapCopies,
-  scaledComponentPaths,
+  wrappedOffsets,
   wrappedPathOffsets,
+  type Point,
 } from './footprint';
 import { QuizProvider } from './QuizContext';
 import { defaultCatalog, defaultQuiz } from './quizContracts';
@@ -25,7 +25,7 @@ export function MapView({ active }: { active: Location }) {
   const seamX = mapXForLongitude(MAP_SEAM_LONGITUDE, map.width);
   const renderedMapWidth = map.width + MAP_OVERLAP_REFERENCE_UNITS * 2;
   const scale = viewportWidth / renderedMapWidth;
-  const footprints = deriveComponentFootprints(
+  const callout = deriveCalloutModel(
     highlightedPaths,
     scale,
     map.width,
@@ -33,14 +33,22 @@ export function MapView({ active }: { active: Location }) {
     undefined,
     seamX,
   );
-  const renderedHighlightedPaths = scaledComponentPaths(
-    highlightedPaths,
-    scale,
-    map.width,
-    undefined,
-    undefined,
-    seamX,
+  const cutoutRadius = Math.min(
+    map.height / 2 - 24,
+    Math.max(64 / scale, (viewportWidth * 0.22) / scale),
   );
+  const cutoutCenter: Point = callout
+    ? [
+        callout.sourceCenter[0] < map.width / 2
+          ? map.width - cutoutRadius - 24
+          : cutoutRadius + 24,
+        Math.min(
+          map.height - cutoutRadius - 24,
+          Math.max(cutoutRadius + 24, callout.sourceCenter[1]),
+        ),
+      ]
+    : [0, 0];
+  const zoom = 3;
   const wrappedPathCopies = (paths: string[]) =>
     paths.flatMap((path) =>
       wrappedPathOffsets(
@@ -105,28 +113,8 @@ export function MapView({ active }: { active: Location }) {
           );
         })}
       </g>
-      {footprints.flatMap((footprint, index) =>
-        footprint.kind === 'circle'
-          ? screenFootprintToMapCopies(
-              footprint,
-              scale,
-              map.width,
-              seamX,
-              MAP_OVERLAP_REFERENCE_UNITS,
-            ).map((copyFootprint, copy) => (
-              <circle
-                key={`${index}:${copy}`}
-                className="minimum-footprint"
-                cx={copyFootprint.center[0]}
-                cy={copyFootprint.center[1]}
-                r={copyFootprint.radius}
-                aria-hidden="true"
-              />
-            ))
-          : [],
-      )}
       <g className="active-fill" aria-hidden="true">
-        {wrappedPathCopies(renderedHighlightedPaths).map(
+        {wrappedPathCopies(highlightedPaths).map(
           ({ path, transform }, index) => (
             <path
               key={`${transform}:${index}`}
@@ -137,7 +125,7 @@ export function MapView({ active }: { active: Location }) {
         )}
       </g>
       <g className="active-outline" aria-hidden="true">
-        {wrappedPathCopies(renderedHighlightedPaths).map(
+        {wrappedPathCopies(highlightedPaths).map(
           ({ path, transform }, index) => (
             <path
               key={`${transform}:${index}`}
@@ -147,6 +135,89 @@ export function MapView({ active }: { active: Location }) {
           ),
         )}
       </g>
+      {callout && (
+        <g className="map-callout" aria-hidden="true">
+          <defs>
+            <clipPath id="map-callout-clip">
+              <circle
+                cx={cutoutCenter[0]}
+                cy={cutoutCenter[1]}
+                r={cutoutRadius}
+              />
+            </clipPath>
+          </defs>
+          <g
+            className="callout-context"
+            clipPath="url(#map-callout-clip)"
+            transform={`translate(${cutoutCenter[0]} ${cutoutCenter[1]}) scale(${zoom}) translate(${-callout.sourceCenter[0]} ${-callout.sourceCenter[1]})`}
+          >
+            {map.sourceFeatureIds.map((id) => {
+              const feature = map.features[id as keyof typeof map.features];
+              return (
+                <g key={id} className="country">
+                  {wrappedPathCopies(feature.paths).map(
+                    ({ path, transform }, index) => (
+                      <path
+                        key={`${id}:${transform}:${index}`}
+                        d={path}
+                        transform={`translate(${transform} 0)`}
+                      />
+                    ),
+                  )}
+                </g>
+              );
+            })}
+            <g className="callout-selected">
+              {callout.selectedPathIndices.flatMap((pathIndex) =>
+                wrappedPathCopies([highlightedPaths[pathIndex]]).map(
+                  ({ path, transform }, index) => (
+                    <path
+                      key={`${pathIndex}:${transform}:${index}`}
+                      d={path}
+                      transform={`translate(${transform} 0)`}
+                    />
+                  ),
+                ),
+              )}
+            </g>
+          </g>
+          <circle
+            className="callout-cutout"
+            cx={cutoutCenter[0]}
+            cy={cutoutCenter[1]}
+            r={cutoutRadius}
+          />
+          {wrappedOffsets(
+            callout.sourceCenter[0] - callout.sourceRadius,
+            callout.sourceCenter[0] + callout.sourceRadius,
+            map.width,
+            seamX,
+            MAP_OVERLAP_REFERENCE_UNITS,
+          ).map((offset) => (
+            <circle
+              key={offset}
+              className="callout-source"
+              cx={callout.sourceCenter[0] + offset}
+              cy={callout.sourceCenter[1]}
+              r={callout.sourceRadius}
+            />
+          ))}
+          <line
+            className="callout-leader"
+            x1={callout.sourceCenter[0]}
+            y1={callout.sourceCenter[1] - callout.sourceRadius * 0.4}
+            x2={cutoutCenter[0]}
+            y2={cutoutCenter[1] - cutoutRadius * 0.72}
+          />
+          <line
+            className="callout-leader"
+            x1={callout.sourceCenter[0]}
+            y1={callout.sourceCenter[1] + callout.sourceRadius * 0.4}
+            x2={cutoutCenter[0]}
+            y2={cutoutCenter[1] + cutoutRadius * 0.72}
+          />
+        </g>
+      )}
     </svg>
   );
 }
