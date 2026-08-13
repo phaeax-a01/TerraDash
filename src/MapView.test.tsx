@@ -42,6 +42,7 @@ describe('MapView small-region callout rendering', () => {
     expect(frame.querySelectorAll('.callout-source')).toHaveLength(1);
     expect(frame.querySelectorAll('.callout-cutout')).toHaveLength(1);
     expect(frame.querySelectorAll('.callout-leader')).toHaveLength(2);
+    expect(frame.querySelector('.callout-cutout')).toBeTruthy();
     expect(
       frame.querySelectorAll('.callout-context .country path').length,
     ).toBeGreaterThan(source.length);
