@@ -9,6 +9,7 @@ import {
 import { suggestionsFor } from './autocomplete';
 import { useQuiz } from './QuizContext';
 import type { CatalogLocation } from './quizEngine';
+import { derivePanelPlacement, type PanelPlacement } from './panelPlacement';
 
 type QuizPlayerProps = {
   catalog: readonly CatalogLocation[];
@@ -34,13 +35,28 @@ export function QuizPlayer({
   const [activeSuggestion, setActiveSuggestion] = useState(0);
   const [suggestionsOpen, setSuggestionsOpen] = useState(true);
   const [feedback, setFeedback] = useState('');
+  const [feedbackTone, setFeedbackTone] = useState<'correct' | 'missed' | ''>(
+    '',
+  );
+  const [panelPlacement, setPanelPlacement] = useState<PanelPlacement>({
+    left: 16,
+    top: 16,
+  });
   const answerRef = useRef<HTMLInputElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const submitting = useRef(false);
   const suggestions = useMemo(
     () => suggestionsFor(catalog, text),
     [catalog, text],
   );
-  const visibleSuggestions = suggestionsOpen ? suggestions : [];
+  const exactMatch =
+    text.trim().length > 0 &&
+    catalog.some(
+      (location) =>
+        location.name.trim().toLowerCase() === text.trim().toLowerCase(),
+    );
+  const visibleSuggestions = suggestionsOpen && !exactMatch ? suggestions : [];
   const currentId =
     state.phase === 'active' ? state.order[state.currentIndex] : undefined;
   const currentLocation = catalog.find((location) => location.id === currentId);
@@ -67,6 +83,13 @@ export function QuizPlayer({
           : 'That action is not available right now.',
       );
     } else if (state.lastEvent.type === 'accepted') {
+      const tone =
+        state.lastEvent.result === 'correct'
+          ? 'correct'
+          : state.lastEvent.result === 'missed'
+            ? 'missed'
+            : '';
+      setFeedbackTone(tone);
       setFeedback(
         state.lastEvent.result === 'correct'
           ? 'Correct. Next location.'
@@ -74,6 +97,11 @@ export function QuizPlayer({
             ? 'Three attempts used. The answer is not revealed.'
             : 'Incorrect. Try again; the answer is not revealed.',
       );
+      const timer = window.setTimeout(() => {
+        setFeedback('');
+        setFeedbackTone('');
+      }, 1200);
+      return () => window.clearTimeout(timer);
     }
   }, [state.lastEvent]);
 
@@ -84,6 +112,7 @@ export function QuizPlayer({
       setActiveSuggestion(0);
       setSuggestionsOpen(true);
       setFeedback('');
+      setFeedbackTone('');
       answerRef.current?.focus();
     }
   }, [state.currentIndex, state.phase]);
@@ -132,12 +161,7 @@ export function QuizPlayer({
       );
     } else if (event.key === 'Enter') {
       event.preventDefault();
-      const exact = catalog.find(
-        (location) =>
-          location.name.trim().toLowerCase() === text.trim().toLowerCase(),
-      );
-      if (exact && (!selectedId || selectedId === exact.id)) submit();
-      else if (visibleSuggestions[activeSuggestion])
+      if (visibleSuggestions[activeSuggestion])
         choose(visibleSuggestions[activeSuggestion]);
       else submit();
     } else if (event.key === 'Escape') {
@@ -147,6 +171,38 @@ export function QuizPlayer({
       setSuggestionsOpen(false);
     }
   }
+
+  useEffect(() => {
+    if (state.phase !== 'active') return;
+    const update = () => {
+      const stage = stageRef.current;
+      const panel = panelRef.current;
+      const target = stage?.querySelector<SVGGraphicsElement>('.active-fill');
+      if (!stage || !panel || !target) return;
+      const stageRect = stage.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      setPanelPlacement(
+        derivePanelPlacement(
+          {
+            left: targetRect.left - stageRect.left,
+            top: targetRect.top - stageRect.top,
+            width: targetRect.width,
+            height: targetRect.height,
+          },
+          { width: panel.offsetWidth, height: panel.offsetHeight },
+          { width: stage.clientWidth, height: stage.clientHeight },
+        ),
+      );
+    };
+    const frame = window.requestAnimationFrame(update);
+    const observer =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
+    if (stageRef.current) observer?.observe(stageRef.current);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
+  }, [state.currentIndex, state.phase, visibleSuggestions.length]);
 
   if (state.phase === 'idle') {
     return (
@@ -223,72 +279,94 @@ export function QuizPlayer({
         </p>
       </div>
       {currentLocation && (
-        <div className="map-slot full-bleed-map">
-          {renderMap(currentLocation)}
+        <div className="map-stage" ref={stageRef}>
+          <div className="map-slot full-bleed-map">
+            {renderMap(currentLocation)}
+          </div>
+          <div
+            ref={panelRef}
+            className={`answer-panel ${feedbackTone ? `feedback-${feedbackTone}` : ''}`}
+            style={{ left: panelPlacement.left, top: panelPlacement.top }}
+          >
+            <div className="quiz-status" aria-live="polite">
+              {formatElapsed(state.elapsedMs)} ·{' '}
+              <span className={`attempts-remaining-label ${attemptStateClass}`}>
+                {attemptsRemaining} guesses remaining
+              </span>
+            </div>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                submit();
+              }}
+            >
+              <label htmlFor="answer">Location name</label>
+              <div className="answer-row">
+                <div className="combobox-wrap">
+                  <input
+                    ref={answerRef}
+                    id="answer"
+                    role="combobox"
+                    value={text}
+                    autoComplete="off"
+                    aria-autocomplete="list"
+                    aria-controls="answer-options"
+                    aria-expanded={visibleSuggestions.length > 0}
+                    aria-activedescendant={
+                      visibleSuggestions[activeSuggestion]
+                        ? `answer-option-${visibleSuggestions[activeSuggestion].id}`
+                        : undefined
+                    }
+                    onInput={(event) => {
+                      setText((event.target as HTMLInputElement).value);
+                      setSelectedId(undefined);
+                      setActiveSuggestion(0);
+                      setSuggestionsOpen(true);
+                    }}
+                    onKeyDown={onKeyDown}
+                  />
+                  {visibleSuggestions.length > 0 && (
+                    <ul
+                      id="answer-options"
+                      role="listbox"
+                      className="suggestions"
+                    >
+                      {visibleSuggestions.map((location, index) => (
+                        <li
+                          id={`answer-option-${location.id}`}
+                          key={location.id}
+                          role="option"
+                          aria-selected={index === activeSuggestion}
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            choose(location);
+                          }}
+                        >
+                          {location.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  className="submit-arrow"
+                  type="submit"
+                  aria-label="Submit answer"
+                  title="Submit answer"
+                >
+                  →
+                </button>
+              </div>
+            </form>
+            <p
+              className={`feedback ${feedbackTone ? `feedback-${feedbackTone}` : ''}`}
+              aria-live="assertive"
+            >
+              {feedback}
+            </p>
+          </div>
         </div>
       )}
-      <div className="quiz-status" aria-live="polite">
-        {formatElapsed(state.elapsedMs)} ·{' '}
-        <span className={`attempts-remaining-label ${attemptStateClass}`}>
-          {attemptsRemaining} attempts remaining
-        </span>
-      </div>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-      >
-        <label htmlFor="answer">Location name</label>
-        <div className="combobox-wrap">
-          <input
-            ref={answerRef}
-            id="answer"
-            role="combobox"
-            value={text}
-            autoComplete="off"
-            aria-autocomplete="list"
-            aria-controls="answer-options"
-            aria-expanded={visibleSuggestions.length > 0}
-            aria-activedescendant={
-              visibleSuggestions[activeSuggestion]
-                ? `answer-option-${visibleSuggestions[activeSuggestion].id}`
-                : undefined
-            }
-            onInput={(event) => {
-              setText((event.target as HTMLInputElement).value);
-              setSelectedId(undefined);
-              setActiveSuggestion(0);
-              setSuggestionsOpen(true);
-            }}
-            onKeyDown={onKeyDown}
-          />
-          {visibleSuggestions.length > 0 && (
-            <ul id="answer-options" role="listbox" className="suggestions">
-              {visibleSuggestions.map((location, index) => (
-                <li
-                  id={`answer-option-${location.id}`}
-                  key={location.id}
-                  role="option"
-                  aria-selected={index === activeSuggestion}
-                  onPointerDown={(event) => {
-                    event.preventDefault();
-                    choose(location);
-                  }}
-                >
-                  {location.name}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <button className="primary-action" type="submit">
-          Submit answer
-        </button>
-      </form>
-      <p className="feedback" aria-live="assertive">
-        {feedback}
-      </p>
     </section>
   );
 }

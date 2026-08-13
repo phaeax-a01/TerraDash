@@ -39,6 +39,22 @@ function renderPlayer() {
 }
 
 describe('QuizPlayer integration', () => {
+  it('suppresses exact matches before Enter routing', async () => {
+    const container = renderPlayer();
+    await act(async () =>
+      (container.querySelector('button') as HTMLButtonElement).click(),
+    );
+    const input = container.querySelector(
+      '[role="combobox"]',
+    ) as HTMLInputElement;
+    await act(async () => {
+      input.value = 'alpha';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelectorAll('[role="option"]')).toHaveLength(0);
+  });
+
   it('starts with accessible combobox wiring and restores focus on a new question', () => {
     const container = renderPlayer();
     expect(container.querySelector('.active-player')).toBeNull();
@@ -139,6 +155,13 @@ describe('QuizPlayer integration', () => {
     expect(attempts.classList.contains('attempts-remaining-3')).toBe(true);
 
     for (const remaining of [2, 1]) {
+      await act(async () => {
+        const input = container.querySelector(
+          '[role="combobox"]',
+        ) as HTMLInputElement;
+        input.value = 'Br';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
       await act(async () =>
         [...container.querySelectorAll('[role="option"]')]
           .find((option) => option.textContent === 'Bravo')!
@@ -194,7 +217,7 @@ describe('QuizPlayer integration', () => {
       submit.click();
       submit.click();
     });
-    expect(container.textContent).toContain('2 attempts remaining');
+    expect(container.textContent).toContain('2 guesses remaining');
     expect(container.textContent).toContain('1 / 1');
     expect(
       container.querySelector('[data-map-id]')?.getAttribute('data-map-id'),
@@ -229,7 +252,7 @@ describe('QuizPlayer integration', () => {
     expect(input.getAttribute('aria-activedescendant')).toBeNull();
     expect(input.getAttribute('aria-expanded')).toBe('false');
     await act(async () => {
-      input.value = 'Bravo';
+      input.value = 'Br';
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     await act(async () =>
@@ -244,14 +267,14 @@ describe('QuizPlayer integration', () => {
     await act(async () =>
       (container.querySelector('form button') as HTMLButtonElement).click(),
     );
-    expect(container.textContent).toContain('2 attempts remaining');
+    expect(container.textContent).toContain('2 guesses remaining');
     expect(
       container.querySelector('[aria-live="assertive"]')?.textContent,
     ).toBe(
       'Choose a canonical location from the suggestions or enter its exact name.',
     );
     await act(async () => {
-      input.value = 'Alpha';
+      input.value = 'Al';
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     expect(container.querySelectorAll('[aria-live="assertive"]')).toHaveLength(
@@ -307,6 +330,13 @@ describe('QuizPlayer integration', () => {
       (container.querySelector('button') as HTMLButtonElement).click(),
     );
     for (let attempt = 0; attempt < 3; attempt += 1) {
+      await act(async () => {
+        const input = container.querySelector(
+          '[role="combobox"]',
+        ) as HTMLInputElement;
+        input.value = 'Br';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
       await act(async () =>
         [...container.querySelectorAll('[role="option"]')]
           .find((option) => option.textContent === 'Bravo')!
@@ -369,7 +399,7 @@ describe('QuizPlayer integration', () => {
     await act(async () =>
       (container.querySelector('button') as HTMLButtonElement).click(),
     );
-    expect(container.textContent).toContain('3 attempts remaining');
+    expect(container.textContent).toContain('3 guesses remaining');
     expect(container.textContent).toContain('1 / 2');
     expect(
       container.querySelector('[data-map-id]')?.getAttribute('data-map-id'),
