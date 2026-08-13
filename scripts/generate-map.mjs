@@ -1,0 +1,232 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+
+const WIDTH = 1440;
+const HEIGHT = 720;
+const sourcePath = 'data/source/ne_50m_admin_0_countries.geojson';
+const EXPECTED_SOURCE_SHA256 =
+  'd7e56812e94bdb374d95021940af98f6cace2cb96827f522e3a3561242406ccc';
+const SOURCE_URL =
+  'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/9380cca83db5f9aef52d5e762765100745f84b27/geojson/ne_50m_admin_0_countries.geojson';
+const sourceBytes = fs.readFileSync(sourcePath);
+const sourceSha256 = crypto
+  .createHash('sha256')
+  .update(sourceBytes)
+  .digest('hex');
+if (sourceSha256 !== EXPECTED_SOURCE_SHA256)
+  throw new Error(
+    `Natural Earth source checksum mismatch: expected ${EXPECTED_SOURCE_SHA256}, got ${sourceSha256}`,
+  );
+const source = JSON.parse(sourceBytes);
+const catalog = JSON.parse(fs.readFileSync('data/catalog.json'));
+const overrides = JSON.parse(fs.readFileSync('data/geometry-overrides.json'));
+
+function sqDistance(point, start, end) {
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  if (!dx && !dy)
+    return (point[0] - start[0]) ** 2 + (point[1] - start[1]) ** 2;
+  const t = Math.max(
+    0,
+    Math.min(
+      1,
+      ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) /
+        (dx * dx + dy * dy),
+    ),
+  );
+  return (
+    (point[0] - (start[0] + t * dx)) ** 2 +
+    (point[1] - (start[1] + t * dy)) ** 2
+  );
+}
+function simplify(points, tolerance = 0.12) {
+  if (points.length < 3) return points;
+  let max = tolerance ** 2;
+  let index = 0;
+  for (let i = 1; i < points.length - 1; i++) {
+    const d = sqDistance(points[i], points[0], points.at(-1));
+    if (d > max) {
+      index = i;
+      max = d;
+    }
+  }
+  if (!index) return [points[0], points.at(-1)];
+  return [
+    ...simplify(points.slice(0, index + 1), tolerance),
+    ...simplify(points.slice(index), tolerance).slice(1),
+  ];
+}
+function project([lon, lat]) {
+  return [
+    +(((lon + 180) / 360) * WIDTH).toFixed(2),
+    +(((90 - lat) / 180) * HEIGHT).toFixed(2),
+  ];
+}
+function ringPath(ring) {
+  const simplified = simplify(ring.map(project), 0.55);
+  return (
+    simplified.map(([x, y], i) => `${i ? 'L' : 'M'}${x},${y}`).join('') + 'Z'
+  );
+}
+function geometryPaths(geometry) {
+  const polygons =
+    geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  return polygons.flatMap((polygon) => polygon.map(ringPath));
+}
+function pathPoints(paths) {
+  return paths.flatMap((path) =>
+    [...path.matchAll(/[ML](-?[\d.]+),(-?[\d.]+)/g)].map(([, x, y]) => [
+      +x,
+      +y,
+    ]),
+  );
+}
+function bounds(points) {
+  const xs = points.map(([x]) => x);
+  const ys = points.map(([, y]) => y);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+function featureKey(feature) {
+  const p = feature.properties;
+  return [p.ISO_A3, p.ADM0_A3, p.SOV_A3, p.GU_A3].filter(
+    (value) => value && value !== '-99',
+  );
+}
+const features = source.features.map((feature) => {
+  const paths = geometryPaths(feature.geometry);
+  const points = pathPoints(paths);
+  const id = `ne:${feature.properties.NE_ID}`;
+  const anchor =
+    feature.properties.LABEL_X != null && feature.properties.LABEL_Y != null
+      ? project([feature.properties.LABEL_X, feature.properties.LABEL_Y])
+      : [bounds(points)[0], bounds(points)[1]];
+  return {
+    id,
+    keys: featureKey(feature),
+    paths,
+    anchor,
+    bounds: bounds(points),
+    parts: paths.map((path, index) => {
+      const partPoints = pathPoints([path]);
+      return {
+        id: `${id}:part:${index}`,
+        paths: [path],
+        anchor: [
+          +(
+            partPoints.reduce((sum, point) => sum + point[0], 0) /
+            partPoints.length
+          ).toFixed(2),
+          +(
+            partPoints.reduce((sum, point) => sum + point[1], 0) /
+            partPoints.length
+          ).toFixed(2),
+        ],
+        bounds: bounds(partPoints),
+      };
+    }),
+  };
+});
+const featuresByKey = new Map();
+for (const feature of features)
+  for (const key of new Set(feature.keys))
+    featuresByKey.set(key, [...(featuresByKey.get(key) ?? []), feature]);
+const locations = catalog.map((location) => {
+  const matches = featuresByKey.get(location.iso3) ?? [];
+  if (!matches.length)
+    throw new Error(
+      `No Natural Earth feature for ${location.iso3} (${location.name})`,
+    );
+  const geometryRefs =
+    overrides[location.id] ?? matches.map((feature) => feature.id);
+  const points = matches.flatMap((feature) => pathPoints(feature.paths));
+  const anchor = matches
+    .map((feature) => feature.anchor)
+    .reduce((sum, point) => [sum[0] + point[0], sum[1] + point[1]], [0, 0])
+    .map((value) => +(value / matches.length).toFixed(2));
+  return { ...location, geometryRefs, anchor, bounds: bounds(points) };
+});
+if (
+  locations.length !== 195 ||
+  new Set(locations.map((x) => x.iso3)).size !== 195
+)
+  throw new Error('Catalog must contain exactly 195 unique ISO3 locations');
+const map = {
+  width: WIDTH,
+  height: HEIGHT,
+  source: {
+    product: 'Natural Earth Admin 0 countries',
+    version: 'v5.1.1',
+    scale: '1:50m',
+    url: SOURCE_URL,
+    sha256: EXPECTED_SOURCE_SHA256,
+    license: 'Public domain',
+    disclaimer:
+      'Boundaries are shown for gameplay visualization and do not imply endorsement of any boundary claim.',
+  },
+  sourceFeatureIds: features.map((feature) => feature.id),
+  features: Object.fromEntries(
+    features.flatMap(({ id, paths, anchor, bounds, parts }) => [
+      [id, { paths, anchor, bounds }],
+      ...parts.map(
+        ({
+          id: partId,
+          paths: partPaths,
+          anchor: partAnchor,
+          bounds: partBounds,
+        }) => [
+          partId,
+          { paths: partPaths, anchor: partAnchor, bounds: partBounds },
+        ],
+      ),
+    ]),
+  ),
+};
+fs.mkdirSync('data/generated', { recursive: true });
+fs.writeFileSync(
+  'data/generated/map.json',
+  JSON.stringify(map, null, 2) + '\n',
+);
+fs.writeFileSync(
+  'data/generated/catalog.json',
+  JSON.stringify(locations, null, 2) + '\n',
+);
+fs.writeFileSync(
+  'data/generated/quiz.json',
+  JSON.stringify(
+    { id: 'world-195', locationIds: locations.map((x) => x.id) },
+    null,
+    2,
+  ) + '\n',
+);
+fs.writeFileSync(
+  'data/generated/manifest.json',
+  JSON.stringify(
+    {
+      sourceSha256: EXPECTED_SOURCE_SHA256,
+      sourceUrl: SOURCE_URL,
+      generatedAt: 'deterministic',
+      featureIds: Object.keys(map.features),
+      locations: Object.fromEntries(
+        locations.map((x) => [x.id, x.geometryRefs]),
+      ),
+    },
+    null,
+    2,
+  ) + '\n',
+);
+const prettier = process.platform === 'win32' ? 'prettier.cmd' : 'prettier';
+execFileSync(
+  prettier,
+  [
+    '--write',
+    'data/generated/catalog.json',
+    'data/generated/manifest.json',
+    'data/generated/map.json',
+    'data/generated/quiz.json',
+  ],
+  { stdio: 'ignore' },
+);
+console.log(
+  `Generated ${locations.length} locations and ${features.length} source features.`,
+);

@@ -1,0 +1,133 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #e8eef7;
+  background: #0b1220;
+  line-height: 1.5;
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 4rem);
+}
+header {
+  max-width: 720px;
+}
+.eyebrow {
+  color: #7dd3fc;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+h1 {
+  font-size: clamp(2.25rem, 6vw, 5rem);
+  line-height: 0.98;
+  margin: 0.5rem 0 1rem;
+}
+h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.intro {
+  color: #a9b8cc;
+  font-size: 1.1rem;
+}
+.demo-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 2rem 0 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #263650;
+  border-radius: 0.75rem;
+  background: #111c2e;
+}
+.demo-panel p {
+  margin: 0.25rem 0 0;
+  color: #a9b8cc;
+}
+label {
+  color: #a9b8cc;
+  font-size: 0.85rem;
+}
+select {
+  min-width: 12rem;
+  padding: 0.6rem 0.75rem;
+  color: #e8eef7;
+  background: #182942;
+  border: 1px solid #486384;
+  border-radius: 0.4rem;
+}
+.map-frame {
+  overflow: hidden;
+  border: 1px solid #263650;
+  border-radius: 0.75rem;
+  box-shadow: 0 1rem 4rem #0005;
+}
+.world-map {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ocean {
+  fill: #10233c;
+}
+.country path {
+  fill: #35506e;
+  stroke: #14263d;
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+.country.active path {
+  fill: #f59e0b;
+}
+.active-outline path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+.active-fill path {
+  fill: #f59e0b;
+}
+.minimum-footprint {
+  fill: #f59e0b55;
+  stroke: #fff;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 4 3;
+}
+.disclaimer {
+  color: #71839c;
+  font-size: 0.75rem;
+}
+:focus-visible {
+  outline: 3px solid #7dd3fc;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .active-outline {
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (max-width: 600px) {
+  .demo-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  select {
+    width: 100%;
+  }
+}
