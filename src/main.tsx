@@ -4,12 +4,12 @@ import map from '../data/generated/map.json';
 import catalog from '../data/generated/catalog.json';
 import {
   deriveCalloutModel,
+  deriveCalloutLayout,
   MAP_OVERLAP_REFERENCE_UNITS,
   MAP_SEAM_LONGITUDE,
   mapXForLongitude,
   wrappedOffsets,
   wrappedPathOffsets,
-  type Point,
 } from './footprint';
 import { QuizProvider } from './QuizContext';
 import { defaultCatalog, defaultQuiz } from './quizContracts';
@@ -33,21 +33,11 @@ export function MapView({ active }: { active: Location }) {
     undefined,
     seamX,
   );
-  const cutoutRadius = Math.min(
-    map.height / 2 - 24,
-    Math.max(64 / scale, (viewportWidth * 0.22) / scale),
-  );
-  const cutoutCenter: Point = callout
-    ? [
-        callout.sourceCenter[0] < map.width / 2
-          ? map.width - cutoutRadius - 24
-          : cutoutRadius + 24,
-        Math.min(
-          map.height - cutoutRadius - 24,
-          Math.max(cutoutRadius + 24, callout.sourceCenter[1]),
-        ),
-      ]
-    : [0, 0];
+  const cutoutLayout = callout
+    ? deriveCalloutLayout(callout, scale, map.width, map.height, viewportWidth)
+    : undefined;
+  const cutoutRadius = cutoutLayout?.radius ?? 0;
+  const cutoutCenter = cutoutLayout?.center ?? [0, 0];
   const zoom = 3;
   const wrappedPathCopies = (paths: string[]) =>
     paths.flatMap((path) =>

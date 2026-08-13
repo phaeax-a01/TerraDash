@@ -4,6 +4,7 @@ import catalog from '../data/generated/catalog.json';
 import map from '../data/generated/map.json';
 import {
   COMPONENT_CLUSTER_PROXIMITY_PX,
+  deriveCalloutLayout,
   deriveCalloutModel,
   deriveComponentFootprints,
   deriveFootprint,
@@ -85,6 +86,34 @@ describe('threshold and ring primitives', () => {
 });
 
 describe('callout selection and actual-boundary clustering', () => {
+  it('bounds the cutout to 280 CSS pixels and keeps it beside the source', () => {
+    const layout = deriveCalloutLayout(
+      { sourceCenter: [240, 180], sourceRadius: 8, selectedPathIndices: [0] },
+      1,
+      1440,
+      720,
+      1440,
+    );
+    expect(layout.radius).toBe(140);
+    expect(layout.center[0]).toBeGreaterThan(240);
+    expect(layout.center[0]).toBeLessThan(240 + 8 + 18 + 140 + 1);
+    expect(layout.center[1]).toBe(180);
+  });
+
+  it('flips and clamps the cutout when the preferred side has no room', () => {
+    const layout = deriveCalloutLayout(
+      { sourceCenter: [1410, 40], sourceRadius: 8, selectedPathIndices: [0] },
+      1,
+      1440,
+      720,
+      390,
+    );
+    expect(layout.radius).toBe(78);
+    expect(layout.center[0]).toBeLessThan(1410);
+    expect(layout.center[1]).toBeGreaterThanOrEqual(102);
+    expect(layout.center[1]).toBeLessThanOrEqual(618);
+  });
+
   it.each(['iso:ATG', 'iso:ARM'])('selects one callout for %s', (id) => {
     const model = deriveCalloutModel(
       pathsFor(id),

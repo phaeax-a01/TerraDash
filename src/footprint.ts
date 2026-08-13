@@ -18,10 +18,53 @@ export type CalloutModel = {
   sourceRadius: number;
   selectedPathIndices: number[];
 };
+export type CalloutLayout = {
+  center: Point;
+  radius: number;
+};
 export const MIN_FOOTPRINT_PX = 10;
 export const COMPONENT_CLUSTER_PROXIMITY_PX = 24;
 export const MAP_SEAM_LONGITUDE = -170;
 export const MAP_OVERLAP_REFERENCE_UNITS = 100;
+
+/** Return a bounded, source-adjacent callout layout in map/viewBox units. */
+export function deriveCalloutLayout(
+  callout: CalloutModel,
+  scale: number,
+  mapWidth: number,
+  mapHeight: number,
+  viewportWidth: number,
+): CalloutLayout {
+  // The map is intentionally wide, so its rendered height is much smaller on
+  // phones. Fit the callout to that height before converting CSS pixels back
+  // into viewBox units; otherwise a phone-width map clips the callout and its
+  // source/leader geometry appears to overlap.
+  const availableRadiusPx = (mapHeight * scale - 48) / 2;
+  const radiusPx = Math.min(
+    140,
+    Math.max(32, Math.min(viewportWidth * 0.2, availableRadiusPx)),
+  );
+  const radius = radiusPx / scale;
+  const margin = 24 / scale;
+  const gap = 18 / scale;
+  const sourceX = Math.max(0, Math.min(mapWidth, callout.sourceCenter[0]));
+  const sourceY = callout.sourceCenter[1];
+  const rightSide = sourceX <= mapWidth / 2;
+  const preferred =
+    sourceX + (rightSide ? 1 : -1) * (callout.sourceRadius + gap + radius);
+  const opposite =
+    sourceX + (rightSide ? -1 : 1) * (callout.sourceRadius + gap + radius);
+  const minX = radius + margin;
+  const maxX = mapWidth - radius - margin;
+  const preferredFits = preferred >= minX && preferred <= maxX;
+  const centerX = preferredFits
+    ? preferred
+    : Math.max(minX, Math.min(maxX, opposite));
+  const minY = radius + margin;
+  const maxY = mapHeight - radius - margin;
+  const centerY = Math.max(minY, Math.min(maxY, sourceY));
+  return { center: [centerX, centerY], radius };
+}
 export function pathPoints(paths: string[]): Point[] {
   return paths.flatMap((path) =>
     [...path.matchAll(/[ML](-?[\d.]+),(-?[\d.]+)/g)].map(([, x, y]) => [
