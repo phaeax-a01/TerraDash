@@ -13,6 +13,11 @@ type Component = {
   nativeRadius: number;
   boundary: Point[];
 };
+export type CalloutModel = {
+  sourceCenter: Point;
+  sourceRadius: number;
+  selectedPathIndices: number[];
+};
 export const MIN_FOOTPRINT_PX = 10;
 export const COMPONENT_CLUSTER_PROXIMITY_PX = 24;
 export const MAP_SEAM_LONGITUDE = -170;
@@ -75,9 +80,8 @@ export function deriveComponentFootprints(
   seamX = 0,
 ): Footprint[] {
   const components = deriveComponents(paths, scale, width, threshold, seamX);
-  return componentClusters(components, width * scale, proximity).flatMap(
-    (cluster) => clusterFootprint(cluster, threshold),
-  );
+  componentClusters(components, width * scale, proximity);
+  return components.map(({ footprint }) => footprint);
 }
 
 function deriveComponents(
@@ -140,91 +144,39 @@ function componentClusters(
   return [...clusterMap.values()];
 }
 
-function clusterFootprint(
-  cluster: Component[],
-  threshold: number,
-): Footprint[] {
-  if (cluster.some(({ footprint }) => footprint.kind === 'polygon'))
-    return cluster
-      .filter(({ footprint }) => footprint.kind === 'polygon')
-      .map(({ footprint }) => footprint);
-  const factor = clusterScale(cluster, threshold);
-  const points = cluster.flatMap(({ boundary, footprint }) =>
-    boundary.map(([x, y]) => {
-      const [centerX, centerY] = footprint.center;
-      return [
-        centerX + (x - centerX) * factor,
-        centerY + (y - centerY) * factor,
-      ] as Point;
-    }),
-  );
-  const minX = Math.min(...points.map(([x]) => x));
-  const maxX = Math.max(...points.map(([x]) => x));
-  const minY = Math.min(...points.map(([, y]) => y));
-  const maxY = Math.max(...points.map(([, y]) => y));
-  const center: Point = [(minX + maxX) / 2, (minY + maxY) / 2];
-  return [
-    {
-      kind: 'circle',
-      center,
-      radius: Math.max(
-        threshold / 2,
-        ...points.map(([x, y]) => Math.hypot(x - center[0], y - center[1])),
-      ),
-    },
-  ];
-}
-
-function clusterScale(cluster: Component[], threshold: number) {
-  const largestRadius = Math.max(
-    ...cluster.map(({ nativeRadius }) => nativeRadius),
-  );
-  return largestRadius ? Math.max(1, threshold / (largestRadius * 2)) : 1;
-}
-
-export function scaledComponentPaths(
+export function deriveCalloutModel(
   paths: string[],
   scale: number,
   width: number,
   threshold = MIN_FOOTPRINT_PX,
   proximity = COMPONENT_CLUSTER_PROXIMITY_PX,
   seamX = 0,
-): string[] {
+): CalloutModel | undefined {
   const components = deriveComponents(paths, scale, width, threshold, seamX);
-  const transforms = new Map<
-    string,
-    { points: Point[]; center: Point; factor: number }
-  >();
-  componentClusters(components, width * scale, proximity).forEach((cluster) => {
-    const factor = cluster.some(({ footprint }) => footprint.kind === 'polygon')
-      ? 1
-      : clusterScale(cluster, threshold);
-    cluster.forEach((component) => {
-      transforms.set(`${component.pathIndex}:${component.ringIndex}`, {
-        points: component.points,
-        center: [
-          component.footprint.center[0] / scale + seamX,
-          component.footprint.center[1] / scale,
-        ],
-        factor,
-      });
-    });
-  });
-  return paths.map((path, pathIndex) => {
-    let ringIndex = 0;
-    return path.replace(/M-?[\d.]+,-?[\d.]+[^M]*/g, (ring) => {
-      const transform = transforms.get(`${pathIndex}:${ringIndex++}`);
-      if (!transform || transform.factor === 1) return ring;
-      let pointIndex = 0;
-      return ring.replace(/[ML](-?[\d.]+),(-?[\d.]+)/g, (command) => {
-        const [x, y] = transform.points[pointIndex++];
-        const [centerX, centerY] = transform.center;
-        const nextX = centerX + (x - centerX) * transform.factor;
-        const nextY = centerY + (y - centerY) * transform.factor;
-        return `${command[0]}${nextX},${nextY}`;
-      });
-    });
-  });
+  if (
+    !components.length ||
+    components.some(({ footprint }) => footprint.kind === 'polygon')
+  )
+    return undefined;
+  const clusters = componentClusters(components, width * scale, proximity);
+  const anchor = components.reduce((largest, component) =>
+    component.nativeRadius > largest.nativeRadius ? component : largest,
+  );
+  const cluster = clusters.find((members) => members.includes(anchor));
+  if (!cluster) return undefined;
+  const points = cluster.flatMap(({ boundary }) => boundary);
+  const minX = Math.min(...points.map(([x]) => x));
+  const maxX = Math.max(...points.map(([x]) => x));
+  const minY = Math.min(...points.map(([, y]) => y));
+  const maxY = Math.max(...points.map(([, y]) => y));
+  const center: Point = [(minX + maxX) / 2, (minY + maxY) / 2];
+  return {
+    sourceCenter: [center[0] / scale + seamX, center[1] / scale],
+    sourceRadius: Math.max(maxX - minX, maxY - minY) / (2 * scale) + 6,
+    selectedPathIndices: [
+      ...new Set(cluster.map(({ pathIndex }) => pathIndex)),
+    ],
+  };
 }
 
 function componentGap(left: Component, right: Component, worldWidth: number) {
