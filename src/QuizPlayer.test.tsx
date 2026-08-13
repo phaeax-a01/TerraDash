@@ -39,6 +39,32 @@ function renderPlayer() {
 }
 
 describe('QuizPlayer integration', () => {
+  it('shows correct answers over total and increments only after a correct completion', async () => {
+    const container = renderPlayer();
+    await act(async () =>
+      (container.querySelector('button') as HTMLButtonElement).click(),
+    );
+    const progress = () => container.querySelector('.progress')?.textContent;
+    expect(progress()).toBe('0 / 2');
+    const currentId = container
+      .querySelector('[data-map-id]')
+      ?.getAttribute('data-map-id');
+    const answer = catalog.find((location) => location.id === currentId)!.name;
+    const input = container.querySelector(
+      '[role="combobox"]',
+    ) as HTMLInputElement;
+    await act(async () => {
+      input.value = answer;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+      );
+    });
+    expect(progress()).toBe('1 / 2');
+  });
+
   it('suppresses exact matches before Enter routing', async () => {
     const container = renderPlayer();
     await act(async () =>
@@ -109,7 +135,7 @@ describe('QuizPlayer integration', () => {
         new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
       ),
     );
-    expect(container.textContent).toContain('2 / 2');
+    expect(container.textContent).toContain('1 / 2');
     expect(
       container.querySelector('[aria-live="assertive"]')?.textContent,
     ).toBe('');
@@ -218,7 +244,7 @@ describe('QuizPlayer integration', () => {
       submit.click();
     });
     expect(container.textContent).toContain('2 guesses remaining');
-    expect(container.textContent).toContain('1 / 1');
+    expect(container.textContent).toContain('0 / 1');
     expect(
       container.querySelector('[data-map-id]')?.getAttribute('data-map-id'),
     ).toBe('iso:AAA');
@@ -302,7 +328,7 @@ describe('QuizPlayer integration', () => {
     await act(async () =>
       (container.querySelector('button') as HTMLButtonElement).click(),
     );
-    expect(container.textContent).toContain('1 / 1');
+    expect(container.textContent).toContain('0 / 1');
     expect(container.textContent).toContain('0:00');
   });
 
@@ -400,7 +426,7 @@ describe('QuizPlayer integration', () => {
       (container.querySelector('button') as HTMLButtonElement).click(),
     );
     expect(container.textContent).toContain('3 guesses remaining');
-    expect(container.textContent).toContain('1 / 2');
+    expect(container.textContent).toContain('0 / 2');
     expect(
       container.querySelector('[data-map-id]')?.getAttribute('data-map-id'),
     ).toBe(firstRunOrder[1]);

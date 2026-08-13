@@ -60,6 +60,9 @@ export function QuizPlayer({
   const currentId =
     state.phase === 'active' ? state.order[state.currentIndex] : undefined;
   const currentLocation = catalog.find((location) => location.id === currentId);
+  const correctCount = Object.values(state.outcomes).filter(
+    (outcome) => outcome.status === 'correct',
+  ).length;
   const attemptsRemaining = 3 - state.attempts;
   const attemptStateClass = `attempts-remaining-${attemptsRemaining}`;
 
@@ -273,9 +276,9 @@ export function QuizPlayer({
         </div>
         <p
           className="progress"
-          aria-label={`Progress ${state.currentIndex + 1} of ${state.order.length}`}
+          aria-label={`Correct answers ${correctCount} of ${state.order.length}`}
         >
-          {state.currentIndex + 1} / {state.order.length}
+          {correctCount} / {state.order.length}
         </p>
       </div>
       {currentLocation && (
