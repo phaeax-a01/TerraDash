@@ -4,6 +4,7 @@ import catalog from '../data/generated/catalog.json';
 import map from '../data/generated/map.json';
 import {
   COMPONENT_CLUSTER_PROXIMITY_PX,
+  calloutLeaderLines,
   deriveCalloutLayout,
   deriveCalloutModel,
   deriveComponentFootprints,
@@ -86,6 +87,15 @@ describe('threshold and ring primitives', () => {
 });
 
 describe('callout selection and actual-boundary clustering', () => {
+  it('keeps both leader endpoints on their circle boundaries', () => {
+    const lines = calloutLeaderLines([10, 20], 8, [80, 20], 30);
+    expect(lines).toHaveLength(2);
+    for (const line of lines) {
+      expect(Math.hypot(line.x1 - 10, line.y1 - 20)).toBeCloseTo(8);
+      expect(Math.hypot(line.x2 - 80, line.y2 - 20)).toBeCloseTo(30);
+    }
+  });
+
   it('bounds the cutout to 200 CSS pixels and keeps it beside the source', () => {
     const layout = deriveCalloutLayout(
       { sourceCenter: [240, 180], sourceRadius: 8, selectedPathIndices: [0] },

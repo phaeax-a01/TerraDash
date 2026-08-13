@@ -5,6 +5,7 @@ import catalog from '../data/generated/catalog.json';
 import {
   deriveCalloutModel,
   deriveCalloutLayout,
+  calloutLeaderLines,
   MAP_OVERLAP_REFERENCE_UNITS,
   MAP_SEAM_LONGITUDE,
   mapXForLongitude,
@@ -42,12 +43,27 @@ export function MapView({ active }: { active: Location }) {
         MAP_OVERLAP_REFERENCE_UNITS,
       )
     : [];
+  const sourceOffset =
+    callout && sourceOffsets.length
+      ? sourceOffsets.reduce(
+          (best, offset) =>
+            Math.abs(callout.sourceCenter[0] + offset - map.width / 2) <
+            Math.abs(callout.sourceCenter[0] + best - map.width / 2)
+              ? offset
+              : best,
+          sourceOffsets[0],
+        )
+      : 0;
   const displayedCallout = callout
     ? {
         ...callout,
         sourceCenter: [
-          callout.sourceCenter[0] + (sourceOffsets[0] ?? 0),
+          callout.sourceCenter[0] + sourceOffset,
           callout.sourceCenter[1],
+        ] as [number, number],
+        focusCenter: [
+          (callout.focusCenter ?? callout.sourceCenter)[0] + sourceOffset,
+          (callout.focusCenter ?? callout.sourceCenter)[1],
         ] as [number, number],
       }
     : undefined;
@@ -62,7 +78,16 @@ export function MapView({ active }: { active: Location }) {
     : undefined;
   const cutoutRadius = cutoutLayout?.radius ?? 0;
   const cutoutCenter = cutoutLayout?.center ?? [0, 0];
-  const zoom = 3;
+  const leaderLines = displayedCallout
+    ? calloutLeaderLines(
+        displayedCallout.sourceCenter,
+        displayedCallout.sourceRadius,
+        cutoutCenter,
+        cutoutRadius,
+      )
+    : [];
+  const zoom = 5;
+  const selectedZoom = 4;
   const wrappedPathCopies = (paths: string[]) =>
     paths.flatMap((path) =>
       wrappedPathOffsets(
@@ -152,7 +177,9 @@ export function MapView({ active }: { active: Location }) {
       {callout && displayedCallout && (
         <g className="map-callout" aria-hidden="true">
           <defs>
-            <clipPath id="map-callout-clip">
+            <clipPath
+              id={`map-callout-clip-${active.id.replace(/[^a-z0-9]/gi, '-')}`}
+            >
               <circle
                 cx={cutoutCenter[0]}
                 cy={cutoutCenter[1]}
@@ -162,8 +189,8 @@ export function MapView({ active }: { active: Location }) {
           </defs>
           <g
             className="callout-context"
-            clipPath="url(#map-callout-clip)"
-            transform={`translate(${cutoutCenter[0]} ${cutoutCenter[1]}) scale(${zoom}) translate(${-displayedCallout.sourceCenter[0]} ${-displayedCallout.sourceCenter[1]})`}
+            clipPath={`url(#map-callout-clip-${active.id.replace(/[^a-z0-9]/gi, '-')})`}
+            transform={`translate(${cutoutCenter[0]} ${cutoutCenter[1]}) scale(${zoom}) translate(${-displayedCallout.focusCenter[0]} ${-displayedCallout.focusCenter[1]})`}
           >
             {map.sourceFeatureIds.map((id) => {
               const feature = map.features[id as keyof typeof map.features];
@@ -181,7 +208,10 @@ export function MapView({ active }: { active: Location }) {
                 </g>
               );
             })}
-            <g className="callout-selected">
+            <g
+              className="callout-selected"
+              transform={`translate(${displayedCallout.focusCenter[0]} ${displayedCallout.focusCenter[1]}) scale(${selectedZoom}) translate(${-displayedCallout.focusCenter[0]} ${-displayedCallout.focusCenter[1]})`}
+            >
               {callout.selectedPathIndices.flatMap((pathIndex) =>
                 wrappedPathCopies([highlightedPaths[pathIndex]]).map(
                   ({ path, transform }, index) => (
@@ -201,29 +231,15 @@ export function MapView({ active }: { active: Location }) {
             cy={cutoutCenter[1]}
             r={cutoutRadius}
           />
-          {sourceOffsets.map((offset) => (
-            <circle
-              key={offset}
-              className="callout-source"
-              cx={callout.sourceCenter[0] + offset}
-              cy={callout.sourceCenter[1]}
-              r={callout.sourceRadius}
-            />
+          <circle
+            className="callout-source"
+            cx={displayedCallout.sourceCenter[0]}
+            cy={displayedCallout.sourceCenter[1]}
+            r={displayedCallout.sourceRadius}
+          />
+          {leaderLines.map((line, index) => (
+            <line key={index} className="callout-leader" {...line} />
           ))}
-          <line
-            className="callout-leader"
-            x1={displayedCallout.sourceCenter[0]}
-            y1={displayedCallout.sourceCenter[1] - callout.sourceRadius * 0.4}
-            x2={cutoutCenter[0]}
-            y2={cutoutCenter[1] - cutoutRadius * 0.72}
-          />
-          <line
-            className="callout-leader"
-            x1={displayedCallout.sourceCenter[0]}
-            y1={displayedCallout.sourceCenter[1] + callout.sourceRadius * 0.4}
-            x2={cutoutCenter[0]}
-            y2={cutoutCenter[1] + cutoutRadius * 0.72}
-          />
         </g>
       )}
     </svg>

@@ -15,6 +15,7 @@ type Component = {
 };
 export type CalloutModel = {
   sourceCenter: Point;
+  focusCenter?: Point;
   sourceRadius: number;
   selectedPathIndices: number[];
 };
@@ -39,7 +40,7 @@ export function deriveCalloutLayout(
   // phones. Fit the callout to that height before converting CSS pixels back
   // into viewBox units; otherwise a phone-width map clips the callout and its
   // source/leader geometry appears to overlap.
-  const availableRadiusPx = (mapHeight * scale - 48) / 2;
+  const availableRadiusPx = Math.max(24, (mapHeight * scale - 48) / 2);
   const radiusPx = Math.min(
     100,
     Math.max(32, Math.min(viewportWidth * 0.14, availableRadiusPx)),
@@ -47,7 +48,10 @@ export function deriveCalloutLayout(
   const radius = radiusPx / scale;
   const margin = 24 / scale;
   const gap = 18 / scale;
-  const sourceX = Math.max(0, Math.min(mapWidth, callout.sourceCenter[0]));
+  const sourceX = Math.max(
+    callout.sourceRadius,
+    Math.min(mapWidth - callout.sourceRadius, callout.sourceCenter[0]),
+  );
   const sourceY = callout.sourceCenter[1];
   const rightSide = sourceX <= mapWidth / 2;
   const preferred =
@@ -213,13 +217,53 @@ export function deriveCalloutModel(
   const minY = Math.min(...points.map(([, y]) => y));
   const maxY = Math.max(...points.map(([, y]) => y));
   const center: Point = [(minX + maxX) / 2, (minY + maxY) / 2];
+  const anchorCenter = anchor.footprint.center;
+  const minimumRadius = threshold / 2;
   return {
     sourceCenter: [center[0] / scale + seamX, center[1] / scale],
-    sourceRadius: Math.max(maxX - minX, maxY - minY) / (2 * scale) + 6,
+    focusCenter: [anchorCenter[0] / scale + seamX, anchorCenter[1] / scale],
+    sourceRadius:
+      (Math.max(maxX - minX, maxY - minY) / 2 + minimumRadius + 8) / scale,
     selectedPathIndices: [
       ...new Set(cluster.map(({ pathIndex }) => pathIndex)),
     ],
   };
+}
+
+/**
+ * Return two common external tangents. Their endpoints lie on the source and
+ * cutout circles, so the leader strokes cannot enter either circle's interior.
+ */
+export function calloutLeaderLines(
+  source: Point,
+  sourceRadius: number,
+  cutout: Point,
+  cutoutRadius: number,
+) {
+  const dx = cutout[0] - source[0];
+  const dy = cutout[1] - source[1];
+  const distance = Math.hypot(dx, dy);
+  if (distance <= Math.abs(cutoutRadius - sourceRadius)) return [];
+  const direction: Point = [dx / distance, dy / distance];
+  const perpendicular: Point = [-direction[1], direction[0]];
+  const tangent = Math.max(
+    -1,
+    Math.min(1, (sourceRadius - cutoutRadius) / distance),
+  );
+  const along = tangent;
+  const across = Math.sqrt(Math.max(0, 1 - tangent * tangent));
+  return [1, -1].map((sign) => {
+    const normal: Point = [
+      direction[0] * along + perpendicular[0] * across * sign,
+      direction[1] * along + perpendicular[1] * across * sign,
+    ];
+    return {
+      x1: source[0] + normal[0] * sourceRadius,
+      y1: source[1] + normal[1] * sourceRadius,
+      x2: cutout[0] + normal[0] * cutoutRadius,
+      y2: cutout[1] + normal[1] * cutoutRadius,
+    };
+  });
 }
 
 function componentGap(left: Component, right: Component, worldWidth: number) {
