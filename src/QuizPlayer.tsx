@@ -34,11 +34,11 @@ export function QuizPlayer({
   const [text, setText] = useState('');
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [activeSuggestion, setActiveSuggestion] = useState(0);
-  const [suggestionsOpen, setSuggestionsOpen] = useState(true);
   const [feedback, setFeedback] = useState('');
   const [feedbackTone, setFeedbackTone] = useState<'correct' | 'missed' | ''>(
     '',
   );
+  const feedbackTimer = useRef<number | undefined>(undefined);
   const [panelPlacement, setPanelPlacement] = useState<PanelPlacement>({
     left: 16,
     top: 16,
@@ -62,13 +62,8 @@ export function QuizPlayer({
     () => suggestionsFor(catalog, text),
     [catalog, text],
   );
-  const exactMatch =
-    text.trim().length > 0 &&
-    catalog.some(
-      (location) =>
-        location.name.trim().toLowerCase() === text.trim().toLowerCase(),
-    );
-  const visibleSuggestions = suggestionsOpen && !exactMatch ? suggestions : [];
+  const hasQuery = text.trim().length > 0;
+  const visibleSuggestions = hasQuery ? suggestions : [];
   const currentId =
     state.phase === 'active' ? state.order[state.currentIndex] : undefined;
   const currentLocation = catalog.find((location) => location.id === currentId);
@@ -93,13 +88,26 @@ export function QuizPlayer({
   useEffect(() => {
     if (state.lastEvent === previousEvent.current) return;
     previousEvent.current = state.lastEvent;
+    if (
+      state.lastEvent.type !== 'accepted' &&
+      state.lastEvent.type !== 'completed' &&
+      state.lastEvent.type !== 'rejected'
+    )
+      return;
+    if (feedbackTimer.current !== undefined) {
+      window.clearTimeout(feedbackTimer.current);
+      feedbackTimer.current = undefined;
+    }
     if (state.lastEvent.type === 'rejected') {
       setFeedback(
         state.lastEvent.reason === 'invalid-answer'
           ? 'Choose a canonical location from the suggestions or enter its exact name.'
           : 'That action is not available right now.',
       );
-    } else if (state.lastEvent.type === 'accepted') {
+    } else if (
+      state.lastEvent.type === 'accepted' ||
+      state.lastEvent.type === 'completed'
+    ) {
       const tone =
         state.lastEvent.result === 'correct'
           ? 'correct'
@@ -114,13 +122,23 @@ export function QuizPlayer({
             ? 'Three attempts used. The answer is not revealed.'
             : 'Incorrect. Try again; the answer is not revealed.',
       );
-      const timer = window.setTimeout(() => {
+      if (feedbackTimer.current !== undefined)
+        window.clearTimeout(feedbackTimer.current);
+      feedbackTimer.current = window.setTimeout(() => {
         setFeedback('');
         setFeedbackTone('');
-      }, 1200);
-      return () => window.clearTimeout(timer);
+        feedbackTimer.current = undefined;
+      }, 3000);
     }
   }, [state.lastEvent]);
+
+  useEffect(
+    () => () => {
+      if (feedbackTimer.current !== undefined)
+        window.clearTimeout(feedbackTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (state.phase === 'active') {
@@ -128,7 +146,6 @@ export function QuizPlayer({
       setText('');
       setSelectedId(undefined);
       setActiveSuggestion(0);
-      setSuggestionsOpen(true);
       answerRef.current?.focus();
     }
   }, [state.currentIndex, state.phase]);
@@ -158,7 +175,6 @@ export function QuizPlayer({
     setText(location.name);
     setSelectedId(location.id);
     setActiveSuggestion(0);
-    setSuggestionsOpen(true);
     answerRef.current?.focus();
   }
 
@@ -184,7 +200,6 @@ export function QuizPlayer({
       setText('');
       setSelectedId(undefined);
       setActiveSuggestion(0);
-      setSuggestionsOpen(false);
     }
   }
 
@@ -236,7 +251,7 @@ export function QuizPlayer({
 
   if (state.phase === 'idle') {
     return (
-      <section className="player-card" aria-labelledby="start-title">
+      <section className="player-card home-page" aria-labelledby="start-title">
         <p className="eyebrow">TERRADASH · QUIZ</p>
         <h1 id="start-title">Name every place on the map.</h1>
         <p>
@@ -256,7 +271,17 @@ export function QuizPlayer({
     return (
       <section className="player-card" aria-labelledby="results-title">
         <p className="eyebrow">TERRADASH · RESULTS</p>
-        <h1 id="results-title">Run complete</h1>
+        <div className="quiz-header completion-header">
+          <div className="quiz-prompt">
+            <h1 id="results-title">Run complete</h1>
+            <p
+              className={`quiz-feedback ${feedbackTone ? `feedback-${feedbackTone}` : ''}`}
+              aria-live="assertive"
+            >
+              {feedback}
+            </p>
+          </div>
+        </div>
         <dl className="results-grid">
           <div>
             <dt>Time</dt>
@@ -302,6 +327,12 @@ export function QuizPlayer({
           <span className={`attempts-remaining-label ${attemptStateClass}`}>
             {attemptsRemaining} guesses remaining
           </span>
+          <p
+            className={`quiz-feedback ${feedbackTone ? `feedback-${feedbackTone}` : ''}`}
+            aria-live="assertive"
+          >
+            {feedback}
+          </p>
         </div>
         <div className="quiz-status quiz-status-bar" aria-live="polite">
           <span
@@ -324,17 +355,9 @@ export function QuizPlayer({
           </div>
           <div
             ref={panelRef}
-            className={`answer-panel ${feedbackTone ? `feedback-${feedbackTone}` : ''}`}
+            className="answer-panel"
             style={{ left: panelPlacement.left, top: panelPlacement.top }}
           >
-            {feedbackTone && (
-              <div
-                className={`answer-result answer-result-${feedbackTone}`}
-                aria-hidden="true"
-              >
-                {feedbackTone === 'correct' ? '✓' : '×'}
-              </div>
-            )}
             <button
               className="panel-move-handle"
               type="button"
@@ -361,7 +384,14 @@ export function QuizPlayer({
                 dragRef.current = undefined;
               }}
             >
-              <span aria-hidden="true">MOVE</span>
+              <svg
+                aria-hidden="true"
+                className="panel-move-icon"
+                viewBox="0 0 24 24"
+                focusable="false"
+              >
+                <path d="M12 3 9 6h2v5H6V9l-3 3 3 3v-2h5v5H9l3 3 3-3h-2v-5h5v2l3-3-3-3v2h-5V6h2l-3-3Z" />
+              </svg>
             </button>
             <form
               onSubmit={(event) => {
@@ -383,7 +413,7 @@ export function QuizPlayer({
                     autoComplete="off"
                     aria-autocomplete="list"
                     aria-controls="answer-options"
-                    aria-expanded={visibleSuggestions.length > 0}
+                    aria-expanded={hasQuery}
                     aria-activedescendant={
                       visibleSuggestions[activeSuggestion]
                         ? `answer-option-${visibleSuggestions[activeSuggestion].id}`
@@ -393,30 +423,35 @@ export function QuizPlayer({
                       setText((event.target as HTMLInputElement).value);
                       setSelectedId(undefined);
                       setActiveSuggestion(0);
-                      setSuggestionsOpen(true);
                     }}
                     onKeyDown={onKeyDown}
                   />
-                  {visibleSuggestions.length > 0 && (
+                  {hasQuery && (
                     <ul
                       id="answer-options"
                       role="listbox"
                       className="suggestions"
                     >
-                      {visibleSuggestions.map((location, index) => (
-                        <li
-                          id={`answer-option-${location.id}`}
-                          key={location.id}
-                          role="option"
-                          aria-selected={index === activeSuggestion}
-                          onPointerDown={(event) => {
-                            event.preventDefault();
-                            choose(location);
-                          }}
-                        >
-                          {location.name}
+                      {visibleSuggestions.length === 0 ? (
+                        <li className="no-matches" role="status">
+                          No matches
                         </li>
-                      ))}
+                      ) : (
+                        visibleSuggestions.map((location, index) => (
+                          <li
+                            id={`answer-option-${location.id}`}
+                            key={location.id}
+                            role="option"
+                            aria-selected={index === activeSuggestion}
+                            onPointerDown={(event) => {
+                              event.preventDefault();
+                              choose(location);
+                            }}
+                          >
+                            {location.name}
+                          </li>
+                        ))
+                      )}
                     </ul>
                   )}
                 </div>
@@ -430,12 +465,6 @@ export function QuizPlayer({
                 </button>
               </div>
             </form>
-            <p
-              className={`feedback ${feedbackTone ? `feedback-${feedbackTone}` : ''}`}
-              aria-live="assertive"
-            >
-              {feedback}
-            </p>
           </div>
         </div>
       )}

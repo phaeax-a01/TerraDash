@@ -96,7 +96,7 @@ export function MapView({ active }: { active: Location }) {
     size: insetSize,
   };
   const insetStrokeWidth = Math.max(1.2, insetSize * 0.04);
-  const insetSelectedPointRadius = Math.min(2.5, insetSize * 0.08);
+  const insetSelectedPointRadius = Math.min(1.25, insetSize * 0.025);
   const leaderLines = displayedCallout
     ? calloutLeaderLines(
         displayedCallout.sourceCenter,
@@ -287,6 +287,16 @@ export function MapView({ active }: { active: Location }) {
     </svg>
   );
 }
+
+export function AppFooter() {
+  return (
+    <footer className="app-footer">
+      <span>TerraDash</span>
+      <span>Geography in motion.</span>
+    </footer>
+  );
+}
+
 function App() {
   return (
     <QuizProvider quiz={defaultQuiz} catalog={defaultCatalog}>
@@ -315,6 +325,7 @@ function App() {
           domain. Boundaries are shown for gameplay visualization and do not
           imply endorsement of any boundary claim.
         </p>
+        <AppFooter />
       </main>
     </QuizProvider>
   );

@@ -58,16 +58,39 @@ describe('QuizPlayer integration', () => {
       input.value = answer;
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await act(async () => {
+    await act(async () =>
       input.dispatchEvent(
         new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
-      );
-    });
+      ),
+    );
+    await act(async () =>
+      (container.querySelector('form button') as HTMLButtonElement).click(),
+    );
     expect(progress()).toBe('1 / 1 countries correct');
     expect(container.textContent).toContain('1 country remaining');
   });
 
-  it('suppresses exact matches before Enter routing', async () => {
+  it('keeps the dropdown closed for an empty value and visible for exact matches', async () => {
+    const container = renderPlayer();
+    await act(async () =>
+      (container.querySelector('button') as HTMLButtonElement).click(),
+    );
+    const input = container.querySelector(
+      '[role="combobox"]',
+    ) as HTMLInputElement;
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelectorAll('[role="option"]')).toHaveLength(0);
+    await act(async () => {
+      input.value = 'alpha';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+    expect(container.querySelector('[role="option"]')?.textContent).toBe(
+      'Alpha',
+    );
+  });
+
+  it('keeps a no-match dropdown visible without making its message selectable', async () => {
     const container = renderPlayer();
     await act(async () =>
       (container.querySelector('button') as HTMLButtonElement).click(),
@@ -76,11 +99,145 @@ describe('QuizPlayer integration', () => {
       '[role="combobox"]',
     ) as HTMLInputElement;
     await act(async () => {
-      input.value = 'alpha';
+      input.value = 'not-a-location';
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+    expect(container.querySelector('[role="status"]')?.textContent).toBe(
+      'No matches',
+    );
     expect(container.querySelectorAll('[role="option"]')).toHaveLength(0);
+    await act(async () =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+      ),
+    );
+    expect(container.textContent).toContain('canonical location');
+    expect(container.textContent).toContain('3 guesses remaining');
+    expect(container.querySelectorAll('[role="option"]')).toHaveLength(0);
+  });
+
+  it('keeps result feedback in the subheader for three seconds without panel graphics', async () => {
+    vi.useFakeTimers();
+    const container = renderPlayer();
+    await act(async () =>
+      (container.querySelector('button') as HTMLButtonElement).click(),
+    );
+    const currentId = container
+      .querySelector('[data-map-id]')
+      ?.getAttribute('data-map-id');
+    const answer = catalog.find((location) => location.id === currentId)!.name;
+    const input = container.querySelector(
+      '[role="combobox"]',
+    ) as HTMLInputElement;
+    await act(async () => {
+      input.value = answer;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      (container.querySelector('form button') as HTMLButtonElement).click(),
+    );
+    expect(container.querySelector('.quiz-feedback')?.textContent).toBe(
+      'Correct. Next location.',
+    );
+    expect(container.querySelector('.answer-panel .feedback')).toBeNull();
+    expect(container.querySelector('.answer-result')).toBeNull();
+    await act(async () => Promise.resolve());
+    await act(async () => vi.advanceTimersByTime(2999));
+    expect(container.querySelector('.quiz-feedback')?.textContent).toBe(
+      'Correct. Next location.',
+    );
+    await act(async () => vi.runOnlyPendingTimers());
+    expect(container.querySelector('.quiz-feedback')?.textContent).toBe('');
+  });
+
+  it('keeps final-incorrect feedback through the next question and restarts on a newer result', async () => {
+    vi.useFakeTimers();
+    const container = renderPlayer();
+    await act(async () =>
+      (container.querySelector('button') as HTMLButtonElement).click(),
+    );
+    const currentId = container
+      .querySelector('[data-map-id]')
+      ?.getAttribute('data-map-id');
+    const wrongAnswer = currentId === 'iso:AAA' ? 'Bravo' : 'Alpha';
+    const input = container.querySelector(
+      '[role="combobox"]',
+    ) as HTMLInputElement;
+    const submit = () =>
+      (container.querySelector('form button') as HTMLButtonElement).click();
+    await act(async () => {
+      input.value = wrongAnswer;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => submit());
+    await act(async () => submit());
+    await act(async () => submit());
+    expect(container.querySelector('.quiz-feedback')?.textContent).toBe(
+      'Three attempts used. The answer is not revealed.',
+    );
+    expect(
+      container.querySelector('[data-map-id]')?.getAttribute('data-map-id'),
+    ).toBe(currentId === 'iso:AAA' ? 'iso:BBB' : 'iso:AAA');
+    await act(async () => vi.advanceTimersByTime(2999));
+    expect(container.querySelector('.quiz-feedback')?.textContent).toContain(
+      'Three attempts used',
+    );
+    const nextId = currentId === 'iso:AAA' ? 'iso:BBB' : 'iso:AAA';
+    const nextAnswer = catalog.find((location) => location.id === nextId)!.name;
+    await act(async () => {
+      input.value = nextAnswer;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => submit());
+    expect(container.querySelector('.quiz-feedback')?.textContent).toBe(
+      'Correct. Next location.',
+    );
+    await act(async () => vi.advanceTimersByTime(2999));
+    expect(container.querySelector('.quiz-feedback')?.textContent).toContain(
+      'Correct',
+    );
+    await act(async () => vi.runOnlyPendingTimers());
+    expect(container.querySelector('.quiz-feedback')?.textContent).toBe('');
+  });
+
+  it('keeps final feedback visible on the completed last-question card', async () => {
+    vi.useFakeTimers();
+    const oneLocationQuiz = { id: 'single', locationIds: ['iso:AAA'] };
+    const container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    act(() => {
+      root!.render(
+        <QuizProvider quiz={oneLocationQuiz} catalog={catalog} rng={() => 0}>
+          <QuizPlayer
+            catalog={catalog}
+            renderMap={(location) => <div data-map-id={location.id} />}
+          />
+        </QuizProvider>,
+      );
+    });
+    await act(async () =>
+      (container.querySelector('button') as HTMLButtonElement).click(),
+    );
+    const input = container.querySelector(
+      '[role="combobox"]',
+    ) as HTMLInputElement;
+    await act(async () => {
+      input.value = 'Alpha';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      (container.querySelector('form button') as HTMLButtonElement).click(),
+    );
+    expect(
+      container.querySelector('.completion-header .quiz-feedback')?.textContent,
+    ).toBe('Correct. Next location.');
+    expect(container.querySelector('.answer-panel')).toBeNull();
+    await act(async () => vi.runOnlyPendingTimers());
+    expect(
+      container.querySelector('.completion-header .quiz-feedback')?.textContent,
+    ).toBe('');
   });
 
   it('starts with accessible combobox wiring and restores focus on a new question', () => {
@@ -95,8 +252,13 @@ describe('QuizPlayer integration', () => {
     expect(
       container.querySelector('[aria-label="Move answer form"]'),
     ).toBeTruthy();
-    expect(input.getAttribute('aria-expanded')).toBe('true');
+    expect(input.getAttribute('aria-expanded')).toBe('false');
     expect(input.tabIndex).toBe(0);
+    act(() => {
+      input.value = 'a';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(input.getAttribute('aria-expanded')).toBe('true');
     expect(container.querySelectorAll('[role="option"]')).toHaveLength(2);
     expect(
       new Set(
@@ -136,21 +298,18 @@ describe('QuizPlayer integration', () => {
     );
     expect(input.value).toBe('Bravo');
     act(() =>
-      input.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
-      ),
+      (container.querySelector('form button') as HTMLButtonElement).click(),
     );
     expect(container.textContent).toContain('1 / 1 countries correct');
     expect(
       container.querySelector('[aria-live="assertive"]')?.textContent,
     ).toBe('Correct. Next location.');
-    expect(container.querySelector('.answer-result-correct')?.textContent).toBe(
-      '✓',
+    expect(container.querySelector('.quiz-feedback')?.textContent).toBe(
+      'Correct. Next location.',
     );
+    expect(container.querySelector('.answer-result')).toBeNull();
     expect(document.activeElement).toBe(input);
-    expect(
-      document.getElementById(input.getAttribute('aria-activedescendant')!),
-    ).toBeTruthy();
+    expect(input.getAttribute('aria-activedescendant')).toBeNull();
     expect(container.querySelector('[data-map-id]')).toBeTruthy();
   });
 
@@ -239,6 +398,10 @@ describe('QuizPlayer integration', () => {
       (container.querySelector('form button') as HTMLButtonElement).click(),
     );
     expect(container.textContent).toContain('canonical location');
+    await act(async () => {
+      input.value = 'Br';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
     await act(async () =>
       [...container.querySelectorAll('[role="option"]')]
         .find((option) => option.textContent === 'Bravo')!
@@ -284,7 +447,10 @@ describe('QuizPlayer integration', () => {
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     expect(input.getAttribute('aria-activedescendant')).toBeNull();
-    expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+    expect(container.querySelector('[role="status"]')?.textContent).toBe(
+      'No matches',
+    );
     await act(async () => {
       input.value = 'Br';
       input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -322,9 +488,9 @@ describe('QuizPlayer integration', () => {
     await act(async () =>
       (container.querySelector('form button') as HTMLButtonElement).click(),
     );
-    expect(container.querySelectorAll('[aria-live="assertive"]')).toHaveLength(
-      0,
-    );
+    expect(
+      container.querySelector('.completion-header .quiz-feedback'),
+    ).toBeTruthy();
     expect(container.textContent).toContain('Run complete');
     expect(container.querySelector('.active-player')).toBeNull();
     expect(container.querySelector('.full-bleed-map')).toBeNull();
