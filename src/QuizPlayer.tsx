@@ -272,9 +272,15 @@ export function QuizPlayer({
   useEffect(() => {
     if (state.phase !== 'active') return;
     const update = () => {
-      if (manualPlacement.current) return;
       const stage = stageRef.current;
       const panel = panelRef.current;
+      if (stage) {
+        stage.style.setProperty(
+          '--map-width',
+          `${Math.min(stage.clientWidth, (stage.clientHeight * 41) / 18)}px`,
+        );
+      }
+      if (manualPlacement.current) return;
       const targets = stage ? panelPlacementTargets(stage) : [];
       if (!stage || !panel || targets.length === 0) return;
       const stageRect = stage.getBoundingClientRect();

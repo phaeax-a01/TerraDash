@@ -278,22 +278,29 @@ h2 {
 }
 .map-stage {
   position: relative;
-  flex: 0 0 auto;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-width: 0;
   min-height: 0;
 }
-.map-stage .map-slot,
-.map-stage .map-frame {
-  height: auto;
+.map-stage .map-slot {
+  display: contents;
 }
 .map-stage .map-slot {
   margin: 0;
 }
 .map-stage .map-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   display: flex;
-  width: 100%;
+  flex: 0 0 auto;
+  width: var(--map-width, 100%);
   aspect-ratio: 41 / 18;
+  transform: translate(-50%, -50%);
 }
 .map-stage .world-map {
   height: auto;
@@ -699,11 +706,15 @@ input {
     gap: 0.75rem;
   }
   .map-stage {
-    flex: 0 0 auto;
+    flex: 1 1 0;
     padding-bottom: 9rem;
   }
-  .map-stage .map-slot,
-  .map-stage .map-frame,
+  .map-stage .map-slot {
+    display: contents;
+  }
+  .map-stage .map-frame {
+    height: auto;
+  }
   .map-stage .world-map {
     height: auto;
   }
