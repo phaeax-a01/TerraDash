@@ -63,7 +63,12 @@ export function QuizPlayer({
     [catalog, text],
   );
   const hasQuery = text.trim().length > 0;
-  const visibleSuggestions = hasQuery ? suggestions : [];
+  const exactMatch = suggestions.some(
+    (location) =>
+      location.name.trim().toLowerCase() === text.trim().toLowerCase(),
+  );
+  const dropdownOpen = hasQuery && !exactMatch;
+  const visibleSuggestions = dropdownOpen ? suggestions : [];
   const currentId =
     state.phase === 'active' ? state.order[state.currentIndex] : undefined;
   const currentLocation = catalog.find((location) => location.id === currentId);
@@ -413,7 +418,7 @@ export function QuizPlayer({
                     autoComplete="off"
                     aria-autocomplete="list"
                     aria-controls="answer-options"
-                    aria-expanded={hasQuery}
+                    aria-expanded={dropdownOpen}
                     aria-activedescendant={
                       visibleSuggestions[activeSuggestion]
                         ? `answer-option-${visibleSuggestions[activeSuggestion].id}`
@@ -426,7 +431,7 @@ export function QuizPlayer({
                     }}
                     onKeyDown={onKeyDown}
                   />
-                  {hasQuery && (
+                  {dropdownOpen && (
                     <ul
                       id="answer-options"
                       role="listbox"

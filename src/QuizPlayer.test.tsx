@@ -70,7 +70,7 @@ describe('QuizPlayer integration', () => {
     expect(container.textContent).toContain('1 country remaining');
   });
 
-  it('keeps the dropdown closed for an empty value and visible for exact matches', async () => {
+  it('closes for empty and case-insensitive exact values, while partial values stay open', async () => {
     const container = renderPlayer();
     await act(async () =>
       (container.querySelector('button') as HTMLButtonElement).click(),
@@ -84,10 +84,43 @@ describe('QuizPlayer integration', () => {
       input.value = 'alpha';
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelectorAll('[role="option"]')).toHaveLength(0);
+    await act(async () => {
+      input.value = 'alp';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
     expect(input.getAttribute('aria-expanded')).toBe('true');
     expect(container.querySelector('[role="option"]')?.textContent).toBe(
       'Alpha',
     );
+  });
+
+  it('submits an exact-match value from the closed dropdown', async () => {
+    const container = renderPlayer();
+    await act(async () =>
+      (container.querySelector('button') as HTMLButtonElement).click(),
+    );
+    const input = container.querySelector(
+      '[role="combobox"]',
+    ) as HTMLInputElement;
+    const currentId = container
+      .querySelector('[data-map-id]')
+      ?.getAttribute('data-map-id');
+    const exactName = catalog.find(
+      (location) => location.id === currentId,
+    )!.name;
+    await act(async () => {
+      input.value = exactName.toUpperCase();
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+    await act(async () =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+      ),
+    );
+    expect(container.textContent).toContain('Correct. Next location.');
   });
 
   it('keeps a no-match dropdown visible without making its message selectable', async () => {
