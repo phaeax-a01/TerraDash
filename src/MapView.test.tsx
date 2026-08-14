@@ -46,15 +46,24 @@ describe('MapView small-region callout rendering', () => {
       .querySelector('.callout-source')
       ?.getAttribute('cx');
     expect(sourceCenter).toBeTruthy();
-    expect(frame.querySelector('.callout-leader')?.getAttribute('x1')).toBe(
-      sourceCenter,
-    );
+    const sourceCircle = frame.querySelector('.callout-source')!;
+    const sourceX = Number(sourceCircle.getAttribute('cx'));
+    const sourceY = Number(sourceCircle.getAttribute('cy'));
+    const sourceRadius = Number(sourceCircle.getAttribute('r'));
+    const leader = frame.querySelector('.callout-leader')!;
     expect(
-      frame.querySelector('.callout-context')?.getAttribute('transform'),
-    ).toContain(`translate(-${sourceCenter} `);
+      Math.hypot(
+        Number(leader.getAttribute('x1')) - sourceX,
+        Number(leader.getAttribute('y1')) - sourceY,
+      ),
+    ).toBeCloseTo(sourceRadius);
+    expect(frame.querySelector('.callout-inset')).toBeTruthy();
+    expect(
+      frame.querySelector('.callout-inset')?.getAttribute('viewBox'),
+    ).toBeTruthy();
     expect(frame.querySelector('.callout-cutout')).toBeTruthy();
     expect(
-      frame.querySelectorAll('.callout-context .country path').length,
+      frame.querySelectorAll('.callout-inset .country path').length,
     ).toBeGreaterThan(source.length);
     expect(
       frame.querySelector('.map-callout')?.getAttribute('aria-hidden'),
