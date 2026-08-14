@@ -2,9 +2,13 @@ import fs from 'node:fs';
 const catalog = JSON.parse(fs.readFileSync('data/generated/catalog.json'));
 const quiz = JSON.parse(fs.readFileSync('data/generated/quiz.json'));
 const map = JSON.parse(fs.readFileSync('data/generated/map.json'));
+const inset = JSON.parse(fs.readFileSync('data/generated/inset.json'));
 const overrides = JSON.parse(fs.readFileSync('data/geometry-overrides.json'));
 const source = JSON.parse(
   fs.readFileSync('data/source/ne_50m_admin_0_countries.geojson'),
+);
+const insetSource = JSON.parse(
+  fs.readFileSync('data/source/ne_10m_admin_0_countries.geojson'),
 );
 const ids = new Set(catalog.map((item) => item.id));
 if (catalog.length !== 195 || ids.size !== 195)
@@ -35,6 +39,27 @@ for (const item of catalog) {
     throw new Error(`Missing geometry reference for ${item.id}`);
   if (!item.bounds || item.bounds.some((value) => !Number.isFinite(value)))
     throw new Error(`Missing projected bounds for ${item.id}`);
+}
+if (
+  inset.width !== map.width ||
+  inset.height !== map.height ||
+  inset.sourceFeatureIds.length !== insetSource.features.length ||
+  new Set(inset.sourceFeatureIds).size !== insetSource.features.length
+)
+  throw new Error(
+    'Inset projection or feature IDs are not stable and complete',
+  );
+for (const item of catalog) {
+  const refs = inset.locationFeatureIds[item.id];
+  if (!refs?.length || refs.some((id) => !inset.features[id]))
+    throw new Error(`Missing inset geometry reference for ${item.id}`);
+}
+for (const [featureId, feature] of Object.entries(inset.features)) {
+  if (!feature.paths.length || !feature.bounds || feature.bounds.length !== 4)
+    throw new Error(`Invalid inset feature ${featureId}`);
+  for (const path of feature.paths)
+    if (!/^M[-0-9.,]+(?:L[-0-9.,]+)*Z$/.test(path))
+      throw new Error(`Invalid inset path for ${featureId}`);
 }
 for (const [locationId, refs] of Object.entries(overrides)) {
   if (

@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import catalog from '../data/generated/catalog.json';
 import map from '../data/generated/map.json';
-import { baseGeometryPaths, highlightedGeometryPaths } from './mapGeometry';
+import inset from '../data/generated/inset.json';
+import {
+  baseGeometryPaths,
+  highlightedGeometryPaths,
+  insetGeometryPaths,
+} from './mapGeometry';
 
 describe('map geometry resolution', () => {
   it('renders each parent source feature once and excludes generated parts from the base layer', () => {
@@ -28,6 +33,25 @@ describe('map geometry resolution', () => {
       palestine.geometryRefs.flatMap(
         (id) => map.features[id as keyof typeof map.features].paths,
       ),
+    );
+  });
+
+  it('keeps the ordinary world map on 50m geometry while the inset resolves 10m geometry', () => {
+    const atg = catalog.find((item) => item.id === 'iso:ATG')!;
+    expect(highlightedGeometryPaths(atg.geometryRefs)).toEqual(
+      atg.geometryRefs.flatMap(
+        (id) => map.features[id as keyof typeof map.features].paths,
+      ),
+    );
+    expect(insetGeometryPaths(atg.id)).toEqual(
+      inset.locationFeatureIds[
+        atg.id as keyof typeof inset.locationFeatureIds
+      ].flatMap(
+        (id) => inset.features[id as keyof typeof inset.features].paths,
+      ),
+    );
+    expect(insetGeometryPaths(atg.id).join('').length).toBeGreaterThan(
+      highlightedGeometryPaths(atg.geometryRefs).join('').length,
     );
   });
 });
