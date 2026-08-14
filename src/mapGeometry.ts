@@ -2,8 +2,13 @@ import map from '../data/generated/map.json';
 import inset from '../data/generated/inset.json';
 import { hasRenderableArea } from './footprint';
 
-export type InsetPathKind = 'polygon' | 'degenerate';
-export type InsetGeometryPath = { path: string; kind: InsetPathKind };
+export type InsetPathKind = 'polygon' | 'artifact' | 'degenerate';
+export type InsetGeometryPath = {
+  path: string;
+  kind: InsetPathKind;
+  polygonId: string;
+  ringIds: string[];
+};
 
 export function baseGeometryPaths(): string[] {
   return map.sourceFeatureIds.flatMap(
@@ -30,12 +35,26 @@ export function classifyInsetGeometryPaths(
     ];
   if (!refs?.length)
     throw new Error(`Missing inset geometry for ${locationId}`);
-  return refs.flatMap((id) =>
-    inset.features[id as keyof typeof inset.features].paths.map((path) => ({
-      path,
-      kind: hasRenderableArea(path)
-        ? ('polygon' as const)
-        : ('degenerate' as const),
-    })),
-  );
+  return refs.flatMap((id) => {
+    const feature = inset.features[id as keyof typeof inset.features];
+    return feature.polygons.map((polygon) => {
+      const validRings = polygon.rings.filter(
+        (ring) => ring.valid && hasRenderableArea(ring.path),
+      );
+      const invalidRings = polygon.rings.filter((ring) => !ring.valid);
+      const path = validRings.length
+        ? validRings.map((ring) => ring.path).join('')
+        : polygon.path;
+      return {
+        path,
+        kind: invalidRings.length
+          ? ('artifact' as const)
+          : validRings.length
+            ? ('polygon' as const)
+            : ('degenerate' as const),
+        polygonId: polygon.id,
+        ringIds: polygon.rings.map((ring) => ring.id),
+      };
+    });
+  });
 }

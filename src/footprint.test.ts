@@ -44,13 +44,35 @@ describe('threshold and ring primitives', () => {
     ).toBe('circle');
   });
 
-  it('uses the 50px linear boundary for newly routed callouts', () => {
+  it('uses the 25px linear boundary for newly routed callouts', () => {
     expect(
       deriveCalloutModel([`M0,0L${MIN_FOOTPRINT_PX - 0.01},0L0,1Z`], 1, 1440),
     ).toBeDefined();
     expect(
       deriveCalloutModel([`M0,0L${MIN_FOOTPRINT_PX},0L0,1Z`], 1, 1440),
     ).toBeUndefined();
+  });
+
+  it('keeps a dateline-spanning Fiji cluster local to its source copy', () => {
+    const fiji = catalog.find((entry) => entry.id === 'iso:FJI')!;
+    const model = deriveCalloutModel(
+      fiji.geometryRefs.flatMap(
+        (ref) => map.features[ref as keyof typeof map.features].paths,
+      ),
+      1,
+      map.width,
+    )!;
+    expect(model.sourceRadius).toBeLessThan(100);
+    expect(model.sourceCenter[0]).toBeGreaterThan(1400);
+    expect(model.clusterBounds![2] - model.clusterBounds![0]).toBeLessThan(100);
+    expect(
+      calloutLeaderLines(
+        model.sourceCenter,
+        model.sourceRadius,
+        [1200, model.sourceCenter[1]],
+        100,
+      ),
+    ).toHaveLength(2);
   });
 
   it('classifies real projected paths without turning points into area', () => {
