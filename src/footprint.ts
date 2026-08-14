@@ -29,6 +29,14 @@ export const COMPONENT_CLUSTER_PROXIMITY_PX = 24;
 export const MAP_SEAM_LONGITUDE = -170;
 export const MAP_OVERLAP_REFERENCE_UNITS = 100;
 
+export function sharedInsetViewBox(center: Point, radius: number) {
+  return {
+    x: center[0] - radius,
+    y: center[1] - radius,
+    size: radius * 2,
+  };
+}
+
 /** Return a bounded, source-adjacent callout layout in map/viewBox units. */
 export function deriveCalloutLayout(
   callout: CalloutModel,

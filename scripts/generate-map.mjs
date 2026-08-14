@@ -5,10 +5,15 @@ import { execFileSync } from 'node:child_process';
 const WIDTH = 1440;
 const HEIGHT = 720;
 const sourcePath = 'data/source/ne_50m_admin_0_countries.geojson';
+const insetSourcePath = 'data/source/ne_10m_admin_0_countries.geojson';
 const EXPECTED_SOURCE_SHA256 =
   'd7e56812e94bdb374d95021940af98f6cace2cb96827f522e3a3561242406ccc';
 const SOURCE_URL =
   'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/9380cca83db5f9aef52d5e762765100745f84b27/geojson/ne_50m_admin_0_countries.geojson';
+const INSET_SOURCE_SHA256 =
+  '239eec57ac17f100a11e2536cffc56752c318b50ae765b0918ff7aab4ce8f255';
+const INSET_SOURCE_URL =
+  'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/9380cca83db5f9aef52d5e762765100745f84b27/geojson/ne_10m_admin_0_countries.geojson';
 const sourceBytes = fs.readFileSync(sourcePath);
 const sourceSha256 = crypto
   .createHash('sha256')
@@ -19,6 +24,16 @@ if (sourceSha256 !== EXPECTED_SOURCE_SHA256)
     `Natural Earth source checksum mismatch: expected ${EXPECTED_SOURCE_SHA256}, got ${sourceSha256}`,
   );
 const source = JSON.parse(sourceBytes);
+const insetSourceBytes = fs.readFileSync(insetSourcePath);
+const insetSourceSha256 = crypto
+  .createHash('sha256')
+  .update(insetSourceBytes)
+  .digest('hex');
+if (insetSourceSha256 !== INSET_SOURCE_SHA256)
+  throw new Error(
+    `Natural Earth inset source checksum mismatch: expected ${INSET_SOURCE_SHA256}, got ${insetSourceSha256}`,
+  );
+const insetSource = JSON.parse(insetSourceBytes);
 const catalog = JSON.parse(fs.readFileSync('data/catalog.json'));
 const overrides = JSON.parse(fs.readFileSync('data/geometry-overrides.json'));
 
@@ -63,16 +78,18 @@ function project([lon, lat]) {
     +(((90 - lat) / 180) * HEIGHT).toFixed(2),
   ];
 }
-function ringPath(ring) {
-  const simplified = simplify(ring.map(project), 0.55);
+function ringPath(ring, tolerance = 0.55) {
+  const simplified = simplify(ring.map(project), tolerance);
   return (
     simplified.map(([x, y], i) => `${i ? 'L' : 'M'}${x},${y}`).join('') + 'Z'
   );
 }
-function geometryPaths(geometry) {
+function geometryPaths(geometry, tolerance = 0.55) {
   const polygons =
     geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
-  return polygons.flatMap((polygon) => polygon.map(ringPath));
+  return polygons.flatMap((polygon) =>
+    polygon.map((ring) => ringPath(ring, tolerance)),
+  );
 }
 function pathPoints(paths) {
   return paths.flatMap((path) =>
@@ -210,10 +227,81 @@ fs.writeFileSync(
       locations: Object.fromEntries(
         locations.map((x) => [x.id, x.geometryRefs]),
       ),
+      inset: {
+        sourceSha256: INSET_SOURCE_SHA256,
+        sourceUrl: INSET_SOURCE_URL,
+        artifact: 'data/generated/inset.json',
+        featureIds: insetSource.features.map(
+          (feature) => `ne:${feature.properties.NE_ID}`,
+        ),
+      },
     },
     null,
     2,
   ) + '\n',
+);
+const insetFeatures = insetSource.features.map((feature) => {
+  const paths = geometryPaths(feature.geometry, 0.2);
+  const points = pathPoints(paths);
+  const id = `ne:${feature.properties.NE_ID}`;
+  return {
+    id,
+    keys: featureKey(feature),
+    paths,
+    anchor:
+      feature.properties.LABEL_X != null && feature.properties.LABEL_Y != null
+        ? project([feature.properties.LABEL_X, feature.properties.LABEL_Y])
+        : [bounds(points)[0], bounds(points)[1]],
+    bounds: bounds(points),
+  };
+});
+const insetFeaturesByKey = new Map();
+for (const feature of insetFeatures)
+  for (const key of new Set(feature.keys))
+    insetFeaturesByKey.set(key, [
+      ...(insetFeaturesByKey.get(key) ?? []),
+      feature,
+    ]);
+const insetLocationFeatures = Object.fromEntries(
+  locations.map((location) => {
+    const matches = insetFeaturesByKey.get(location.iso3) ?? [];
+    if (!matches.length)
+      throw new Error(
+        `No Natural Earth inset feature for ${location.iso3} (${location.name})`,
+      );
+    return [location.id, matches.map(({ id }) => id)];
+  }),
+);
+const inset = {
+  width: WIDTH,
+  height: HEIGHT,
+  source: {
+    product: 'Natural Earth Admin 0 countries',
+    version: 'v5.1.1',
+    scale: '1:10m',
+    url: INSET_SOURCE_URL,
+    sha256: INSET_SOURCE_SHA256,
+    license: 'Public domain',
+    disclaimer:
+      'Inset boundaries are shown for gameplay visualization and do not imply endorsement of any boundary claim.',
+  },
+  selection: {
+    rule: 'all quiz-eligible catalog locations plus their source features; all features are retained because the catalog covers all 195 locations',
+    catalogLocations: locations.length,
+    neighborPaddingProjectedUnits: 24,
+  },
+  sourceFeatureIds: insetFeatures.map(({ id }) => id),
+  locationFeatureIds: insetLocationFeatures,
+  features: Object.fromEntries(
+    insetFeatures.map(({ id, paths, anchor, bounds: featureBounds }) => [
+      id,
+      { paths, anchor, bounds: featureBounds },
+    ]),
+  ),
+};
+fs.writeFileSync(
+  'data/generated/inset.json',
+  JSON.stringify(inset, null, 2) + '\n',
 );
 const prettier = process.platform === 'win32' ? 'prettier.cmd' : 'prettier';
 execFileSync(
@@ -224,6 +312,7 @@ execFileSync(
     'data/generated/manifest.json',
     'data/generated/map.json',
     'data/generated/quiz.json',
+    'data/generated/inset.json',
   ],
   { stdio: 'ignore' },
 );

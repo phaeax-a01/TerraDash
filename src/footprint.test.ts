@@ -13,6 +13,7 @@ import {
   MAP_SEAM_LONGITUDE,
   pathPoints,
   pathPointComponents,
+  sharedInsetViewBox,
   unwrapComponent,
   wrappedOffsets,
 } from './footprint';
@@ -87,6 +88,21 @@ describe('threshold and ring primitives', () => {
 });
 
 describe('callout selection and actual-boundary clustering', () => {
+  it('uses one shared map-space circle extent for source and inset cardinal points', () => {
+    const center: [number, number] = [1438, 90];
+    const radius = 12.5;
+    const viewBox = sharedInsetViewBox(center, radius);
+    expect(viewBox).toEqual({ x: 1425.5, y: 77.5, size: 25 });
+    expect([viewBox.x + viewBox.size / 2, viewBox.y]).toEqual([
+      center[0],
+      center[1] - radius,
+    ]);
+    expect([viewBox.x + viewBox.size, viewBox.y + viewBox.size / 2]).toEqual([
+      center[0] + radius,
+      center[1],
+    ]);
+  });
+
   it('keeps both leader endpoints on their circle boundaries', () => {
     const lines = calloutLeaderLines([10, 20], 8, [80, 20], 30);
     expect(lines).toHaveLength(2);

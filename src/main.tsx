@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import map from '../data/generated/map.json';
+import inset from '../data/generated/inset.json';
 import catalog from '../data/generated/catalog.json';
 import {
   deriveCalloutModel,
@@ -9,6 +10,7 @@ import {
   MAP_OVERLAP_REFERENCE_UNITS,
   MAP_SEAM_LONGITUDE,
   mapXForLongitude,
+  sharedInsetViewBox,
   wrappedOffsets,
   wrappedPathOffsets,
 } from './footprint';
@@ -16,13 +18,14 @@ import { QuizProvider } from './QuizContext';
 import { defaultCatalog, defaultQuiz } from './quizContracts';
 import { QuizPlayer } from './QuizPlayer';
 import { mapLocationForQuizId } from './quizMapBoundary';
-import { highlightedGeometryPaths } from './mapGeometry';
+import { highlightedGeometryPaths, insetGeometryPaths } from './mapGeometry';
 import './styles.css';
 
 type Location = (typeof catalog)[number];
 export function MapView({ active }: { active: Location }) {
   const [viewportWidth, setViewportWidth] = useState(map.width);
   const highlightedPaths = highlightedGeometryPaths(active.geometryRefs);
+  const insetSelectedPaths = insetGeometryPaths(active.id);
   const seamX = mapXForLongitude(MAP_SEAM_LONGITUDE, map.width);
   const renderedMapWidth = map.width + MAP_OVERLAP_REFERENCE_UNITS * 2;
   const scale = viewportWidth / renderedMapWidth;
@@ -78,25 +81,15 @@ export function MapView({ active }: { active: Location }) {
     : undefined;
   const cutoutRadius = cutoutLayout?.radius ?? 0;
   const cutoutCenter = cutoutLayout?.center ?? [0, 0];
-  const clusterBounds = displayedCallout?.clusterBounds ?? [
-    (displayedCallout?.focusCenter ?? [0, 0])[0] - 1,
-    (displayedCallout?.focusCenter ?? [0, 0])[1] - 1,
-    (displayedCallout?.focusCenter ?? [0, 0])[0] + 1,
-    (displayedCallout?.focusCenter ?? [0, 0])[1] + 1,
-  ];
-  const clusterSpan = Math.max(
-    clusterBounds[2] - clusterBounds[0],
-    clusterBounds[3] - clusterBounds[1],
+  // The nested viewBox is the exact source-circle extent in the shared map
+  // coordinate system. The outer cutout is independently sized in rendered
+  // map units, so the same geography is shown at a larger pixel scale.
+  const insetViewBox = sharedInsetViewBox(
+    displayedCallout?.sourceCenter ?? [0, 0],
+    displayedCallout?.sourceRadius ?? 1,
   );
-  const insetContextMargin = Math.max(14, clusterSpan * 1.8);
-  const insetSize = Math.max(32, clusterSpan + insetContextMargin * 2);
-  const insetViewBox = {
-    x: (displayedCallout?.focusCenter ?? [0, 0])[0] - insetSize / 2,
-    y: (displayedCallout?.focusCenter ?? [0, 0])[1] - insetSize / 2,
-    size: insetSize,
-  };
-  const insetStrokeWidth = Math.max(1.2, insetSize * 0.04);
-  const insetSelectedPointRadius = Math.min(1.25, insetSize * 0.025);
+  const insetStrokeWidth = Math.max(1.2, insetViewBox.size * 0.04);
+  const insetSelectedPointRadius = Math.min(1.25, insetViewBox.size * 0.025);
   const leaderLines = displayedCallout
     ? calloutLeaderLines(
         displayedCallout.sourceCenter,
@@ -110,6 +103,15 @@ export function MapView({ active }: { active: Location }) {
       wrappedPathOffsets(
         [path],
         map.width,
+        seamX,
+        MAP_OVERLAP_REFERENCE_UNITS,
+      ).map((transform) => ({ path, transform })),
+    );
+  const wrappedInsetPathCopies = (paths: string[]) =>
+    paths.flatMap((path) =>
+      wrappedPathOffsets(
+        [path],
+        inset.width,
         seamX,
         MAP_OVERLAP_REFERENCE_UNITS,
       ).map((transform) => ({ path, transform })),
@@ -224,11 +226,12 @@ export function MapView({ active }: { active: Location }) {
                 width={insetViewBox.size}
                 height={insetViewBox.size}
               />
-              {map.sourceFeatureIds.map((id) => {
-                const feature = map.features[id as keyof typeof map.features];
+              {inset.sourceFeatureIds.map((id) => {
+                const feature =
+                  inset.features[id as keyof typeof inset.features];
                 return (
                   <g key={id} className="country">
-                    {wrappedPathCopies(feature.paths).map(
+                    {wrappedInsetPathCopies(feature.paths).map(
                       ({ path, transform }, index) => (
                         <path
                           key={`${id}:${transform}:${index}`}
@@ -241,21 +244,19 @@ export function MapView({ active }: { active: Location }) {
                 );
               })}
               <g className="callout-selected">
-                {callout.selectedPathIndices.flatMap((pathIndex) =>
-                  wrappedPathCopies([highlightedPaths[pathIndex]]).map(
-                    ({ path, transform }, index) => (
-                      <path
-                        key={`${pathIndex}:${transform}:${index}`}
-                        d={path}
-                        transform={`translate(${transform} 0)`}
-                        strokeWidth={insetStrokeWidth}
-                        vectorEffect="none"
-                        style={{
-                          strokeWidth: insetStrokeWidth,
-                          vectorEffect: 'none',
-                        }}
-                      />
-                    ),
+                {wrappedInsetPathCopies(insetSelectedPaths).map(
+                  ({ path, transform }, index) => (
+                    <path
+                      key={`${transform}:${index}`}
+                      d={path}
+                      transform={`translate(${transform} 0)`}
+                      strokeWidth={insetStrokeWidth}
+                      vectorEffect="none"
+                      style={{
+                        strokeWidth: insetStrokeWidth,
+                        vectorEffect: 'none',
+                      }}
+                    />
                   ),
                 )}
               </g>
@@ -321,9 +322,9 @@ function App() {
           )}
         />
         <p className="disclaimer">
-          Map data: Natural Earth Admin 0 countries, v5.1.1, 1:50m. Public
-          domain. Boundaries are shown for gameplay visualization and do not
-          imply endorsement of any boundary claim.
+          Map data: Natural Earth Admin 0 countries, v5.1.1, 1:50m main map and
+          1:10m inset. Public domain. Boundaries are shown for gameplay
+          visualization and do not imply endorsement of any boundary claim.
         </p>
         <AppFooter />
       </main>
