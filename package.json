@@ -5,29 +5,32 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "preview": "vite preview",
     "build": "npm run generate && tsc -b && vite build",
     "generate": "node scripts/generate-map.mjs",
     "validate:data": "node scripts/validate-data.mjs",
     "validate:branding": "node scripts/validate-branding.mjs",
     "validate:layout": "node scripts/validate-layout.mjs",
+    "browser:test": "playwright test",
     "lint": "eslint .",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
-    "test": "vitest run"
+    "test": "vitest run --exclude browser/**"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "eslint": "latest",
+    "jsdom": "latest",
     "prettier": "latest",
-    "vitest": "latest",
-    "jsdom": "latest"
+    "vitest": "latest"
   }
 }
