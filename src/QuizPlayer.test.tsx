@@ -80,6 +80,8 @@ describe('QuizPlayer integration', () => {
     await act(async () =>
       (container.querySelector('button') as HTMLButtonElement).click(),
     );
+    expect(container.querySelector('.results-grid')).toBeNull();
+    expect(container.textContent).not.toContain('Score');
     expect(
       container.querySelectorAll('.active-player > .quiz-header'),
     ).toHaveLength(1);
