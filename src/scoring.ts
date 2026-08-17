@@ -5,7 +5,10 @@ const HUNDREDTHS_PER_CREDIT_UNIT =
 const PENALTY_NUMERATOR = 25n;
 const PENALTY_DENOMINATOR = 9n;
 
-function roundNonnegativeHalfUp(numerator: bigint, denominator: bigint): number {
+function roundNonnegativeHalfUp(
+  numerator: bigint,
+  denominator: bigint,
+): number {
   if (numerator <= 0n) return 0;
   return Number((2n * numerator + denominator) / (2n * denominator));
 }
@@ -26,9 +29,8 @@ export function calculateFinalScore(
     throw new RangeError('Accuracy hundredths must be nonnegative and finite');
   if (!Number.isInteger(elapsedWholeSeconds) || elapsedWholeSeconds < 0)
     throw new RangeError('Elapsed seconds must be a nonnegative integer');
-  const [accuracyNumerator, accuracyDenominator] = decimalRational(
-    accuracyHundredths,
-  );
+  const [accuracyNumerator, accuracyDenominator] =
+    decimalRational(accuracyHundredths);
   const numerator =
     accuracyNumerator * PENALTY_DENOMINATOR -
     BigInt(elapsedWholeSeconds) * PENALTY_NUMERATOR * accuracyDenominator;
