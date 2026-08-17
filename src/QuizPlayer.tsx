@@ -384,6 +384,10 @@ export function QuizPlayer({
             <dd>{formatAccuracy(results.accuracy)}</dd>
           </div>
           <div>
+            <dt>Score</dt>
+            <dd>{results.finalScore}</dd>
+          </div>
+          <div>
             <dt>Missed</dt>
             <dd>{results.missed}</dd>
           </div>
