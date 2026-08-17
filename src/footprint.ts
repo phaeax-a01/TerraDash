@@ -25,7 +25,9 @@ export type CalloutLayout = {
 // the inset callout.
 export const MIN_FOOTPRINT_PX = 25;
 export const COMPONENT_CLUSTER_PROXIMITY_PX = 24;
-export const MAP_SEAM_LONGITUDE = -170;
+// Keep the wrapped viewport's right edge at 127°E while retaining the same
+// reference-unit overlap on both sides of the primary world.
+export const MAP_SEAM_LONGITUDE = -102;
 export const MAP_OVERLAP_REFERENCE_UNITS = 100;
 export const CALLOUT_GAP_PX = 72;
 export const CALLOUT_AREA_SCALE = 2;
@@ -38,6 +40,21 @@ export function sharedInsetViewBox(center: Point, radius: number) {
     y: center[1] - radius,
     size: radius * 2,
   };
+}
+
+export function calloutEdgeGapPx(
+  source: Point,
+  sourceRadius: number,
+  cutout: Point,
+  cutoutRadius: number,
+  scale: number,
+) {
+  return (
+    (Math.hypot(cutout[0] - source[0], cutout[1] - source[1]) -
+      sourceRadius -
+      cutoutRadius) *
+    scale
+  );
 }
 
 /** Return a bounded, source-adjacent callout layout in map/viewBox units. */
@@ -116,15 +133,35 @@ export function deriveCalloutLayout(
     }
   }
   const fittingCandidates = candidates.filter(
-    ([x, y]) => Math.hypot(x - sourceX, y - sourceY) >= requiredDistance,
+    ([x, y]) =>
+      calloutEdgeGapPx(
+        [sourceX, sourceY],
+        sourceRadius,
+        [x, y],
+        radius,
+        scale,
+      ) >= CALLOUT_GAP_PX,
   );
-  const [centerX, centerY] = fittingCandidates.reduce(
+  const preferredCandidate = fittingCandidates.reduce(
     (best, candidate) =>
       Math.hypot(candidate[0] - preferred, candidate[1] - sourceY) <
       Math.hypot(best[0] - preferred, best[1] - sourceY)
         ? candidate
         : best,
     fittingCandidates[0] ?? [initialCenterX, initialCenterY],
+  );
+  const candidateDistance = Math.hypot(
+    preferredCandidate[0] - sourceX,
+    preferredCandidate[1] - sourceY,
+  );
+  const distanceScale =
+    candidateDistance > requiredDistance
+      ? requiredDistance / candidateDistance
+      : 1;
+  const centerX = sourceX + (preferredCandidate[0] - sourceX) * distanceScale;
+  const centerY = Math.max(
+    minY,
+    Math.min(maxY, sourceY + (preferredCandidate[1] - sourceY) * distanceScale),
   );
   const boundedSourceY = Math.max(
     sourceRadius,

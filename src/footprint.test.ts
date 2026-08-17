@@ -8,6 +8,7 @@ import {
   CALLOUT_MAGNIFICATION_RATIO,
   CALLOUT_GAP_PX,
   calloutLeaderLines,
+  calloutEdgeGapPx,
   deriveCalloutLayout,
   deriveCalloutModel,
   hasRenderableArea,
@@ -35,9 +36,13 @@ describe('threshold and ring primitives', () => {
   it('retains the original 100-unit wrapped geometry band', () => {
     expect(MAP_OVERLAP_REFERENCE_UNITS).toBe(100);
     const seamX = mapXForLongitude(MAP_SEAM_LONGITUDE, 1440);
-    expect(wrappedViewportBounds(1440, seamX)).toEqual([-140, 1500]);
-    expect(wrappedOffsets(1340, 1380, 1440, seamX)).toContain(-1480);
-    expect(wrappedOffsets(60, 100, 1440, seamX)).toContain(1400);
+    const bounds = wrappedViewportBounds(1440, seamX);
+    expect(bounds).toEqual([-412, 1228]);
+    expect(bounds[1]).toBe(mapXForLongitude(127, 1440));
+    expect(-seamX - bounds[0]).toBe(MAP_OVERLAP_REFERENCE_UNITS);
+    expect(bounds[1] - (-seamX + 1440)).toBe(MAP_OVERLAP_REFERENCE_UNITS);
+    expect(wrappedOffsets(1340, 1380, 1440, seamX)).toContain(-1752);
+    expect(wrappedOffsets(60, 100, 1440, seamX)).toContain(1128);
   });
 
   it('uses the 25px linear boundary for newly routed callouts', () => {
@@ -181,7 +186,7 @@ describe('callout selection and actual-boundary clustering', () => {
       sourceCenter: [240, 180] as [number, number],
       selectedPathIndices: [0],
     };
-    for (const scale of [1, 0.5]) {
+    for (const scale of [1, 0.5, 358 / 1640, 954 / 1640]) {
       const layout = deriveCalloutLayout(
         callout,
         scale,
@@ -189,13 +194,24 @@ describe('callout selection and actual-boundary clustering', () => {
         720,
         1440 * scale,
       );
-      const renderedGap =
-        (layout.center[0] -
-          callout.sourceCenter[0] -
-          layout.sourceRadius -
-          layout.radius) *
-        scale;
-      expect(renderedGap).toBeCloseTo(CALLOUT_GAP_PX);
+      expect(
+        calloutEdgeGapPx(
+          callout.sourceCenter,
+          layout.sourceRadius,
+          layout.center,
+          layout.radius,
+          scale,
+        ),
+      ).toBeGreaterThanOrEqual(CALLOUT_GAP_PX);
+      expect(
+        calloutEdgeGapPx(
+          callout.sourceCenter,
+          layout.sourceRadius,
+          layout.center,
+          layout.radius,
+          scale,
+        ),
+      ).toBeLessThanOrEqual(CALLOUT_GAP_PX + 1.5);
     }
   });
 
@@ -206,12 +222,15 @@ describe('callout selection and actual-boundary clustering', () => {
       selectedPathIndices: [0],
     };
     const layout = deriveCalloutLayout(callout, scale, 1440, 720, 358);
-    const renderedGap =
-      (Math.abs(layout.center[0] - callout.sourceCenter[0]) -
-        layout.sourceRadius -
-        layout.radius) *
-      scale;
-    expect(renderedGap).toBeCloseTo(CALLOUT_GAP_PX);
+    expect(
+      calloutEdgeGapPx(
+        callout.sourceCenter,
+        layout.sourceRadius,
+        layout.center,
+        layout.radius,
+        scale,
+      ),
+    ).toBeCloseTo(CALLOUT_GAP_PX);
   });
 
   it('flips and clamps the cutout when the preferred side has no room', () => {
