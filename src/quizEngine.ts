@@ -8,6 +8,7 @@ export type LocationOutcome = {
 };
 export type QuizResults = {
   accuracy: number;
+  finalScore: number;
   score: number;
   missed: number;
   perfect: number;
@@ -58,6 +59,7 @@ export type EngineConfig = {
 };
 export type Transition = { state: QuizState; event: QuizEvent };
 import { countryNameKey } from './countryName';
+import { calculateFinalScoreFromWeightedCredit } from './scoring';
 
 const idleEvent: QuizEvent = { type: 'idle' };
 export function validateQuizInputs(
@@ -221,6 +223,11 @@ function finish(
     elapsedMs,
     results: {
       accuracy: total ? score / total : 0,
+      finalScore: calculateFinalScoreFromWeightedCredit(
+        score,
+        total,
+        elapsedMs,
+      ),
       score,
       missed,
       perfect,

@@ -737,6 +737,10 @@ describe('QuizPlayer integration', () => {
     expect(container.querySelector('.active-player')).toBeNull();
     expect(container.querySelector('.full-bleed-map')).toBeNull();
     expect(container.textContent).toContain('50.00%');
+    expect(container.textContent).toContain('Score');
+    expect(container.querySelector('.results-grid')?.textContent).toContain(
+      '5000',
+    );
     await act(async () =>
       (container.querySelector('button') as HTMLButtonElement).click(),
     );
