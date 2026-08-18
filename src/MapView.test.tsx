@@ -34,7 +34,21 @@ describe('MapView small-region callout rendering', () => {
     const frame = renderLocation('iso:UZB');
     const worldMap = frame.querySelector('.world-map');
     expect(worldMap?.hasAttribute('preserveAspectRatio')).toBe(false);
-    expect(worldMap?.getAttribute('viewBox')).toBe('-412 0 1640 720');
+    expect(worldMap?.getAttribute('viewBox')).toBe('-1428 0 1640 720');
+    expect(worldMap?.querySelector('rect.ocean')?.getAttribute('x')).toBe(
+      '-1428',
+    );
+    const renderedCountryPaths = [
+      ...worldMap!.querySelectorAll('g.countries path'),
+    ];
+    expect(renderedCountryPaths.every((path) => path.getAttribute('d'))).toBe(
+      true,
+    );
+    expect(
+      new Set(
+        renderedCountryPaths.map((path) => path.getAttribute('transform')),
+      ),
+    ).toEqual(new Set(['translate(0 0)', 'translate(-1440 0)']));
   });
 
   it('keeps the source geometry unchanged and renders one contextual callout', () => {

@@ -33,19 +33,19 @@ function pathsFor(id: string) {
 }
 
 describe('threshold and ring primitives', () => {
-  it('ends the rendered geography at 127°E with equal wrapped overlap', () => {
+  it('ends the rendered geography at 127°W with equal wrapped overlap', () => {
     expect(MAP_OVERLAP_REFERENCE_UNITS).toBe(100);
     const seamX = mapXForLongitude(MAP_SEAM_LONGITUDE, 1440);
     const bounds = wrappedViewportBounds(1440, seamX);
-    expect(bounds).toEqual([-412, 1228]);
-    expect(bounds[1]).toBe(mapXForLongitude(127, 1440));
+    expect(bounds).toEqual([-1428, 212]);
+    expect(bounds[1]).toBe(mapXForLongitude(-127, 1440));
     expect(-seamX - bounds[0]).toBe(MAP_OVERLAP_REFERENCE_UNITS);
     expect(bounds[1] - (-seamX + 1440)).toBe(MAP_OVERLAP_REFERENCE_UNITS);
 
-    // The 77°E–127°E band is the only duplicated geography. Its unshifted
+    // The 177°W–127°W band is the only duplicated geography. Its unshifted
     // copy reaches the right edge and its -world-width copy reaches the left.
-    const duplicatedBandStart = mapXForLongitude(77, 1440);
-    const duplicatedBandEnd = mapXForLongitude(127, 1440);
+    const duplicatedBandStart = mapXForLongitude(-177, 1440);
+    const duplicatedBandEnd = mapXForLongitude(-127, 1440);
     expect(
       wrappedOffsets(duplicatedBandStart, duplicatedBandEnd, 1440, seamX),
     ).toEqual([0, -1440]);
@@ -154,7 +154,7 @@ describe('callout selection and actual-boundary clustering', () => {
 
   it('doubles cutout area with a 72px source gap', () => {
     const layout = deriveCalloutLayout(
-      { sourceCenter: [240, 180], selectedPathIndices: [0] },
+      { sourceCenter: [-1200, 180], selectedPathIndices: [0] },
       1,
       1440,
       720,
@@ -164,9 +164,9 @@ describe('callout selection and actual-boundary clustering', () => {
     expect(layout.sourceRadius).toBe(
       (100 * CALLOUT_RADIUS_SCALE) / CALLOUT_MAGNIFICATION_RATIO,
     );
-    expect(layout.center[0]).toBeGreaterThan(240);
+    expect(layout.center[0]).toBeGreaterThan(-1200);
     expect(layout.center[0]).toBe(
-      240 + layout.sourceRadius + 72 + 100 * CALLOUT_RADIUS_SCALE,
+      -1200 + layout.sourceRadius + 72 + 100 * CALLOUT_RADIUS_SCALE,
     );
     expect(layout.center[1]).toBe(180);
   });
@@ -191,7 +191,7 @@ describe('callout selection and actual-boundary clustering', () => {
 
   it('keeps the source-to-cutout edge gap constant in rendered pixels', () => {
     const callout = {
-      sourceCenter: [240, 180] as [number, number],
+      sourceCenter: [-1200, 180] as [number, number],
       selectedPathIndices: [0],
     };
     for (const scale of [1, 0.5, 358 / 1640, 954 / 1640]) {
@@ -226,7 +226,7 @@ describe('callout selection and actual-boundary clustering', () => {
   it('keeps the gap when the map is reduced to a phone-sized scale', () => {
     const scale = 358 / 1640;
     const callout = {
-      sourceCenter: [720, 360] as [number, number],
+      sourceCenter: [-720, 360] as [number, number],
       selectedPathIndices: [0],
     };
     const layout = deriveCalloutLayout(callout, scale, 1440, 720, 358);
