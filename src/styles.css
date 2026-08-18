@@ -507,14 +507,61 @@ input {
   min-height: 1.5em;
   color: #fbbf24 !important;
 }
+.result-score {
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  margin: 1.35rem 0 1.5rem;
+  text-align: center;
+}
+.result-score-label {
+  color: #a9b8cc;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.result-score > strong {
+  color: #f5b942;
+  font-size: clamp(3.5rem, 12vw, 6.5rem);
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+}
+.result-mood {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #dbeafe;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.result-mood > span:first-child {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .result-mood > span:first-child {
+    animation: result-mood-bounce 1.5s ease-in-out infinite;
+  }
+}
+@keyframes result-mood-bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-0.2rem) rotate(4deg);
+  }
+}
 .results-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-  margin: 1.5rem 0;
+  gap: clamp(0.4rem, 2vw, 1rem);
+  margin: 0 0 1.5rem;
 }
 .results-grid div {
-  padding: 0.75rem;
+  min-width: 0;
+  padding: clamp(0.55rem, 2vw, 0.75rem);
   border: 1px solid #263650;
   border-radius: 0.4rem;
 }
@@ -524,8 +571,9 @@ input {
 }
 .results-grid dd {
   margin: 0.25rem 0 0;
-  font-size: 1.4rem;
+  font-size: clamp(1rem, 4vw, 1.4rem);
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 .map-frame {
   overflow: hidden;
@@ -727,8 +775,5 @@ input {
   }
   .suggestions {
     max-height: 12rem;
-  }
-  .results-grid {
-    grid-template-columns: 1fr;
   }
 }
