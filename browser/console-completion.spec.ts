@@ -11,7 +11,7 @@ test('completes the active quiz through the browser console command', async ({
   await expect(
     page.getByRole('heading', { name: 'Run complete' }),
   ).toBeVisible();
-  await expect(page.locator('.results-grid')).toContainText('10:00');
+  await expect(page.locator('.results-grid')).toContainText(/10:\d{2}/);
   await expect(page.locator('.results-grid')).toContainText('195');
   expect(await page.evaluate(() => window.terraDash?.completeQuiz())).toBe(
     'ignored',

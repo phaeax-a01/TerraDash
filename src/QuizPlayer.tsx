@@ -19,6 +19,7 @@ import {
   unionRects,
 } from './panelPlacement';
 import { mapWidthForStage } from './mapLayout';
+import { resultMoodForScore } from './resultMood';
 
 type QuizPlayerProps = {
   catalog: readonly CatalogLocation[];
@@ -391,6 +392,7 @@ export function QuizPlayer({
 
   if (state.phase === 'completed') {
     const results = state.results!;
+    const mood = resultMoodForScore(results.finalScore);
     return (
       <section className="player-card" aria-labelledby="results-title">
         <p className="eyebrow">TERRADASH · RESULTS</p>
@@ -408,6 +410,19 @@ export function QuizPlayer({
             </span>
           </div>
         </div>
+        <div
+          className="result-score"
+          aria-label={`Score ${results.finalScore}`}
+        >
+          <span className="result-score-label">Score</span>
+          <strong>{results.finalScore}</strong>
+          <span className="result-mood">
+            <span aria-hidden="true">{mood.emoji}</span>
+            <span>
+              {mood.label}: {mood.description}
+            </span>
+          </span>
+        </div>
         <dl className="results-grid">
           <div>
             <dt>Time</dt>
@@ -416,10 +431,6 @@ export function QuizPlayer({
           <div>
             <dt>Accuracy</dt>
             <dd>{formatAccuracy(results.accuracy)}</dd>
-          </div>
-          <div>
-            <dt>Score</dt>
-            <dd>{results.finalScore}</dd>
           </div>
           <div>
             <dt>Missed</dt>

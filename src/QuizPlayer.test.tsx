@@ -783,8 +783,16 @@ describe('QuizPlayer integration', () => {
     expect(container.querySelector('.full-bleed-map')).toBeNull();
     expect(container.textContent).toContain('50.00%');
     expect(container.textContent).toContain('Score');
-    expect(container.querySelector('.results-grid')?.textContent).toContain(
+    expect(container.querySelector('.result-score strong')?.textContent).toBe(
       '5000',
+    );
+    expect(
+      [...container.querySelectorAll('.results-grid dt')].map(
+        (label) => label.textContent,
+      ),
+    ).toEqual(['Time', 'Accuracy', 'Missed']);
+    expect(container.querySelector('.result-mood')?.textContent).toContain(
+      'Great work',
     );
     await act(async () =>
       (container.querySelector('button') as HTMLButtonElement).click(),
