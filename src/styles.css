@@ -1,4 +1,6 @@
 :root {
+  --map-stage-header-height: 4.25rem;
+  --map-stage-header-gap: 0.5rem;
   --page-gutter: clamp(1rem, 2vw, 2rem);
   --content-gutter: clamp(0.65rem, 1.2vw, 1rem);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
@@ -121,6 +123,7 @@ h2 {
   width: 100%;
 }
 .quiz-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -141,6 +144,20 @@ h2 {
   justify-content: flex-end;
   gap: clamp(0.75rem, 2vw, 1.75rem);
   font-variant-numeric: tabular-nums;
+}
+.map-header-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0.55rem var(--content-gutter);
+  pointer-events: none;
+}
+.map-header-overlay > * {
+  width: clamp(8rem, 28vw, 14rem);
+  max-width: 40%;
+  pointer-events: auto;
 }
 .quiz-prompt-group {
   display: flex;
@@ -250,6 +267,8 @@ h2 {
   border: 1px solid #263650;
   border-radius: 0.75rem;
   background: #111c2e;
+  min-height: var(--map-stage-header-height);
+  margin-bottom: var(--map-stage-header-gap);
 }
 .status-item {
   display: grid;
@@ -592,39 +611,21 @@ input {
   height: auto;
   background: #10233c;
 }
-.diagnostics-card select {
+.diagnostics-control {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+  color: #9fb0c5;
+  font-size: 0.62rem;
+}
+.diagnostics-control select {
   width: 100%;
-  margin: 0.5rem 0 1rem;
-  padding: 0.65rem;
+  min-width: 0;
+  padding: 0.2rem 0.4rem;
   color: #e8eef8;
   background: #1c314d;
   border: 1px solid #4b6b8e;
   border-radius: 0.4rem;
-}
-.diagnostics-card {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  width: min(100%, 1200px);
-  min-height: 0;
-  margin: 0 auto;
-  overflow: hidden;
-}
-.diagnostics-card > p {
-  margin-block: 0.15rem;
-}
-.diagnostics-card h1 {
-  margin: 0.25rem 0 0.5rem;
-  font-size: clamp(1.35rem, 4vw, 2.5rem);
-}
-.diagnostics-map {
-  display: flex;
-  flex: 1 1 auto;
-  width: 100%;
-  min-height: 0;
-}
-.diagnostics-map .world-map {
-  height: 100%;
 }
 .ocean {
   fill: #10233c;

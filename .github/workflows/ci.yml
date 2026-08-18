@@ -3,6 +3,7 @@ on:
   pull_request:
   push:
     branches: [master]
+  workflow_dispatch:
 permissions: { contents: read }
 jobs:
   validation:
@@ -34,7 +35,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - run: npm test
+      - run: npm exec -- vitest run --config vitest.config.ts
 
   browser:
     runs-on: ubuntu-latest
