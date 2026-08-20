@@ -24,7 +24,9 @@ test('Quizzes menu exposes all destinations and enters the selected quiz', async
   const menu = page.getByRole('menu');
   const links = menu.getByRole('menuitem');
   await expect(links).toHaveText(
-    quizNames.map((name) => name.replace(' UN Countries', '')).concat('Non-UN'),
+    quizNames
+      .map((name) => name.replace(' UN Countries', ''))
+      .concat(nonUnTitle),
   );
   await expect(menu.getByRole('menuitem', { name: 'World' })).toHaveAttribute(
     'aria-current',
@@ -69,17 +71,20 @@ test('Quizzes menu exposes all destinations and enters the selected quiz', async
   ]);
   await links.filter({ hasText: /^Asia$/ }).click();
   await expect(page).toHaveURL(/\?quiz=asia&select=1$/);
+  const dialog = page.getByRole('dialog', { name: 'Asia UN Countries' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Close quiz details' }).click();
   await trigger.click();
   await expect(page.getByRole('menu')).toBeVisible();
   await expect(
     page.getByRole('menu').getByRole('menuitem', { name: 'Asia' }),
   ).toHaveAttribute('aria-current', 'page');
-  await trigger.click();
+  await page.getByRole('menu').getByRole('menuitem', { name: 'Asia' }).click();
   await expect(page.getByRole('button', { name: 'Start quiz' })).toHaveCount(0);
-  const dialog = page.getByRole('dialog', { name: 'Asia UN Countries' });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByText('48 locations')).toBeVisible();
-  await dialog
+  const asiaDialog = page.getByRole('dialog', { name: 'Asia UN Countries' });
+  await expect(asiaDialog).toBeVisible();
+  await expect(asiaDialog.getByText('48 locations')).toBeVisible();
+  await asiaDialog
     .getByRole('button', { name: 'Start Asia UN Countries Quiz' })
     .click();
   await expect(page.locator('.active-player .quiz-name')).toHaveText(
@@ -206,7 +211,7 @@ test('mobile Quizzes menu reaches and clicks the final quiz', async ({
   await page.goto('/TerraDash/');
   const mobileNav = page.getByRole('navigation', { name: 'Quizzes' });
   await mobileNav.getByRole('button', { name: /Quizzes/ }).click();
-  await mobileNav.getByRole('menuitem', { name: 'Non-UN' }).click();
+  await mobileNav.getByRole('menuitem', { name: nonUnTitle }).click();
   await expect(page).toHaveURL(/\/TerraDash\/\?quiz=non-un&select=1$/);
   await expect(page.getByRole('button', { name: /Quizzes/ })).toBeVisible();
 });
@@ -239,6 +244,12 @@ test('home composition captures wide and mobile surfaces', async ({
           disclaimerBox.right <= footerBox.right
         );
       })(),
+      guidance: [
+        ...document.querySelectorAll<HTMLElement>('.home-guidance li'),
+      ].map((item) => {
+        const box = item.getBoundingClientRect();
+        return { left: box.left, top: box.top, width: box.width };
+      }),
     };
   });
   expect(wideBounds.heroLeft).toBe(wideBounds.gridLeft);
@@ -250,6 +261,9 @@ test('home composition captures wide and mobile surfaces', async ({
     wideBounds.navigationRight,
   );
   expect(wideBounds.disclaimerContained).toBe(true);
+  expect(wideBounds.guidance).toHaveLength(4);
+  expect(new Set(wideBounds.guidance.map(({ left }) => left)).size).toBe(1);
+  expect(wideBounds.guidance.every(({ width }) => width <= 550)).toBe(true);
   await page.getByRole('button', { name: /Quizzes/ }).click();
   await expect(page.getByRole('menu')).toBeVisible();
   await page.screenshot({
@@ -266,7 +280,32 @@ test('home composition captures wide and mobile surfaces', async ({
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/TerraDash/');
   await page.getByRole('button', { name: /Quizzes/ }).click();
-  await expect(page.getByRole('menu')).toBeVisible();
+  const mobileMenu = page.getByRole('menu');
+  await expect(mobileMenu).toBeVisible();
+  await expect(
+    mobileMenu.getByRole('menuitem', { name: nonUnTitle }),
+  ).toHaveText(nonUnTitle);
+  const menuBounds = await mobileMenu.evaluate((element) => {
+    const menuBox = element.getBoundingClientRect();
+    const items = [
+      ...element.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    ];
+    return {
+      menu: { left: menuBox.left, right: menuBox.right },
+      items: items.map((item) => {
+        const box = item.getBoundingClientRect();
+        return { left: box.left, right: box.right };
+      }),
+      viewport: innerWidth,
+    };
+  });
+  expect(menuBounds.menu.left).toBeGreaterThanOrEqual(0);
+  expect(menuBounds.menu.right).toBeLessThanOrEqual(menuBounds.viewport);
+  expect(
+    menuBounds.items.every(
+      ({ left, right }) => left >= 0 && right <= menuBounds.viewport,
+    ),
+  ).toBe(true);
   await page.screenshot({
     path: testInfo.outputPath('home-mobile-dropdown.png'),
     fullPage: true,
@@ -285,12 +324,20 @@ test('home composition captures wide and mobile surfaces', async ({
     ),
     pageScrollWidth: document.documentElement.scrollWidth,
     pageClientWidth: document.documentElement.clientWidth,
+    guidance: [
+      ...document.querySelectorAll<HTMLElement>('.home-guidance li'),
+    ].map((item) => {
+      const box = item.getBoundingClientRect();
+      return { left: box.left, top: box.top };
+    }),
   }));
   expect(mobileBounds.gridWidth).toBeLessThanOrEqual(mobileBounds.viewport);
   expect(mobileBounds.minCardWidth).toBeGreaterThanOrEqual(140);
   expect(mobileBounds.pageScrollWidth).toBeLessThanOrEqual(
     mobileBounds.pageClientWidth,
   );
+  expect(mobileBounds.guidance).toHaveLength(4);
+  expect(new Set(mobileBounds.guidance.map(({ left }) => left)).size).toBe(1);
   await page.screenshot({
     path: testInfo.outputPath('home-mobile.png'),
     fullPage: true,
