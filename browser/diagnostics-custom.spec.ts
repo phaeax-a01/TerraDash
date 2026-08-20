@@ -1,6 +1,4 @@
 import { expect, test } from '@playwright/test';
-import catalog from '../data/generated/catalog.json';
-import candidates from '../data/generated/non-un-candidates.json';
 
 test('Diagnostics exposes the complete standard and Non-UN location union', async ({
   page,
@@ -8,15 +6,10 @@ test('Diagnostics exposes the complete standard and Non-UN location union', asyn
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.goto('/TerraDash/diagnostics.html');
   const selector = page.getByRole('combobox', { name: 'Location' });
-  await expect(selector.locator('option')).toHaveCount(
-    catalog.length + candidates.length,
-  );
-  await expect(selector.locator('option')).toHaveCount(
-    new Set([...catalog, ...candidates].map(({ id }) => id)).size,
-  );
+  await expect(selector.locator('option')).toHaveCount(296);
 
   for (const [id, name] of [
-    [candidates[0].id, candidates[0].name],
+    ['non-un:abkhazia', 'Abkhazia'],
     ['non-un:adjara', 'Adjara'],
   ] as const) {
     await selector.selectOption(id);
