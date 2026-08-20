@@ -145,16 +145,13 @@ export function QuizPlayer({
     | undefined
   >(undefined);
   const submitting = useRef(false);
-  const suggestions = useMemo(
-    () => {
-      const allowedIds = new Set(locationIds);
-      return suggestionsFor(
-        catalog.filter((location) => allowedIds.has(location.id)),
-        text,
-      );
-    },
-    [catalog, locationIds, text],
-  );
+  const suggestions = useMemo(() => {
+    const allowedIds = new Set(locationIds);
+    return suggestionsFor(
+      catalog.filter((location) => allowedIds.has(location.id)),
+      text,
+    );
+  }, [catalog, locationIds, text]);
   const hasQuery = text.trim().length > 0;
   const exactMatch = suggestions.some(
     (location) => countryNameKey(location.name) === countryNameKey(text),

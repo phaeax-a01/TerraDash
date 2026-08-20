@@ -66,7 +66,9 @@ test('autocomplete only exposes locations in the active quiz', async ({
 }) => {
   await page.goto('/TerraDash/?quiz=asia');
   await page.getByRole('button', { name: 'Asia UN Countries' }).click();
-  await page.getByRole('button', { name: 'Start Asia UN Countries Quiz' }).click();
+  await page
+    .getByRole('button', { name: 'Start Asia UN Countries Quiz' })
+    .click();
 
   const input = page.getByRole('combobox', { name: 'Location name' });
   await input.fill('Albania');
