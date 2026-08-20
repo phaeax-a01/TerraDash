@@ -42,58 +42,105 @@ main.standalone-page {
   min-height: 100dvh;
   overflow: visible;
 }
+.app-shell {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+main.app-shell:has(.active-player) {
+  height: 100dvh;
+  overflow: hidden;
+}
 .app-header {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  justify-content: space-between;
-  min-height: 2.25rem;
-  padding-inline: var(--content-gutter);
-  border-bottom: 1px solid #263650;
-  background: #0d1525;
+  gap: 1rem;
+  height: 4.5rem;
+  min-height: 4.5rem;
+  padding: 0.7rem clamp(0.8rem, 2vw, 1.5rem);
+  border: 1px solid #263650;
+  border-radius: 0.85rem;
+  background: linear-gradient(110deg, #12233a, #0d1525 62%);
+  box-shadow: 0 0.7rem 2rem #0003;
 }
 .app-brand {
+  display: grid;
+  grid-template-columns: 2.2rem auto;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 0.1rem;
   color: #e8eef7;
-  font-size: 1rem;
-  font-weight: 800;
   text-decoration: none;
+}
+.app-brand img {
+  grid-row: span 2;
+  width: 2rem;
+  height: 2rem;
+}
+.app-brand strong {
+  color: #f8fbff;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.app-brand span {
+  color: #7dd3fc;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
 }
 .app-header nav {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.2rem;
 }
 .app-header .quiz-navigation {
   flex: 1 1 auto;
-  justify-content: center;
+  justify-content: flex-start;
   min-width: 0;
   overflow-x: auto;
-  padding: 0.25rem 0.75rem;
+  padding: 0.3rem;
   scrollbar-width: thin;
 }
 .app-header nav a {
   flex: 0 0 auto;
+  padding: 0.35rem 0.25rem;
+  border-radius: 0.5rem;
   color: #a9b8cc;
-  font-size: 0.8rem;
+  font-size: 0.62rem;
+  font-weight: 700;
   text-decoration: none;
 }
 .app-header nav a:hover,
 .app-header nav a[aria-current='page'] {
   color: #7dd3fc;
+  background: #1b3655;
+}
+.app-header .utility-navigation {
+  flex: 0 0 auto;
+  padding-left: clamp(0.4rem, 1vw, 1rem);
+  border-left: 1px solid #34506f;
+}
+.app-header .utility-navigation a {
+  color: #dbeafe;
+  font-size: 0.72rem;
 }
 .app-footer {
   display: flex;
   flex: 0 0 auto;
   justify-content: space-between;
-  gap: 1rem;
-  min-height: 3rem;
+  gap: 1.5rem;
+  min-height: 4rem;
   align-items: center;
-  padding: 0.65rem var(--content-gutter);
-  border-top: 1px solid #263650;
-  background: #0d1525;
+  margin-top: 0.6rem;
+  padding: 0.8rem clamp(0.8rem, 2vw, 1.5rem);
+  border: 1px solid #263650;
+  border-radius: 0.85rem;
+  background: #0d1829;
   color: #71839c;
   font-size: 0.72rem;
 }
-
 .high-score-panel {
   margin: 1.5rem 0;
   padding: 1rem;
@@ -148,6 +195,21 @@ main.standalone-page {
 .standalone-page > .high-score-page {
   flex: 1 0 auto;
 }
+.footer-brand,
+.footer-meta {
+  display: grid;
+  gap: 0.15rem;
+}
+.footer-brand strong {
+  color: #dbeafe;
+  font-size: 0.85rem;
+}
+.footer-brand span {
+  color: #7dd3fc;
+}
+.footer-meta {
+  text-align: right;
+}
 .eyebrow {
   color: #7dd3fc;
   font-size: 0.75rem;
@@ -175,18 +237,20 @@ h2 {
 }
 .home-page {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow: visible;
   gap: var(--home-content-gap);
   width: 100%;
-  min-height: 0;
+  min-height: auto;
   margin: 0;
   padding: clamp(1.25rem, 4vw, 4rem);
   overflow-y: auto;
 }
 .home-page > * {
-  width: min(100%, 54rem);
+  align-self: center;
+  width: min(100%, 78rem);
   margin-right: auto;
   margin-left: auto;
 }
@@ -196,16 +260,35 @@ h2 {
 .home-page > h1 {
   margin-block: 0;
 }
+.home-graphic {
+  display: flex;
+  justify-content: center;
+  color: #7dd3fc;
+  opacity: 0.85;
+}
+.home-graphic svg {
+  width: min(100%, 18rem);
+  height: 3.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+.home-graphic circle {
+  fill: #f5b942;
+  stroke: none;
+}
 .quiz-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--home-content-gap);
   margin: 0;
 }
 .quiz-option {
   display: grid;
   gap: 0.35rem;
-  min-height: 8rem;
+  min-height: 12rem;
   padding: 0;
   overflow: hidden;
   border: 1px solid #344967;
@@ -217,7 +300,7 @@ h2 {
 }
 .quiz-option-thumbnail {
   display: block;
-  height: 4rem;
+  height: clamp(6rem, 9vw, 8rem);
   overflow: hidden;
   background: linear-gradient(135deg, #102d4a, #071a2b);
 }
@@ -268,18 +351,56 @@ h2 {
 .quiz-option > span:not(.quiz-option-thumbnail) {
   margin-bottom: 0.75rem;
 }
+.quiz-option .quiz-option-description {
+  margin-top: -0.15rem;
+  margin-bottom: 0.75rem;
+  color: #9fb0c5;
+  font-size: 0.7rem;
+  line-height: 1.25;
+}
 .quiz-option:hover,
 .quiz-option:focus-visible {
   border-color: #7dd3fc;
   background: #172840;
 }
 .quiz-option strong {
-  font-size: 0.85rem;
+  font-size: clamp(0.9rem, 1.2vw, 1.05rem);
 }
 .quiz-option span,
 .quiz-name {
   color: #9fb0c5;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
+}
+.quiz-results {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  width: min(100%, 52rem);
+  min-height: auto;
+  overflow: visible;
+  margin: 0.8rem auto;
+  padding: clamp(1rem, 3vw, 2rem);
+  border-color: #385778;
+  border-radius: 1rem;
+  background: radial-gradient(circle at 50% 0, #1b3554, #111c2e 55%);
+  box-shadow: 0 1rem 3rem #0004;
+}
+.quiz-results .completion-header {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.quiz-results .completion-header h1 {
+  margin-top: 0.25rem;
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+}
+.quiz-results .completion-header .quiz-name {
+  position: static;
+  margin: 0;
+}
+.quiz-results .completion-header .quiz-prompt {
+  gap: 0.35rem;
 }
 .quiz-dialog-backdrop {
   position: fixed;
@@ -757,7 +878,11 @@ input {
   display: grid;
   justify-items: center;
   gap: 0.2rem;
-  margin: 1.35rem 0 1.5rem;
+  margin: clamp(1rem, 3vw, 2rem) 0;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid #345273;
+  border-radius: 0.8rem;
+  background: #0c1728aa;
   text-align: center;
 }
 .result-score-label {
@@ -808,8 +933,9 @@ input {
 .results-grid div {
   min-width: 0;
   padding: clamp(0.55rem, 2vw, 0.75rem);
-  border: 1px solid #263650;
-  border-radius: 0.4rem;
+  border: 1px solid #345273;
+  border-radius: 0.65rem;
+  background: #172940aa;
 }
 .results-grid dt {
   color: #a9b8cc;
@@ -820,6 +946,13 @@ input {
   font-size: clamp(1rem, 4vw, 1.4rem);
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+.quiz-results > .primary-action {
+  align-self: center;
+  min-width: 10rem;
+  margin-top: 0.5rem;
+  border: 1px solid #9bdff8;
+  box-shadow: 0 0.4rem 1.2rem #0004;
 }
 .map-frame {
   overflow: hidden;
@@ -960,6 +1093,25 @@ input {
 }
 @media (prefers-reduced-motion: reduce) {
 }
+@media (min-width: 601px) and (max-width: 1100px) {
+  .app-header {
+    gap: 0.5rem;
+    padding-inline: 0.7rem;
+  }
+  .app-header nav {
+    gap: 0.2rem;
+  }
+  .app-header nav a {
+    padding-inline: 0.4rem;
+    font-size: 0.68rem;
+  }
+  .app-header .utility-navigation {
+    padding-left: 0.4rem;
+  }
+  .app-header .utility-navigation a {
+    font-size: 0.65rem;
+  }
+}
 @media (max-width: 600px) {
   main {
     width: calc(100% - 2 * var(--page-gutter));
@@ -968,8 +1120,24 @@ input {
     font-size: 0.65rem;
   }
   .app-header {
-    gap: 0.5rem;
-    padding-inline: 0;
+    gap: 0.45rem;
+    height: 4.75rem;
+    min-height: 4.75rem;
+    padding-inline: 0.55rem;
+    border-radius: 0.65rem;
+  }
+  .app-brand {
+    grid-template-columns: 1.65rem auto;
+  }
+  .app-brand img {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  .app-brand strong {
+    font-size: 1rem;
+  }
+  .app-brand span {
+    font-size: 0.42rem;
   }
   .app-header .quiz-navigation {
     justify-content: flex-start;
@@ -978,6 +1146,37 @@ input {
   }
   .app-header .utility-navigation {
     display: none;
+  }
+  .quiz-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+  .quiz-option {
+    min-height: 9.5rem;
+  }
+  .quiz-option-thumbnail {
+    height: 5rem;
+  }
+  .app-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .footer-meta {
+    text-align: left;
+  }
+  .quiz-results {
+    margin-block: 0.5rem;
+    padding: 1rem;
+  }
+  .results-grid {
+    gap: 0.4rem;
+  }
+  .results-grid dt {
+    font-size: 0.68rem;
+  }
+  .results-grid dd {
+    font-size: 1rem;
   }
   .home-page {
     padding: 1.25rem 0.25rem;
