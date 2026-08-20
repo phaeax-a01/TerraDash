@@ -792,12 +792,23 @@ describe('QuizPlayer integration', () => {
         const input = container.querySelector(
           '[role="combobox"]',
         ) as HTMLInputElement;
-        input.value = 'Br';
+        const currentId = container
+          .querySelector('[data-map-id]')
+          ?.getAttribute('data-map-id');
+        input.value = currentId === 'iso:AAA' ? 'Br' : 'Al';
         input.dispatchEvent(new Event('input', { bubbles: true }));
       });
       await act(async () =>
         [...container.querySelectorAll('[role="option"]')]
-          .find((option) => option.textContent === 'Bravo')!
+          .find(
+            (option) =>
+              option.textContent ===
+              (container
+                .querySelector('[data-map-id]')
+                ?.getAttribute('data-map-id') === 'iso:AAA'
+                ? 'Bravo'
+                : 'Alpha'),
+          )!
           .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
       );
       await act(async () =>
@@ -813,7 +824,10 @@ describe('QuizPlayer integration', () => {
   });
 
   it('keeps invalid text attempt-free, scores a wrong-then-correct run, and restarts cleanly', async () => {
-    const oneLocationQuiz = { id: 'single', locationIds: ['iso:AAA'] };
+    const oneLocationQuiz = {
+      id: 'single',
+      locationIds: catalog.map(({ id }) => id),
+    };
     const container = document.createElement('div');
     document.body.append(container);
     root = createRoot(container);
@@ -897,16 +911,23 @@ describe('QuizPlayer integration', () => {
     await act(async () =>
       (container.querySelector('form button') as HTMLButtonElement).click(),
     );
+    await act(async () => {
+      input.value = 'Bravo';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      (container.querySelector('form button') as HTMLButtonElement).click(),
+    );
     expect(
       container.querySelector('.completion-header .quiz-feedback'),
     ).toBeTruthy();
     expect(container.textContent).toContain('Run complete');
     expect(container.querySelector('.active-player')).toBeNull();
     expect(container.querySelector('.full-bleed-map')).toBeNull();
-    expect(container.textContent).toContain('50.00%');
+    expect(container.textContent).toContain('75.00%');
     expect(container.textContent).toContain('Score');
     expect(container.querySelector('.result-score strong')?.textContent).toBe(
-      '5000',
+      '7500',
     );
     expect(
       [...container.querySelectorAll('.results-grid dt')].map(
