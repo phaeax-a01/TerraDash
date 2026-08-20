@@ -273,6 +273,14 @@ function insetPolygonData(geometry, featureId) {
     };
   });
 }
+function buildGeometryFeature(geometry, featureId, mode = 'main') {
+  const paths = geometryPaths(geometry, mode === 'inset' ? 0.05 : 0.55);
+  return {
+    paths,
+    polygons:
+      mode === 'inset' ? insetPolygonData(geometry, featureId) : undefined,
+  };
+}
 function ringPath(ring, tolerance = 0.55) {
   const simplified = simplify(ring.map(project), tolerance);
   return (
@@ -306,7 +314,10 @@ function featureKey(feature) {
   );
 }
 const features = source.features.map((feature) => {
-  const paths = geometryPaths(feature.geometry);
+  const { paths } = buildGeometryFeature(
+    feature.geometry,
+    `ne:${feature.properties.NE_ID}`,
+  );
   const points = pathPoints(paths);
   const id = `ne:${feature.properties.NE_ID}`;
   const anchor =
@@ -344,11 +355,12 @@ const supplementalFeatures = SUPPLEMENTAL_SOURCES.flatMap((definition) =>
     const p = feature.properties;
     const sourceId = p.NE_ID ?? p.ne_id ?? p.adm1_code;
     const id = `ne:${definition.id}:${sourceId}`;
-    const paths = geometryPaths(feature.geometry);
+    const { paths } = buildGeometryFeature(feature.geometry, id);
     const points = pathPoints(paths);
     return {
       id,
       source: definition.id,
+      geometry: feature.geometry,
       keys: [
         p.iso_3166_2,
         p.ISO_A2,
@@ -535,6 +547,31 @@ if (
   new Set(locations.map((x) => x.iso3)).size !== 195
 )
   throw new Error('Catalog must contain exactly 195 unique ISO3 locations');
+const playableLocations = [...locations, ...nonUnCandidates];
+const playableLocationIds = playableLocations.map(({ id }) => id);
+const mainFeatureIds = new Set(
+  [...features, ...supplementalFeatures].flatMap(({ id, parts = [] }) => [
+    id,
+    ...parts.map(({ id: partId }) => partId),
+  ]),
+);
+if (
+  playableLocations.length !== 296 ||
+  new Set(playableLocationIds).size !== playableLocations.length
+)
+  throw new Error('Playable catalog must contain exactly 296 unique locations');
+const playableLocationFeatureIds = Object.fromEntries(
+  playableLocations.map((location) => [location.id, location.geometryRefs]),
+);
+if (
+  Object.keys(playableLocationFeatureIds).length !== playableLocations.length ||
+  playableLocations.some((location) =>
+    location.geometryRefs.some((ref) => !mainFeatureIds.has(ref)),
+  )
+)
+  throw new Error(
+    'Every playable location must resolve to generated main geometry',
+  );
 const map = {
   width: WIDTH,
   height: HEIGHT,
@@ -550,6 +587,7 @@ const map = {
   },
   sourceFeatureIds: features.map((feature) => feature.id),
   supplementalFeatureIds: supplementalFeatures.map((feature) => feature.id),
+  locationFeatureIds: playableLocationFeatureIds,
   features: Object.fromEntries(
     [...features, ...supplementalFeatures].flatMap(
       ({ id, paths, anchor, bounds, parts = [] }) => [
@@ -599,9 +637,7 @@ fs.writeFileSync(
       supplementalSources: SUPPLEMENTAL_SOURCES,
       generatedAt: 'deterministic',
       featureIds: Object.keys(map.features),
-      locations: Object.fromEntries(
-        locations.map((x) => [x.id, x.geometryRefs]),
-      ),
+      locations: playableLocationFeatureIds,
       nonUnCandidates: Object.fromEntries(
         nonUnCandidates.map((x) => [x.name, x.geometryRefs]),
       ),
@@ -620,8 +656,11 @@ fs.writeFileSync(
 );
 const insetFeatures = insetSource.features.map((feature) => {
   const id = `ne:${feature.properties.NE_ID}`;
-  const paths = geometryPaths(feature.geometry, 0.2);
-  const polygons = insetPolygonData(feature.geometry, id);
+  const { paths, polygons } = buildGeometryFeature(
+    feature.geometry,
+    id,
+    'inset',
+  );
   const points = pathPoints(paths);
   return {
     id,
@@ -635,6 +674,26 @@ const insetFeatures = insetSource.features.map((feature) => {
     bounds: bounds(points),
   };
 });
+const nonUnInsetFeatureIds = new Set(
+  nonUnCandidates.flatMap(({ geometryRefs }) => geometryRefs),
+);
+const supplementalInsetFeatures = supplementalFeatures
+  .filter(({ id }) => nonUnInsetFeatureIds.has(id))
+  .map((feature) => {
+    const { paths, polygons } = buildGeometryFeature(
+      feature.geometry,
+      feature.id,
+      'inset',
+    );
+    const points = pathPoints(paths);
+    return {
+      id: feature.id,
+      paths,
+      polygons,
+      anchor: feature.anchor,
+      bounds: bounds(points),
+    };
+  });
 const insetFeaturesByKey = new Map();
 for (const feature of insetFeatures)
   for (const key of new Set(feature.keys))
@@ -642,38 +701,57 @@ for (const feature of insetFeatures)
       ...(insetFeaturesByKey.get(key) ?? []),
       feature,
     ]);
+const insetFeaturesById = new Map(
+  [...insetFeatures, ...supplementalInsetFeatures].map((feature) => [
+    feature.id,
+    feature,
+  ]),
+);
 const insetLocationFeatures = Object.fromEntries(
-  locations.map((location) => {
-    const matches = insetFeaturesByKey.get(location.iso3) ?? [];
-    if (!matches.length)
+  playableLocations.map((location) => {
+    const refs = location.id.startsWith('non-un:')
+      ? location.geometryRefs
+      : (insetFeaturesByKey.get(location.iso3) ?? []).map(({ id }) => id);
+    if (!refs.length || refs.some((id) => !insetFeaturesById.has(id)))
       throw new Error(
-        `No Natural Earth inset feature for ${location.iso3} (${location.name})`,
+        `No exact inset feature for every geometry ref in ${location.id}`,
       );
-    return [location.id, matches.map(({ id }) => id)];
+    return [location.id, refs];
   }),
 );
+if (
+  Object.keys(insetLocationFeatures).length !== playableLocations.length ||
+  new Set(Object.keys(insetLocationFeatures)).size !== playableLocations.length
+)
+  throw new Error(
+    'Inset location index must have exact playable-location parity',
+  );
 const inset = {
   width: WIDTH,
   height: HEIGHT,
   source: {
-    product: 'Natural Earth Admin 0 countries',
+    product:
+      'Natural Earth Admin 0 countries plus supplemental Admin-1/map-unit/map-subunit regions',
     version: 'v5.1.1',
     scale: '1:10m',
     url: INSET_SOURCE_URL,
     sha256: INSET_SOURCE_SHA256,
+    supplementalSources: SUPPLEMENTAL_SOURCES,
     license: 'Public domain',
     disclaimer:
       'Inset boundaries are shown for gameplay visualization and do not imply endorsement of any boundary claim.',
   },
   selection: {
-    rule: 'all quiz-eligible catalog locations plus their source features; all features are retained because the catalog covers all 195 locations',
-    catalogLocations: locations.length,
+    rule: 'all quiz-eligible catalog locations plus every exact supplemental feature referenced by a Non-UN candidate',
+    catalogLocations: locations.length + nonUnCandidates.length,
+    standardLocations: locations.length,
+    nonUnCandidates: nonUnCandidates.length,
     neighborPaddingProjectedUnits: 24,
   },
   sourceFeatureIds: insetFeatures.map(({ id }) => id),
   locationFeatureIds: insetLocationFeatures,
   features: Object.fromEntries(
-    insetFeatures.map(
+    [...insetFeatures, ...supplementalInsetFeatures].map(
       ({ id, paths, polygons, anchor, bounds: featureBounds }) => [
         id,
         { paths, polygons, anchor, bounds: featureBounds },

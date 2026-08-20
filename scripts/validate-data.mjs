@@ -14,6 +14,8 @@ const insetSource = JSON.parse(
   fs.readFileSync('data/source/ne_10m_admin_0_countries.geojson'),
 );
 const ids = new Set(catalog.map((item) => item.id));
+const playable = [...catalog, ...candidates];
+const playableIds = new Set(playable.map((item) => item.id));
 if (catalog.length !== 195 || ids.size !== 195)
   throw new Error('Expected 195 unique catalog entries');
 if (new Set(catalog.map((item) => item.iso3)).size !== 195)
@@ -25,12 +27,19 @@ if (
   throw new Error('Quiz does not resolve to catalog');
 if (map.sourceFeatureIds.length !== source.features.length)
   throw new Error('Base layer does not include every source feature');
+if (map.sourceFeatureIds.some((id) => map.supplementalFeatureIds.includes(id)))
+  throw new Error('Base source index must exclude supplemental exact features');
 if (new Set(map.sourceFeatureIds).size !== source.features.length)
   throw new Error('Base feature IDs are not stable and unique');
 if (
   map.supplementalFeatureIds.length !== new Set(map.supplementalFeatureIds).size
 )
   throw new Error('Supplemental feature IDs are not stable and unique');
+if (
+  map.supplementalFeatureIds.some((id) => !map.features[id]) ||
+  inset?.sourceFeatureIds?.some((id) => !inset.features[id])
+)
+  throw new Error('Generated feature indexes contain unknown feature IDs');
 for (const [featureId, feature] of Object.entries(map.features)) {
   if (!feature.paths.length || !feature.bounds || feature.bounds.length !== 4)
     throw new Error(`Invalid base feature ${featureId}`);
@@ -49,6 +58,8 @@ for (const item of catalog) {
 }
 if (candidates.length !== 101)
   throw new Error('Expected exactly 101 non-UN candidates');
+if (playable.length !== 296 || playableIds.size !== 296)
+  throw new Error('Expected exactly 296 unique playable locations');
 for (const candidate of candidates) {
   if (
     !candidate.geometryRefs.length ||
@@ -64,6 +75,37 @@ for (const candidate of candidates) {
     );
 }
 if (
+  Object.keys(map.locationFeatureIds ?? {}).length !== 296 ||
+  Object.keys(inset.locationFeatureIds ?? {}).length !== 296
+)
+  throw new Error(
+    'Main and inset indexes must cover exactly 296 playable locations',
+  );
+if (
+  new Set(Object.keys(map.locationFeatureIds ?? {})).size !== 296 ||
+  new Set(Object.keys(inset.locationFeatureIds ?? {})).size !== 296 ||
+  JSON.stringify(Object.keys(map.locationFeatureIds).sort()) !==
+    JSON.stringify(Object.keys(inset.locationFeatureIds).sort())
+)
+  throw new Error('Main and inset indexes must have identical playable IDs');
+for (const item of playable) {
+  const mainRefs = map.locationFeatureIds[item.id];
+  const insetRefs = inset.locationFeatureIds[item.id];
+  if (!mainRefs?.length || !insetRefs?.length)
+    throw new Error(`Missing playable geometry refs for ${item.id}`);
+  if (
+    mainRefs.some((id) => !map.features[id]) ||
+    insetRefs.some((id) => !inset.features[id])
+  )
+    throw new Error(`Unresolvable playable geometry ref for ${item.id}`);
+  if (
+    item.id.startsWith('non-un:') &&
+    (JSON.stringify(mainRefs) !== JSON.stringify(item.geometryRefs) ||
+      JSON.stringify(insetRefs) !== JSON.stringify(item.geometryRefs))
+  )
+    throw new Error(`Custom geometry ref parity mismatch for ${item.id}`);
+}
+if (
   inset.width !== map.width ||
   inset.height !== map.height ||
   inset.sourceFeatureIds.length !== insetSource.features.length ||
@@ -71,6 +113,12 @@ if (
 )
   throw new Error(
     'Inset projection or feature IDs are not stable and complete',
+  );
+if (
+  inset.sourceFeatureIds.some((id) => map.supplementalFeatureIds.includes(id))
+)
+  throw new Error(
+    'Inset source index must exclude supplemental exact features',
   );
 for (const item of catalog) {
   const refs = inset.locationFeatureIds[item.id];

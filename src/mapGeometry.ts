@@ -86,21 +86,12 @@ export function insetGeometryPaths(locationId: string): string[] {
 
 export function selectedInsetGeometryPaths(
   locationId: string,
-  geometryRefs: string[],
+  _geometryRefs: string[],
 ): InsetGeometryPath[] {
   const exactInsetPaths = classifyInsetGeometryPaths(locationId);
-  if (exactInsetPaths.length) return exactInsetPaths;
-  return highlightedGeometryPaths(geometryRefs).map((path, index) => {
-    const metrics = pathMetrics(path);
-    return {
-      path,
-      kind: 'polygon',
-      polygonId: `${locationId}:map:${index}`,
-      ringIds: [],
-      ...metrics,
-      area: Math.abs(pathArea(path)),
-    };
-  });
+  if (!exactInsetPaths.length)
+    throw new Error(`Missing high-resolution inset geometry for ${locationId}`);
+  return exactInsetPaths;
 }
 
 export function classifyInsetGeometryPaths(
@@ -110,9 +101,12 @@ export function classifyInsetGeometryPaths(
     inset.locationFeatureIds[
       locationId as keyof typeof inset.locationFeatureIds
     ];
-  if (!refs?.length) return [];
+  if (!refs?.length)
+    throw new Error(`Missing high-resolution inset geometry for ${locationId}`);
   return refs.flatMap((id) => {
     const feature = inset.features[id as keyof typeof inset.features];
+    if (!feature)
+      throw new Error(`Missing high-resolution inset feature ${id}`);
     return feature.polygons.map((polygon) => {
       const validRings = polygon.rings.filter(
         (ring) => ring.valid && hasRenderableArea(ring.path),
