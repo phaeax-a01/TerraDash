@@ -115,10 +115,13 @@ export function createEngineConfig(
     id: quiz.id,
     locationIds: Object.freeze([...quiz.locationIds]),
   });
+  const quizLocationIds = new Set(quiz.locationIds);
   const copiedCatalog = Object.freeze(
-    catalog.map((location) =>
-      Object.freeze({ id: location.id, name: location.name }),
-    ),
+    catalog
+      .filter((location) => quizLocationIds.has(location.id))
+      .map((location) =>
+        Object.freeze({ id: location.id, name: location.name }),
+      ),
   );
   return Object.freeze({
     quiz: copiedQuiz,

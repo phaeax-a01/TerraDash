@@ -110,7 +110,7 @@ export function QuizPlayer({
   onAutoStartHandled,
   renderQuizThumbnail,
 }: QuizPlayerProps) {
-  const { state, dispatch } = useQuiz();
+  const { state, dispatch, locationIds } = useQuiz();
   const [text, setText] = useState('');
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [activeSuggestion, setActiveSuggestion] = useState(0);
@@ -146,8 +146,14 @@ export function QuizPlayer({
   >(undefined);
   const submitting = useRef(false);
   const suggestions = useMemo(
-    () => suggestionsFor(catalog, text),
-    [catalog, text],
+    () => {
+      const allowedIds = new Set(locationIds);
+      return suggestionsFor(
+        catalog.filter((location) => allowedIds.has(location.id)),
+        text,
+      );
+    },
+    [catalog, locationIds, text],
   );
   const hasQuery = text.trim().length > 0;
   const exactMatch = suggestions.some(

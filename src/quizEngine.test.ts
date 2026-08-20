@@ -357,4 +357,28 @@ describe('quiz engine', () => {
       () => ((isolated as { rng: () => number }).rng = () => 0.9),
     ).toThrow();
   });
+  it('restricts answer resolution to the active quiz membership', () => {
+    const scoped = createEngineConfig(
+      { id: 'scoped', locationIds: ['iso:AAA'] },
+      catalog,
+      () => 0,
+    );
+    expect(scoped.catalog).toEqual([{ id: 'iso:AAA', name: 'Alpha' }]);
+    let state = reduceQuiz(
+      createIdleState(),
+      { type: 'start', now: 1 },
+      scoped,
+    ).state;
+    const transition = reduceQuiz(
+      state,
+      { type: 'submit', text: 'Bravo', now: 2 },
+      scoped,
+    );
+    state = transition.state;
+    expect(transition.event).toEqual({
+      type: 'rejected',
+      reason: 'invalid-answer',
+    });
+    expect(state.attempts).toBe(0);
+  });
 });

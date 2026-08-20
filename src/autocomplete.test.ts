@@ -37,4 +37,13 @@ describe('autocomplete suggestions', () => {
     expect(suggestionsFor(localized, 'cote divoire')).toEqual(localized);
     expect(suggestionsFor(localized, 'cote ivoire')).toEqual([]);
   });
+  it('supports a catalog already scoped to the active quiz', () => {
+    const regionalCatalog = catalog.filter(({ id }) => id !== 'b');
+    expect(suggestionsFor(regionalCatalog, 'br')).toEqual([]);
+    expect(suggestionsFor(regionalCatalog, 'al')).toEqual([
+      { id: 'd', name: 'Albatross' },
+      { id: 'a', name: 'Alpha' },
+      { id: 'c', name: 'Alpine' },
+    ]);
+  });
 });

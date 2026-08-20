@@ -60,3 +60,17 @@ test('selects and starts the non-UN quiz', async ({ page }) => {
   await page.goto('/TerraDash/?quiz=non-un&start=1');
   await expect(page.locator('.active-player .quiz-name')).toHaveText(title);
 });
+
+test('autocomplete only exposes locations in the active quiz', async ({
+  page,
+}) => {
+  await page.goto('/TerraDash/?quiz=asia');
+  await page.getByRole('button', { name: 'Asia UN Countries' }).click();
+  await page.getByRole('button', { name: 'Start Asia UN Countries Quiz' }).click();
+
+  const input = page.getByRole('combobox', { name: 'Location name' });
+  await input.fill('Albania');
+  await expect(page.getByRole('option', { name: 'Albania' })).toHaveCount(0);
+  await input.fill('Afghan');
+  await expect(page.getByRole('option', { name: 'Afghanistan' })).toBeVisible();
+});
