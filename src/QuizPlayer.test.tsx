@@ -769,7 +769,7 @@ describe('QuizPlayer integration', () => {
     root = createRoot(container);
     act(() => {
       root!.render(
-        <QuizProvider quiz={oneLocationQuiz} catalog={catalog} rng={() => 0}>
+        <QuizProvider quiz={oneLocationQuiz} catalog={catalog} rng={() => 0.9}>
           <QuizPlayer
             catalog={catalog}
             renderMap={(location) => <div data-map-id={location.id} />}
