@@ -133,9 +133,9 @@ export function QuizPlayer({
   const [newHighScoreId, setNewHighScoreId] = useState<string | undefined>();
   const [username, setUsername] = useState(getPlayerName);
   const recordedResult = useRef<number | null>(null);
-  const [selectedQuizOption, setSelectedQuizOption] = useState<QuizOption>(() =>
-    quizOptions.find((option) => option.id === initialSelectedQuizId),
-  );
+  const [selectedQuizOption, setSelectedQuizOption] = useState<
+    QuizOption | undefined
+  >(() => quizOptions.find((option) => option.id === initialSelectedQuizId));
   const feedbackTimer = useRef<number | undefined>(undefined);
   const [panelPlacement, setPanelPlacement] = useState<PanelPlacement>({
     left: 16,
