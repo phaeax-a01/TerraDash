@@ -424,7 +424,7 @@ describe('QuizPlayer integration', () => {
       ),
     );
     expect(container.textContent).toContain('canonical location');
-    expect(container.textContent).toContain('3 guesses remaining');
+    expect(container.textContent).toContain('2 guesses remaining');
     expect(container.querySelectorAll('[role="option"]')).toHaveLength(0);
   });
 
@@ -816,7 +816,7 @@ describe('QuizPlayer integration', () => {
     }
   });
 
-  it('keeps invalid text attempt-free, scores a wrong-then-correct run, and restarts cleanly', async () => {
+  it('keeps invalid text attempt-free and completes a two-target wrong-then-correct run', async () => {
     const oneLocationQuiz = {
       id: 'single',
       locationIds: catalog.map(({ id }) => id),
@@ -849,10 +849,11 @@ describe('QuizPlayer integration', () => {
       input.value = 'Br';
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await act(async () => {
-      input.value = 'Bravo';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    await act(async () =>
+      [...container.querySelectorAll('[role="option"]')]
+        .find((option) => option.textContent === 'Bravo')!
+        .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
+    );
     await act(async () => {
       const submit = container.querySelector(
         'form button',
@@ -867,16 +868,30 @@ describe('QuizPlayer integration', () => {
     ).toBe('iso:AAA');
     expect(container.querySelector('.active-player')).toBeTruthy();
     expect(container.querySelector('.full-bleed-map')).toBeTruthy();
-    expect(container.textContent).toContain(
-      'Incorrect. Try again; the answer is not revealed.',
-    );
+    expect(
+      container.querySelector('[aria-live="assertive"]')?.textContent,
+    ).toBe('Incorrect. Try again; the answer is not revealed.');
+    expect(
+      container.querySelector('.feedback-incorrect .feedback-x-first'),
+    ).not.toBeNull();
     await act(async () => Promise.resolve());
-    await act(async () => {
-      input.value = '';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    await act(async () =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+      ),
+    );
     expect(input.value).toBe('');
     expect(input.getAttribute('aria-activedescendant')).toBeNull();
+    await act(async () => {
+      input.value = 'Br';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(input.getAttribute('aria-activedescendant')).toBe(
+      'answer-option-iso:BBB',
+    );
+    expect(
+      document.getElementById(input.getAttribute('aria-activedescendant')!),
+    ).toBeTruthy();
     await act(async () => {
       input.value = 'Z';
       input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -885,6 +900,15 @@ describe('QuizPlayer integration', () => {
     expect(input.getAttribute('aria-expanded')).toBe('true');
     expect(container.querySelector('[role="status"]')?.textContent).toBe(
       'No matches',
+    );
+    await act(async () => {
+      input.value = 'Br';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      [...container.querySelectorAll('[role="option"]')]
+        .find((option) => option.textContent === 'Bravo')!
+        .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
     );
     await act(async () => {
       input.value = 'Bravo edited';
@@ -900,16 +924,29 @@ describe('QuizPlayer integration', () => {
       'Choose a canonical location from the suggestions or enter its exact name.',
     );
     await act(async () => {
-      input.value = 'Alpha';
+      input.value = 'Al';
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
+    expect(container.querySelectorAll('[aria-live="assertive"]')).toHaveLength(
+      1,
+    );
+    await act(async () =>
+      [...container.querySelectorAll('[role="option"]')]
+        .find((option) => option.textContent === 'Alpha')!
+        .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
+    );
     await act(async () =>
       (container.querySelector('form button') as HTMLButtonElement).click(),
     );
     await act(async () => {
-      input.value = 'Bravo';
+      input.value = 'Br';
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
+    await act(async () =>
+      [...container.querySelectorAll('[role="option"]')]
+        .find((option) => option.textContent === 'Bravo')!
+        .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
+    );
     await act(async () =>
       (container.querySelector('form button') as HTMLButtonElement).click(),
     );
@@ -959,7 +996,7 @@ describe('QuizPlayer integration', () => {
     expect(container.textContent).toContain('0:00');
   });
 
-  it('advances after three valid misses without revealing the answer and stops the timer', async () => {
+  it('finishes a two-target quiz after three valid misses per target and stops the timer', async () => {
     const clearInterval = vi.spyOn(window, 'clearInterval');
     const container = document.createElement('div');
     document.body.append(container);
