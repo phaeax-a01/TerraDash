@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useState } from 'react';
+import { StrictMode, type ReactNode, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import map from '../data/generated/map.json';
 import inset from '../data/generated/inset.json';
@@ -328,7 +328,7 @@ export function MapView({ active }: { active: Location }) {
   );
 }
 
-export function AppFooter() {
+export function AppFooter({ children }: { children?: ReactNode }) {
   return (
     <footer className="app-footer">
       <div className="footer-brand">
@@ -339,7 +339,107 @@ export function AppFooter() {
         <span>Open geography · timed quizzes</span>
         <span>Natural Earth data · public domain</span>
       </div>
+      {children}
     </footer>
+  );
+}
+
+function AppDisclaimer() {
+  return (
+    <p className="disclaimer">
+      Map data: Natural Earth Admin 0 boundary data, v5.1.1, 1:50m main map and
+      1:10m inset. Public domain. Boundaries are shown for gameplay
+      visualization and do not imply endorsement of any boundary claim.
+    </p>
+  );
+}
+
+function QuizMenu({ selectedQuizId }: { selectedQuizId?: string }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = 'quiz-menu';
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
+  return (
+    <div className="quiz-menu" ref={menuRef}>
+      <button
+        className="quiz-menu-trigger"
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        onClick={() => setOpen((value) => !value)}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setOpen(true);
+            requestAnimationFrame(() =>
+              menuRef.current
+                ?.querySelector<HTMLAnchorElement>('[role="menuitem"]')
+                ?.focus(),
+            );
+          }
+        }}
+      >
+        Quizzes <span aria-hidden="true">▾</span>
+      </button>
+      {open && (
+        <div className="quiz-menu-popover" id={menuId} role="menu">
+          {quizOptions.map((quiz) => (
+            <a
+              key={quiz.id}
+              role="menuitem"
+              aria-current={quiz.id === selectedQuizId ? 'page' : undefined}
+              href={`${import.meta.env.BASE_URL}?quiz=${encodeURIComponent(quiz.id)}&select=1`}
+              onClick={() => setOpen(false)}
+            >
+              {quiz.id === 'non-un'
+                ? 'Non-UN'
+                : quiz.name.replace(' UN Countries', '')}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function AppHeader({ selectedQuizId }: { selectedQuizId?: string }) {
+  return (
+    <header className="app-header">
+      <a
+        className="app-brand"
+        href={import.meta.env.BASE_URL}
+        aria-label="TerraDash home"
+      >
+        <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
+        <strong>TerraDash</strong>
+        <span>MAP YOUR KNOWLEDGE</span>
+      </a>
+      <nav className="quiz-navigation" aria-label="Quizzes">
+        <QuizMenu selectedQuizId={selectedQuizId} />
+      </nav>
+      <nav className="utility-navigation" aria-label="Utilities">
+        <a href={`${import.meta.env.BASE_URL}?page=high-scores`}>High Scores</a>
+        <a href={`${import.meta.env.BASE_URL}diagnostics.html`}>Diagnostics</a>
+      </nav>
+    </header>
   );
 }
 
@@ -386,17 +486,7 @@ export function HighScoresPage() {
   const scores = getAllHighScores();
   return (
     <main className="standalone-page">
-      <header className="app-header">
-        <a className="app-brand" href="./">
-          TerraDash
-        </a>
-        <nav className="utility-navigation" aria-label="Utilities">
-          <a href="./">Quizzes</a>
-          <a aria-current="page" href="?page=high-scores">
-            High Scores
-          </a>
-        </nav>
-      </header>
+      <AppHeader />
       <section className="high-score-page" aria-labelledby="high-scores-title">
         <p className="eyebrow">TERRADASH · RECORDS</p>
         <h1 id="high-scores-title">High Scores</h1>
@@ -410,7 +500,9 @@ export function HighScoresPage() {
           </section>
         ))}
       </section>
-      <AppFooter />
+      <AppFooter>
+        <AppDisclaimer />
+      </AppFooter>
     </main>
   );
 }
@@ -437,43 +529,18 @@ function App() {
       catalog={allCatalog}
     >
       <main className="app-shell">
-        <header className="app-header">
-          <a
-            className="app-brand"
-            href={import.meta.env.BASE_URL}
-            aria-label="TerraDash home"
-          >
-            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
-            <strong>TerraDash</strong>
-            <span>MAP YOUR KNOWLEDGE</span>
-          </a>
-          <nav className="quiz-navigation" aria-label="Quizzes">
-            {quizOptions.map((quiz) => (
-              <a
-                key={quiz.id}
-                aria-current={quiz.id === selectedQuiz.id ? 'page' : undefined}
-                href={`${import.meta.env.BASE_URL}?quiz=${encodeURIComponent(quiz.id)}`}
-                title={quiz.name}
-              >
-                {quiz.name.replace(' UN Countries', '')}
-              </a>
-            ))}
-          </nav>
-          <nav className="utility-navigation" aria-label="Utilities">
-            <a href={`${import.meta.env.BASE_URL}?page=high-scores`}>
-              High Scores
-            </a>
-            <a href={`${import.meta.env.BASE_URL}diagnostics.html`}>
-              Diagnostics
-            </a>
-          </nav>
-        </header>
+        <AppHeader selectedQuizId={selectedQuiz.id} />
         <QuizPlayer
           catalog={allCatalog}
           quizId={selectedQuiz.id}
           quizName={selectedQuiz.name}
           quizOptions={quizOptions}
           autoStart={autoStart}
+          initialSelectedQuizId={
+            new URLSearchParams(window.location.search).get('select') === '1'
+              ? selectedQuiz.id
+              : undefined
+          }
           onAutoStartHandled={() => setAutoStart(false)}
           onSelectQuiz={(quizId) => {
             setSelectedQuizId(quizId);
@@ -484,12 +551,9 @@ function App() {
           )}
           renderQuizThumbnail={(quiz) => <QuizThumbnail quiz={quiz} />}
         />
-        <p className="disclaimer">
-          Map data: Natural Earth Admin 0 boundary data, v5.1.1, 1:50m main map
-          and 1:10m inset. Public domain. Boundaries are shown for gameplay
-          visualization and do not imply endorsement of any boundary claim.
-        </p>
-        <AppFooter />
+        <AppFooter>
+          <AppDisclaimer />
+        </AppFooter>
       </main>
     </QuizProvider>
   );

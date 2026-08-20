@@ -42,6 +42,7 @@ type QuizPlayerProps = {
   onSelectQuiz?: (quizId: string) => void;
   autoStart?: boolean;
   onAutoStartHandled?: () => void;
+  initialSelectedQuizId?: string;
   renderQuizThumbnail?: (quiz: QuizOption) => ReactNode;
 };
 
@@ -49,7 +50,7 @@ type FeedbackTone = 'correct' | 'incorrect' | 'missed' | '';
 function quizDescription(quiz: QuizOption): string {
   if (quiz.id === 'world') return 'All UN Member and UN Observer states';
   if (quiz.id === 'non-un') {
-    return 'Non-UN countries, independent territories, and autonomous regions';
+    return 'Countries and regions listed in ISO 3166-1, UN M49, the List of Economies published by the World Bank Group, or under select categories in ISO 3166-2.';
   }
   const region = quiz.name.replace(/ UN Countries$/, '');
   return `UN Member and UN Observer states in ${region}`;
@@ -116,6 +117,7 @@ export function QuizPlayer({
   onSelectQuiz,
   autoStart = false,
   onAutoStartHandled,
+  initialSelectedQuizId,
   renderQuizThumbnail,
 }: QuizPlayerProps) {
   const { state, dispatch, locationIds } = useQuiz();
@@ -131,7 +133,9 @@ export function QuizPlayer({
   const [newHighScoreId, setNewHighScoreId] = useState<string | undefined>();
   const [username, setUsername] = useState(getPlayerName);
   const recordedResult = useRef<number | null>(null);
-  const [selectedQuizOption, setSelectedQuizOption] = useState<QuizOption>();
+  const [selectedQuizOption, setSelectedQuizOption] = useState<QuizOption>(() =>
+    quizOptions.find((option) => option.id === initialSelectedQuizId),
+  );
   const feedbackTimer = useRef<number | undefined>(undefined);
   const [panelPlacement, setPanelPlacement] = useState<PanelPlacement>({
     left: 16,
@@ -454,7 +458,6 @@ export function QuizPlayer({
   if (state.phase === 'idle') {
     return (
       <section className="player-card home-page" aria-labelledby="start-title">
-        <p className="eyebrow">TERRADASH · QUIZ</p>
         <div className="home-graphic" aria-hidden="true">
           <svg viewBox="0 0 240 64" focusable="false">
             <path d="M8 44c20-18 34-18 52-3s31 17 49 2 31-18 49-3 34 16 65-6" />
@@ -465,11 +468,12 @@ export function QuizPlayer({
           </svg>
         </div>
         <h1 id="start-title">Name every place on the map.</h1>
-        <p>
-          Choose a quiz, then identify every location with three attempts each.
-          Correct answers earn weighted credit; the run is timed, and missed
-          answers are not revealed.
-        </p>
+        <ul className="home-guidance" aria-label="How TerraDash works">
+          <li>Choose a quiz</li>
+          <li>Identify every location with three attempts each</li>
+          <li>Earn a score based on your time and accuracy</li>
+          <li>Improve your next run</li>
+        </ul>
         {quizOptions.length > 0 && (
           <div className="quiz-options" aria-label="Choose a quiz">
             {quizOptions.map((option) => (

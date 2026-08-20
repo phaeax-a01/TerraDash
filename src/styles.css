@@ -99,9 +99,8 @@ main.app-shell:has(.active-player) {
   flex: 1 1 auto;
   justify-content: flex-start;
   min-width: 0;
-  overflow-x: auto;
-  padding: 0.3rem;
-  scrollbar-width: thin;
+  overflow: visible;
+  padding: 0.3rem 0;
 }
 .app-header nav a {
   flex: 0 0 auto;
@@ -125,6 +124,53 @@ main.app-shell:has(.active-player) {
 .app-header .utility-navigation a {
   color: #dbeafe;
   font-size: 0.72rem;
+}
+.quiz-menu {
+  position: relative;
+}
+.quiz-menu-trigger {
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  color: #dbeafe;
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.quiz-menu-trigger:hover,
+.quiz-menu-trigger[aria-expanded='true'] {
+  color: #7dd3fc;
+  background: #1b3655;
+}
+.quiz-menu-popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  display: grid;
+  min-width: 15rem;
+  padding: 0.35rem;
+  border: 1px solid #34506f;
+  border-radius: 0.7rem;
+  background: #102238;
+  box-shadow: 0 1rem 2rem #0006;
+}
+.quiz-menu-popover a {
+  display: block;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.4rem;
+  color: #c7d6e8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.quiz-menu-popover a:hover,
+.quiz-menu-popover a[aria-current='page'] {
+  color: #7dd3fc;
+  background: #1b3655;
 }
 .app-footer {
   display: flex;
@@ -210,6 +256,10 @@ main.app-shell:has(.active-player) {
 .footer-meta {
   text-align: right;
 }
+.app-footer .disclaimer {
+  flex: 1 1 22rem;
+  max-width: 42rem;
+}
 .eyebrow {
   color: #7dd3fc;
   font-size: 0.75rem;
@@ -259,6 +309,23 @@ h2 {
 }
 .home-page > h1 {
   margin-block: 0;
+  font-size: clamp(1.8rem, 4vw, 3.6rem);
+}
+.home-guidance {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 1.5rem;
+  width: min(100%, 42rem);
+  margin: 0;
+  padding: 0;
+  color: #b9c9dc;
+  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  list-style: none;
+}
+.home-guidance li::before {
+  content: '•';
+  margin-right: 0.45rem;
+  color: #f5b942;
 }
 .home-graphic {
   display: flex;
@@ -454,9 +521,8 @@ h2 {
   letter-spacing: 0.04em;
 }
 .quiz-header .quiz-name {
-  position: absolute;
-  top: 0.45rem;
-  left: 0.65rem;
+  position: static;
+  overflow-wrap: anywhere;
 }
 .player-card > p {
   max-width: 60ch;
@@ -474,6 +540,9 @@ h2 {
   gap: 1rem;
   min-height: 4.25rem;
   padding-inline: 0.65rem;
+}
+.active-player .quiz-header {
+  align-items: flex-start;
 }
 .quiz-header h1 {
   font-size: clamp(1rem, 1.5vw, 1.3rem);
@@ -505,12 +574,14 @@ h2 {
 }
 .quiz-prompt-group {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
   min-width: 0;
   gap: 0.7rem;
 }
 .quiz-prompt {
   display: grid;
+  min-width: 0;
   gap: 0.3rem;
 }
 .quiz-prompt .attempts-remaining-label {
@@ -1141,8 +1212,7 @@ input {
   }
   .app-header .quiz-navigation {
     justify-content: flex-start;
-    gap: 0.75rem;
-    padding-inline: 0.25rem;
+    padding-inline: 0;
   }
   .app-header .utility-navigation {
     display: none;
@@ -1150,6 +1220,10 @@ input {
   .quiz-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.7rem;
+  }
+  .home-guidance {
+    grid-template-columns: 1fr;
+    font-size: 0.9rem;
   }
   .quiz-option {
     min-height: 9.5rem;
@@ -1161,6 +1235,10 @@ input {
     align-items: flex-start;
     flex-direction: column;
     gap: 0.55rem;
+  }
+  .app-footer .disclaimer {
+    max-width: none;
+    order: 3;
   }
   .footer-meta {
     text-align: left;
@@ -1182,18 +1260,23 @@ input {
     padding: 1.25rem 0.25rem;
   }
   .quiz-header {
-    display: block;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+    padding-block: 0.65rem;
   }
   .quiz-header .eyebrow {
     display: none;
   }
   .quiz-header h1 {
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   .quiz-status-bar {
     max-width: none;
-    justify-content: flex-end;
-    margin-top: 0.85rem;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-top: 0;
     gap: 0.75rem;
   }
   .map-stage {

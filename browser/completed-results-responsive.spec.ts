@@ -69,6 +69,21 @@ for (const viewport of [
     expect(reachability.documentHeight).toBeGreaterThan(
       reachability.viewportHeight,
     );
+    const disclaimerContained = await page
+      .locator('.app-footer .disclaimer')
+      .evaluate((disclaimer) => {
+        const footer = disclaimer
+          .closest('.app-footer')!
+          .getBoundingClientRect();
+        const text = disclaimer.getBoundingClientRect();
+        return (
+          text.left >= footer.left &&
+          text.right <= footer.right &&
+          text.top >= footer.top &&
+          text.bottom <= footer.bottom
+        );
+      });
+    expect(disclaimerContained).toBe(true);
     await page.screenshot({
       path: testInfo.outputPath(
         `completed-results-${viewport.width}x${viewport.height}.png`,
