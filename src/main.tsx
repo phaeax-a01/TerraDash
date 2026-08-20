@@ -331,8 +331,14 @@ export function MapView({ active }: { active: Location }) {
 export function AppFooter() {
   return (
     <footer className="app-footer">
-      <span>TerraDash</span>
-      <span>Geography in motion.</span>
+      <div className="footer-brand">
+        <strong>TerraDash</strong>
+        <span>Geography in motion.</span>
+      </div>
+      <div className="footer-meta">
+        <span>Open geography · timed quizzes</span>
+        <span>Natural Earth data · public domain</span>
+      </div>
     </footer>
   );
 }
@@ -430,10 +436,16 @@ function App() {
       quiz={selectedQuiz}
       catalog={allCatalog}
     >
-      <main>
+      <main className="app-shell">
         <header className="app-header">
-          <a className="app-brand" href={import.meta.env.BASE_URL}>
-            TerraDash
+          <a
+            className="app-brand"
+            href={import.meta.env.BASE_URL}
+            aria-label="TerraDash home"
+          >
+            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
+            <strong>TerraDash</strong>
+            <span>MAP YOUR KNOWLEDGE</span>
           </a>
           <nav className="quiz-navigation" aria-label="Quizzes">
             {quizOptions.map((quiz) => (

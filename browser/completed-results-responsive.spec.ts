@@ -42,6 +42,33 @@ for (const viewport of [
       'Accuracy',
     );
     await expect(page.locator('.results-grid dt').nth(2)).toHaveText('Missed');
+    const reachability = await page.evaluate(() => {
+      const playAgain = document.querySelector<HTMLButtonElement>(
+        '.quiz-results > .primary-action',
+      );
+      const footer = document.querySelector<HTMLElement>('.app-footer');
+      playAgain?.scrollIntoView({ block: 'center' });
+      const playAgainVisible = Boolean(
+        playAgain && playAgain.getBoundingClientRect().bottom <= innerHeight,
+      );
+      footer?.scrollIntoView({ block: 'center' });
+      const footerVisible = Boolean(
+        footer &&
+        footer.getBoundingClientRect().top >= 0 &&
+        footer.getBoundingClientRect().bottom <= innerHeight,
+      );
+      return {
+        playAgainVisible,
+        footerVisible,
+        documentHeight: document.documentElement.scrollHeight,
+        viewportHeight: innerHeight,
+      };
+    });
+    expect(reachability.playAgainVisible).toBe(true);
+    expect(reachability.footerVisible).toBe(true);
+    expect(reachability.documentHeight).toBeGreaterThan(
+      reachability.viewportHeight,
+    );
     await page.screenshot({
       path: testInfo.outputPath(
         `completed-results-${viewport.width}x${viewport.height}.png`,

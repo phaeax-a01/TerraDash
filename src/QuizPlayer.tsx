@@ -46,6 +46,14 @@ type QuizPlayerProps = {
 };
 
 type FeedbackTone = 'correct' | 'incorrect' | 'missed' | '';
+function quizDescription(quiz: QuizOption): string {
+  if (quiz.id === 'world') return 'All UN Member and UN Observer states';
+  if (quiz.id === 'non-un') {
+    return 'Non-UN countries, independent territories, and autonomous regions';
+  }
+  const region = quiz.name.replace(/ UN Countries$/, '');
+  return `UN Member and UN Observer states in ${region}`;
+}
 type TerraDashConsole = {
   completeQuiz?: () => 'completed' | 'ignored';
   [key: string]: unknown;
@@ -447,6 +455,15 @@ export function QuizPlayer({
     return (
       <section className="player-card home-page" aria-labelledby="start-title">
         <p className="eyebrow">TERRADASH · QUIZ</p>
+        <div className="home-graphic" aria-hidden="true">
+          <svg viewBox="0 0 240 64" focusable="false">
+            <path d="M8 44c20-18 34-18 52-3s31 17 49 2 31-18 49-3 34 16 65-6" />
+            <path d="M20 22c16 10 30 10 45 0s30-10 45 0 30 10 45 0 30-10 65 2" />
+            <circle cx="52" cy="34" r="4" />
+            <circle cx="122" cy="31" r="4" />
+            <circle cx="188" cy="34" r="4" />
+          </svg>
+        </div>
         <h1 id="start-title">Name every place on the map.</h1>
         <p>
           Choose a quiz, then identify every location with three attempts each.
@@ -465,6 +482,9 @@ export function QuizPlayer({
                 {renderQuizThumbnail?.(option)}
                 <strong>{option.name}</strong>
                 <span>{option.locationIds.length} locations</span>
+                <span className="quiz-option-description">
+                  {quizDescription(option)}
+                </span>
               </button>
             ))}
           </div>
@@ -500,6 +520,7 @@ export function QuizPlayer({
               <p className="eyebrow">TERRADASH · QUIZ</p>
               <h2 id="quiz-dialog-title">{selectedQuizOption.name}</h2>
               <p>{selectedQuizOption.locationIds.length} locations</p>
+              <p>{quizDescription(selectedQuizOption)}</p>
               <button
                 className="primary-action"
                 type="button"

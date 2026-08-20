@@ -26,6 +26,24 @@ test('header navbar exposes all quizzes and enters the selected quiz', async ({
   );
   await expect(page.locator('.quiz-option')).toHaveCount(9);
   await expect(page.locator('.quiz-option-thumbnail')).toHaveCount(9);
+  const descriptions = [
+    'All UN Member and UN Observer states',
+    'UN Member and UN Observer states in Africa',
+    'UN Member and UN Observer states in Asia',
+    'UN Member and UN Observer states in Europe',
+    'UN Member and UN Observer states in North America',
+    'UN Member and UN Observer states in South America',
+    'UN Member and UN Observer states in Oceania',
+    'UN Member and UN Observer states in Caribbean',
+  ];
+  for (const [index, description] of descriptions.entries()) {
+    await expect(
+      page.locator('.quiz-option-description').nth(index),
+    ).toHaveText(description);
+  }
+  await expect(page.locator('.quiz-option-description').nth(8)).toHaveText(
+    'Non-UN countries, independent territories, and autonomous regions',
+  );
   await expect(
     page.getByText(
       /Identify all .* locations with three attempts per location/,
@@ -122,4 +140,80 @@ test('autocomplete only exposes locations in the active quiz', async ({
   await expect(page.getByRole('option', { name: 'Albania' })).toHaveCount(0);
   await input.fill('Afghan');
   await expect(page.getByRole('option', { name: 'Afghanistan' })).toBeVisible();
+});
+
+test('mobile navigation scrolls to and reaches the final quiz', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto('/TerraDash/');
+  const mobileNav = page.getByRole('navigation', { name: 'Quizzes' });
+  await mobileNav.evaluate((nav) => {
+    nav.scrollLeft = nav.scrollWidth;
+  });
+  await mobileNav.getByRole('link', { name: 'Non-UN' }).click();
+  await expect(page).toHaveURL(/\/TerraDash\/\?quiz=non-un$/);
+  await expect(mobileNav.getByRole('link', { name: 'Non-UN' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+});
+
+test('home composition captures wide and mobile surfaces', async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/TerraDash/');
+  const wideBounds = await page.evaluate(() => {
+    const hero = document.querySelector<HTMLElement>('#start-title')!;
+    const grid = document.querySelector<HTMLElement>('.quiz-options')!;
+    const navigation = document.querySelector<HTMLElement>('.quiz-navigation')!;
+    const finalLink = navigation.querySelector<HTMLElement>('a:last-child')!;
+    return {
+      heroLeft: hero.getBoundingClientRect().left,
+      gridLeft: grid.getBoundingClientRect().left,
+      gridWidth: grid.getBoundingClientRect().width,
+      pageScrollWidth: document.documentElement.scrollWidth,
+      pageClientWidth: document.documentElement.clientWidth,
+      finalLinkRight: finalLink.getBoundingClientRect().right,
+      navigationRight: navigation.getBoundingClientRect().right,
+    };
+  });
+  expect(wideBounds.heroLeft).toBe(wideBounds.gridLeft);
+  expect(wideBounds.gridWidth).toBeGreaterThan(900);
+  expect(wideBounds.pageScrollWidth).toBeLessThanOrEqual(
+    wideBounds.pageClientWidth,
+  );
+  expect(wideBounds.finalLinkRight).toBeLessThanOrEqual(
+    wideBounds.navigationRight,
+  );
+  await page.screenshot({
+    path: testInfo.outputPath('home-wide.png'),
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto('/TerraDash/');
+  const mobileBounds = await page.evaluate(() => ({
+    gridWidth: document
+      .querySelector<HTMLElement>('.quiz-options')!
+      .getBoundingClientRect().width,
+    viewport: innerWidth,
+    minCardWidth: Math.min(
+      ...[...document.querySelectorAll<HTMLElement>('.quiz-option')].map(
+        (card) => card.getBoundingClientRect().width,
+      ),
+    ),
+    pageScrollWidth: document.documentElement.scrollWidth,
+    pageClientWidth: document.documentElement.clientWidth,
+  }));
+  expect(mobileBounds.gridWidth).toBeLessThanOrEqual(mobileBounds.viewport);
+  expect(mobileBounds.minCardWidth).toBeGreaterThanOrEqual(140);
+  expect(mobileBounds.pageScrollWidth).toBeLessThanOrEqual(
+    mobileBounds.pageClientWidth,
+  );
+  await page.screenshot({
+    path: testInfo.outputPath('home-mobile.png'),
+    fullPage: true,
+  });
 });
