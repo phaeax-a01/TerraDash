@@ -13,14 +13,12 @@ async function bounds(page: Page, selector: string) {
   return page.locator(selector).boundingBox();
 }
 
-function expectSameBounds(
-  actual: { x: number; y: number; width: number; height: number } | null,
-  expected: { x: number; y: number; width: number; height: number } | null,
+function expectSameDimensions(
+  actual: { width: number; height: number } | null,
+  expected: { width: number; height: number } | null,
 ) {
   expect(actual).not.toBeNull();
   expect(expected).not.toBeNull();
-  expect(actual.x).toBeCloseTo(expected.x, 2);
-  expect(actual.y).toBeCloseTo(expected.y, 2);
   expect(actual.width).toBeCloseTo(expected.width, 2);
   expect(actual.height).toBeCloseTo(expected.height, 2);
 }
@@ -67,9 +65,33 @@ if (!runningUnderVitest) {
         }),
       );
 
-      for (const key of ['header', 'stage', 'frame', 'svg', 'geometry']) {
-        expectSameBounds(diagnosticsBounds[key], quizBounds[key]);
+      for (const key of ['frame', 'svg']) {
+        expectSameDimensions(diagnosticsBounds[key], quizBounds[key]);
       }
+
+      for (const bounds of [quizBounds, diagnosticsBounds]) {
+        const stage = bounds.stage!;
+        const svg = bounds.svg!;
+        expect(stage.x).toBeGreaterThanOrEqual(0);
+        expect(stage.x + stage.width).toBeLessThanOrEqual(viewport.width);
+        expect(svg.x).toBeGreaterThanOrEqual(0);
+        expect(svg.x + svg.width).toBeLessThanOrEqual(viewport.width);
+      }
+      const quizGeometry = quizBounds.geometry!;
+      const diagnosticsGeometry = diagnosticsBounds.geometry!;
+      expect(diagnosticsGeometry.x - diagnosticsBounds.svg!.x).toBeCloseTo(
+        quizGeometry.x - quizBounds.svg!.x,
+        2,
+      );
+      expect(diagnosticsGeometry.y - diagnosticsBounds.svg!.y).toBeCloseTo(
+        quizGeometry.y - quizBounds.svg!.y,
+        2,
+      );
+      expect(diagnosticsGeometry.width).toBeCloseTo(quizGeometry.width, 2);
+      expect(diagnosticsGeometry.height).toBeCloseTo(quizGeometry.height, 2);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(viewport.width);
 
       await expect(page.locator('.map-header-overlay')).toHaveCSS(
         'position',

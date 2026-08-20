@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import catalog from '../data/generated/catalog.json';
-import { AppFooter, MapView } from './main';
+import { AppFooter, AppHeader, MapView } from './main';
 import { MapBoxShell } from './MapBoxShell';
 import './styles.css';
 
@@ -22,26 +22,7 @@ function Diagnostics() {
   const location = catalog.find(({ id }) => id === locationId)!;
   return (
     <main className="diagnostics-page">
-      <header className="app-header">
-        <a
-          className="app-brand"
-          href={import.meta.env.BASE_URL}
-          aria-label="TerraDash home"
-        >
-          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
-          <strong>TerraDash</strong>
-          <span>MAP YOUR KNOWLEDGE</span>
-        </a>
-        <nav className="quiz-navigation" aria-label="Primary navigation">
-          <a href={import.meta.env.BASE_URL}>Quiz</a>
-          <a
-            aria-current="page"
-            href={`${import.meta.env.BASE_URL}diagnostics.html`}
-          >
-            Diagnostics
-          </a>
-        </nav>
-      </header>
+      <AppHeader />
       <section className="player-card active-player">
         <MapBoxShell
           prompt={
@@ -103,12 +84,13 @@ function Diagnostics() {
           }
         />
       </section>
-      <p className="disclaimer">
-        Map data: Natural Earth Admin 0 boundary data, v5.1.1, 1:50m main map
-        and 1:10m inset. Public domain. Boundaries are shown for gameplay
-        visualization and do not imply endorsement of any boundary claim.
-      </p>
-      <AppFooter />
+      <AppFooter>
+        <p className="disclaimer">
+          Map data: Natural Earth Admin 0 boundary data, v5.1.1, 1:50m main map
+          and 1:10m inset. Public domain. Boundaries are shown for gameplay
+          visualization and do not imply endorsement of any boundary claim.
+        </p>
+      </AppFooter>
     </main>
   );
 }

@@ -69,6 +69,37 @@ for (const viewport of [
     expect(reachability.documentHeight).toBeGreaterThan(
       reachability.viewportHeight,
     );
+    const disclaimerContained = await page
+      .locator('.app-footer .disclaimer')
+      .evaluate((disclaimer) => {
+        const footer = disclaimer
+          .closest('.app-footer')!
+          .getBoundingClientRect();
+        const text = disclaimer.getBoundingClientRect();
+        return (
+          text.left >= footer.left &&
+          text.right <= footer.right &&
+          text.top >= footer.top &&
+          text.bottom <= footer.bottom
+        );
+      });
+    expect(disclaimerContained).toBe(true);
+    const footerContentFit = await page
+      .locator('.app-footer')
+      .evaluate((footer) => {
+        const footerBox = footer.getBoundingClientRect();
+        const contentBottom = Math.max(
+          ...[...footer.children].map(
+            (child) => child.getBoundingClientRect().bottom,
+          ),
+        );
+        const bottomGap = footerBox.bottom - contentBottom;
+        const paddingBottom = Number.parseFloat(
+          getComputedStyle(footer).paddingBottom,
+        );
+        return bottomGap >= 0 && bottomGap <= paddingBottom + 2;
+      });
+    expect(footerContentFit).toBe(true);
     await page.screenshot({
       path: testInfo.outputPath(
         `completed-results-${viewport.width}x${viewport.height}.png`,
