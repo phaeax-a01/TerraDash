@@ -514,10 +514,7 @@ describe('QuizPlayer integration', () => {
 
   it('keeps final feedback visible on the completed last-question card', async () => {
     vi.useFakeTimers();
-    const oneLocationQuiz = {
-      id: 'single',
-      locationIds: catalog.map(({ id }) => id),
-    };
+    const oneLocationQuiz = { id: 'single', locationIds: ['iso:AAA'] };
     const container = document.createElement('div');
     document.body.append(container);
     root = createRoot(container);
@@ -954,7 +951,7 @@ describe('QuizPlayer integration', () => {
     act(() => {
       root!.render(
         <QuizProvider
-          quiz={{ id: 'single', locationIds: ['iso:AAA'] }}
+          quiz={{ id: 'single', locationIds: catalog.map(({ id }) => id) }}
           catalog={catalog}
           rng={() => 0}
         >
@@ -969,17 +966,20 @@ describe('QuizPlayer integration', () => {
     await act(async () =>
       (container.querySelector('button') as HTMLButtonElement).click(),
     );
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
       await act(async () => {
         const input = container.querySelector(
           '[role="combobox"]',
         ) as HTMLInputElement;
-        input.value = 'Br';
+        input.value = attempt < 3 ? 'Br' : 'Al';
         input.dispatchEvent(new Event('input', { bubbles: true }));
       });
       await act(async () =>
         [...container.querySelectorAll('[role="option"]')]
-          .find((option) => option.textContent === 'Bravo')!
+          .find(
+            (option) =>
+              option.textContent === (attempt < 3 ? 'Bravo' : 'Alpha'),
+          )!
           .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
       );
       await act(async () =>
