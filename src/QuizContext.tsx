@@ -18,6 +18,7 @@ import {
 type QuizContextValue = {
   state: QuizState;
   dispatch: (action: QuizAction) => void;
+  locationIds: readonly string[];
 };
 const QuizContext = createContext<QuizContextValue | null>(null);
 export function QuizProvider({
@@ -42,7 +43,9 @@ export function QuizProvider({
     createIdleState,
   );
   return (
-    <QuizContext.Provider value={{ state, dispatch }}>
+    <QuizContext.Provider
+      value={{ state, dispatch, locationIds: config.quiz.locationIds }}
+    >
       {children}
     </QuizContext.Provider>
   );

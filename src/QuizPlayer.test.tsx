@@ -66,6 +66,44 @@ function renderPlayer(
 }
 
 describe('QuizPlayer integration', () => {
+  it('scopes suggestions to the active quiz while retaining the full map catalog', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    act(() => {
+      root!.render(
+        <QuizProvider
+          quiz={{ id: 'regional', locationIds: ['iso:AAA'] }}
+          catalog={catalog}
+          rng={() => 0}
+        >
+          <QuizPlayer
+            catalog={catalog}
+            renderMap={(location) => <div data-map-id={location.id} />}
+          />
+        </QuizProvider>,
+      );
+    });
+    await act(async () =>
+      (container.querySelector('button') as HTMLButtonElement).click(),
+    );
+    const input = container.querySelector(
+      '[role="combobox"]',
+    ) as HTMLInputElement;
+    await act(async () => {
+      input.value = 'Br';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(container.querySelector('[role="option"]')).toBeNull();
+    await act(async () => {
+      input.value = 'Al';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(container.querySelector('[role="option"]')?.textContent).toBe(
+      'Alpha',
+    );
+  });
+
   it('opens quiz details and reports the quiz only when its start action is used', async () => {
     let selected: string | undefined;
     const options: QuizOption[] = [
@@ -722,13 +760,16 @@ describe('QuizPlayer integration', () => {
   });
 
   it('shares attempt-state colors across the map and remaining-attempt status', async () => {
-    const oneLocationQuiz = { id: 'single', locationIds: ['iso:AAA'] };
+    const oneLocationQuiz = {
+      id: 'single',
+      locationIds: catalog.map(({ id }) => id),
+    };
     const container = document.createElement('div');
     document.body.append(container);
     root = createRoot(container);
     act(() => {
       root!.render(
-        <QuizProvider quiz={oneLocationQuiz} catalog={catalog} rng={() => 0}>
+        <QuizProvider quiz={oneLocationQuiz} catalog={catalog} rng={() => 0.9}>
           <QuizPlayer
             catalog={catalog}
             renderMap={(location) => <div data-map-id={location.id} />}
@@ -747,16 +788,20 @@ describe('QuizPlayer integration', () => {
     expect(attempts.classList.contains('attempts-remaining-3')).toBe(true);
 
     for (const remaining of [2, 1]) {
+      const currentId = container
+        .querySelector('[data-map-id]')
+        ?.getAttribute('data-map-id');
+      const wrongName = currentId === 'iso:AAA' ? 'Bravo' : 'Alpha';
       await act(async () => {
         const input = container.querySelector(
           '[role="combobox"]',
         ) as HTMLInputElement;
-        input.value = 'Br';
+        input.value = wrongName.slice(0, 2);
         input.dispatchEvent(new Event('input', { bubbles: true }));
       });
       await act(async () =>
         [...container.querySelectorAll('[role="option"]')]
-          .find((option) => option.textContent === 'Bravo')!
+          .find((option) => option.textContent === wrongName)!
           .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
       );
       await act(async () =>
@@ -771,14 +816,17 @@ describe('QuizPlayer integration', () => {
     }
   });
 
-  it('keeps invalid text attempt-free, scores a wrong-then-correct run, and restarts cleanly', async () => {
-    const oneLocationQuiz = { id: 'single', locationIds: ['iso:AAA'] };
+  it('keeps invalid text attempt-free and completes a two-target wrong-then-correct run', async () => {
+    const oneLocationQuiz = {
+      id: 'single',
+      locationIds: catalog.map(({ id }) => id),
+    };
     const container = document.createElement('div');
     document.body.append(container);
     root = createRoot(container);
     act(() => {
       root!.render(
-        <QuizProvider quiz={oneLocationQuiz} catalog={catalog} rng={() => 0}>
+        <QuizProvider quiz={oneLocationQuiz} catalog={catalog} rng={() => 0.9}>
           <QuizPlayer
             catalog={catalog}
             renderMap={(location) => <div data-map-id={location.id} />}
@@ -890,16 +938,28 @@ describe('QuizPlayer integration', () => {
     await act(async () =>
       (container.querySelector('form button') as HTMLButtonElement).click(),
     );
+    await act(async () => {
+      input.value = 'Br';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      [...container.querySelectorAll('[role="option"]')]
+        .find((option) => option.textContent === 'Bravo')!
+        .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
+    );
+    await act(async () =>
+      (container.querySelector('form button') as HTMLButtonElement).click(),
+    );
     expect(
       container.querySelector('.completion-header .quiz-feedback'),
     ).toBeTruthy();
     expect(container.textContent).toContain('Run complete');
     expect(container.querySelector('.active-player')).toBeNull();
     expect(container.querySelector('.full-bleed-map')).toBeNull();
-    expect(container.textContent).toContain('50.00%');
+    expect(container.textContent).toContain('75.00%');
     expect(container.textContent).toContain('Score');
     expect(container.querySelector('.result-score strong')?.textContent).toBe(
-      '5000',
+      '7500',
     );
     expect(
       [...container.querySelectorAll('.results-grid dt')].map(
@@ -907,7 +967,7 @@ describe('QuizPlayer integration', () => {
       ),
     ).toEqual(['Time', 'Accuracy', 'Missed']);
     expect(container.querySelector('.result-mood')?.textContent).toContain(
-      'Great work',
+      'Outstanding',
     );
     expect(
       [
@@ -936,7 +996,7 @@ describe('QuizPlayer integration', () => {
     expect(container.textContent).toContain('0:00');
   });
 
-  it('advances after three valid misses without revealing the answer and stops the timer', async () => {
+  it('finishes a two-target quiz after three valid misses per target and stops the timer', async () => {
     const clearInterval = vi.spyOn(window, 'clearInterval');
     const container = document.createElement('div');
     document.body.append(container);
@@ -944,7 +1004,7 @@ describe('QuizPlayer integration', () => {
     act(() => {
       root!.render(
         <QuizProvider
-          quiz={{ id: 'single', locationIds: ['iso:AAA'] }}
+          quiz={{ id: 'single', locationIds: catalog.map(({ id }) => id) }}
           catalog={catalog}
           rng={() => 0}
         >
@@ -959,17 +1019,21 @@ describe('QuizPlayer integration', () => {
     await act(async () =>
       (container.querySelector('button') as HTMLButtonElement).click(),
     );
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const currentId = container
+        .querySelector('[data-map-id]')
+        ?.getAttribute('data-map-id');
+      const wrongName = currentId === 'iso:AAA' ? 'Bravo' : 'Alpha';
       await act(async () => {
         const input = container.querySelector(
           '[role="combobox"]',
         ) as HTMLInputElement;
-        input.value = 'Br';
+        input.value = wrongName.slice(0, 2);
         input.dispatchEvent(new Event('input', { bubbles: true }));
       });
       await act(async () =>
         [...container.querySelectorAll('[role="option"]')]
-          .find((option) => option.textContent === 'Bravo')!
+          .find((option) => option.textContent === wrongName)!
           .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
       );
       await act(async () =>
