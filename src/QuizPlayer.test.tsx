@@ -788,27 +788,20 @@ describe('QuizPlayer integration', () => {
     expect(attempts.classList.contains('attempts-remaining-3')).toBe(true);
 
     for (const remaining of [2, 1]) {
+      const currentId = container
+        .querySelector('[data-map-id]')
+        ?.getAttribute('data-map-id');
+      const wrongName = currentId === 'iso:AAA' ? 'Bravo' : 'Alpha';
       await act(async () => {
         const input = container.querySelector(
           '[role="combobox"]',
         ) as HTMLInputElement;
-        const currentId = container
-          .querySelector('[data-map-id]')
-          ?.getAttribute('data-map-id');
-        input.value = currentId === 'iso:AAA' ? 'Br' : 'Al';
+        input.value = wrongName.slice(0, 2);
         input.dispatchEvent(new Event('input', { bubbles: true }));
       });
       await act(async () =>
         [...container.querySelectorAll('[role="option"]')]
-          .find(
-            (option) =>
-              option.textContent ===
-              (container
-                .querySelector('[data-map-id]')
-                ?.getAttribute('data-map-id') === 'iso:AAA'
-                ? 'Bravo'
-                : 'Alpha'),
-          )!
+          .find((option) => option.textContent === wrongName)!
           .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
       );
       await act(async () =>
@@ -988,19 +981,20 @@ describe('QuizPlayer integration', () => {
       (container.querySelector('button') as HTMLButtonElement).click(),
     );
     for (let attempt = 0; attempt < 6; attempt += 1) {
+      const currentId = container
+        .querySelector('[data-map-id]')
+        ?.getAttribute('data-map-id');
+      const wrongName = currentId === 'iso:AAA' ? 'Bravo' : 'Alpha';
       await act(async () => {
         const input = container.querySelector(
           '[role="combobox"]',
         ) as HTMLInputElement;
-        input.value = attempt < 3 ? 'Br' : 'Al';
+        input.value = wrongName.slice(0, 2);
         input.dispatchEvent(new Event('input', { bubbles: true }));
       });
       await act(async () =>
         [...container.querySelectorAll('[role="option"]')]
-          .find(
-            (option) =>
-              option.textContent === (attempt < 3 ? 'Bravo' : 'Alpha'),
-          )!
+          .find((option) => option.textContent === wrongName)!
           .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })),
       );
       await act(async () =>
