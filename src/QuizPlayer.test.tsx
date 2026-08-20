@@ -424,7 +424,7 @@ describe('QuizPlayer integration', () => {
       ),
     );
     expect(container.textContent).toContain('canonical location');
-    expect(container.textContent).toContain('3 guesses remaining');
+    expect(container.textContent).toContain('2 guesses remaining');
     expect(container.querySelectorAll('[role="option"]')).toHaveLength(0);
   });
 
@@ -860,14 +860,16 @@ describe('QuizPlayer integration', () => {
       submit.click();
       submit.click();
     });
-    expect(container.textContent).toContain('3 guesses remaining');
+    expect(container.textContent).toContain('2 guesses remaining');
     expect(container.textContent).toContain('0 / 0 locations correct');
     expect(
       container.querySelector('[data-map-id]')?.getAttribute('data-map-id'),
     ).toBe('iso:AAA');
     expect(container.querySelector('.active-player')).toBeTruthy();
     expect(container.querySelector('.full-bleed-map')).toBeTruthy();
-    expect(container.querySelector('.feedback-incorrect')).toBeNull();
+    expect(container.textContent).toContain(
+      'Incorrect. Try again; the answer is not revealed.',
+    );
     await act(async () => Promise.resolve());
     await act(async () => {
       input.value = '';
@@ -891,7 +893,7 @@ describe('QuizPlayer integration', () => {
     await act(async () =>
       (container.querySelector('form button') as HTMLButtonElement).click(),
     );
-    expect(container.textContent).toContain('3 guesses remaining');
+    expect(container.textContent).toContain('2 guesses remaining');
     expect(
       container.querySelector('[aria-live="assertive"]')?.textContent,
     ).toBe(
