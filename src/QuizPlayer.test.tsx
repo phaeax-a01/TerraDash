@@ -66,6 +66,44 @@ function renderPlayer(
 }
 
 describe('QuizPlayer integration', () => {
+  it('scopes suggestions to the active quiz while retaining the full map catalog', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    act(() => {
+      root!.render(
+        <QuizProvider
+          quiz={{ id: 'regional', locationIds: ['iso:AAA'] }}
+          catalog={catalog}
+          rng={() => 0}
+        >
+          <QuizPlayer
+            catalog={catalog}
+            renderMap={(location) => <div data-map-id={location.id} />}
+          />
+        </QuizProvider>,
+      );
+    });
+    await act(async () =>
+      (container.querySelector('button') as HTMLButtonElement).click(),
+    );
+    const input = container.querySelector(
+      '[role="combobox"]',
+    ) as HTMLInputElement;
+    await act(async () => {
+      input.value = 'Br';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(container.querySelector('[role="option"]')).toBeNull();
+    await act(async () => {
+      input.value = 'Al';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(container.querySelector('[role="option"]')?.textContent).toBe(
+      'Alpha',
+    );
+  });
+
   it('opens quiz details and reports the quiz only when its start action is used', async () => {
     let selected: string | undefined;
     const options: QuizOption[] = [
