@@ -20,6 +20,7 @@ import { QuizProvider } from './QuizContext';
 import { defaultCatalog, quizOptions, worldQuiz } from './quizContracts';
 import { QuizPlayer } from './QuizPlayer';
 import { mapLocationForQuizId } from './quizMapBoundary';
+import { getAllHighScores, type HighScoreEntry } from './highScores';
 import {
   classifyInsetGeometryPaths,
   highlightedGeometryPaths,
@@ -370,7 +371,53 @@ function QuizThumbnail({ quiz }: { quiz: (typeof quizOptions)[number] }) {
   );
 }
 
+export function HighScoresPage() {
+  const scores = getAllHighScores();
+  return (
+    <main className="standalone-page">
+      <header className="app-header">
+        <a className="app-brand" href="./">
+          TerraDash
+        </a>
+        <nav className="utility-navigation" aria-label="Utilities">
+          <a href="./">Quizzes</a>
+          <a aria-current="page" href="?page=high-scores">
+            High Scores
+          </a>
+        </nav>
+      </header>
+      <section className="high-score-page" aria-labelledby="high-scores-title">
+        <p className="eyebrow">TERRADASH · RECORDS</p>
+        <h1 id="high-scores-title">High Scores</h1>
+        {quizOptions.map((quiz) => (
+          <section className="high-score-panel" key={quiz.id}>
+            <h2>{quiz.name}</h2>
+            <ol className="high-score-list">
+              {(scores[quiz.id] ?? []).map((entry: HighScoreEntry) => (
+                <li key={entry.id}>
+                  <span>{entry.username}</span>
+                  <strong>{entry.score}</strong>
+                  <time>{formatElapsed(entry.elapsedMs)}</time>
+                </li>
+              ))}
+              {!scores[quiz.id]?.length && <li>No scores yet</li>}
+            </ol>
+          </section>
+        ))}
+      </section>
+      <AppFooter />
+    </main>
+  );
+}
+
+function formatElapsed(milliseconds: number): string {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')}`;
+}
+
 function App() {
+  if (new URLSearchParams(window.location.search).get('page') === 'high-scores')
+    return <HighScoresPage />;
   const requestedQuizId = new URLSearchParams(window.location.search).get(
     'quiz',
   );
@@ -405,6 +452,9 @@ function App() {
             ))}
           </nav>
           <nav className="utility-navigation" aria-label="Utilities">
+            <a href={`${import.meta.env.BASE_URL}?page=high-scores`}>
+              High Scores
+            </a>
             <a href={`${import.meta.env.BASE_URL}diagnostics.html`}>
               Diagnostics
             </a>
@@ -412,6 +462,7 @@ function App() {
         </header>
         <QuizPlayer
           catalog={defaultCatalog}
+          quizId={selectedQuiz.id}
           quizName={selectedQuiz.name}
           quizOptions={quizOptions}
           autoStart={autoStart}
