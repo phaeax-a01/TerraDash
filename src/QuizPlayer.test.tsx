@@ -424,7 +424,7 @@ describe('QuizPlayer integration', () => {
       ),
     );
     expect(container.textContent).toContain('canonical location');
-    expect(container.textContent).toContain('2 guesses remaining');
+    expect(container.textContent).toContain('3 guesses remaining');
     expect(container.querySelectorAll('[role="option"]')).toHaveLength(0);
   });
 
