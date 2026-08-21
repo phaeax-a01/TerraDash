@@ -2,6 +2,7 @@
   --quiz-card-surface: #111c2e;
   --quiz-card-surface-translucent: #111c2eee;
   --quiz-card-surface-interactive: #172840;
+  --quiz-card-thumbnail-fill: #5ec8e5;
   --map-stage-header-height: 4.25rem;
   --map-stage-header-gap: 0.5rem;
   --page-gutter: clamp(1rem, 2vw, 2rem);
@@ -443,6 +444,7 @@ h2 {
 }
 .quiz-option-thumbnail svg {
   opacity: 0.9;
+  fill: var(--quiz-card-thumbnail-fill);
 }
 .quiz-option-thumbnail-world svg {
   fill: #3a7ca5;

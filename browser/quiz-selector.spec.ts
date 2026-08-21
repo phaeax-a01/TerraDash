@@ -417,6 +417,15 @@ test('quiz cards keep a non-black surface in interactive states', async ({
       .first()
       .evaluate((element) => getComputedStyle(element).backgroundColor);
     expect(interactiveBackground).not.toBe('rgb(0, 0, 0)');
+    const thumbnailFills = await page
+      .locator('.quiz-option-thumbnail svg')
+      .evaluateAll((elements) =>
+        elements.map((element) => getComputedStyle(element).fill),
+      );
+    expect(thumbnailFills.length).toBeGreaterThan(0);
+    expect(thumbnailFills.every((color) => color !== 'rgb(0, 0, 0)')).toBe(
+      true,
+    );
     await page.screenshot({
       path: testInfo.outputPath(`quiz-cards-${viewport.name}.png`),
       fullPage: true,
