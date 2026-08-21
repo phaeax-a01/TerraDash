@@ -64,6 +64,7 @@ if (insetSourceSha256 !== INSET_SOURCE_SHA256)
   );
 const insetSource = JSON.parse(insetSourceBytes);
 const catalog = JSON.parse(fs.readFileSync('data/catalog.json'));
+const quizLocations = JSON.parse(fs.readFileSync('data/quiz-locations.json'));
 const overrides = JSON.parse(fs.readFileSync('data/geometry-overrides.json'));
 function parseCsv(text) {
   return text
@@ -626,9 +627,10 @@ if (
   throw new Error(
     'Every non-UN candidate must use nonempty exact supplemental geometry refs.',
   );
-const referencedSupplementalIds = new Set(
-  nonUnCandidates.flatMap(({ geometryRefs }) => geometryRefs),
-);
+const referencedSupplementalIds = new Set([
+  ...nonUnCandidates.flatMap(({ geometryRefs }) => geometryRefs),
+  ...quizLocations.flatMap(({ geometryRefs }) => geometryRefs),
+]);
 const playableSupplementalFeatures = supplementalFeatures.filter(({ id }) =>
   referencedSupplementalIds.has(id),
 );
@@ -720,6 +722,18 @@ fs.writeFileSync(
   JSON.stringify(nonUnCandidates, null, 2) + '\n',
 );
 fs.writeFileSync(
+  'data/generated/quiz-locations.json',
+  JSON.stringify(quizLocations, null, 2) + '\n',
+);
+fs.writeFileSync(
+  'data/generated/locations.json',
+  JSON.stringify(
+    [...locations, ...nonUnCandidates, ...quizLocations],
+    null,
+    2,
+  ) + '\n',
+);
+fs.writeFileSync(
   'data/generated/manifest.json',
   JSON.stringify(
     {
@@ -765,9 +779,13 @@ const insetFeatures = insetSource.features.map((feature) => {
     bounds: bounds(points),
   };
 });
-const nonUnInsetFeatureIds = new Set(
-  nonUnCandidates.flatMap(({ geometryRefs }) => geometryRefs),
+const configuredInsetFeatureIds = new Set(
+  quizLocations.flatMap(({ geometryRefs }) => geometryRefs),
 );
+const nonUnInsetFeatureIds = new Set([
+  ...nonUnCandidates.flatMap(({ geometryRefs }) => geometryRefs),
+  ...configuredInsetFeatureIds,
+]);
 const supplementalInsetFeatures = playableSupplementalFeatures
   .filter(({ id }) => nonUnInsetFeatureIds.has(id))
   .map((feature) => {
@@ -799,10 +817,11 @@ const insetFeaturesById = new Map(
   ]),
 );
 const insetLocationFeatures = Object.fromEntries(
-  playableLocations.map((location) => {
-    const refs = location.id.startsWith('non-un:')
-      ? location.geometryRefs
-      : (insetFeaturesByKey.get(location.iso3) ?? []).map(({ id }) => id);
+  [...playableLocations, ...quizLocations].map((location) => {
+    const refs =
+      'iso3' in location
+        ? (insetFeaturesByKey.get(location.iso3) ?? []).map(({ id }) => id)
+        : location.geometryRefs;
     if (!refs.length || refs.some((id) => !insetFeaturesById.has(id)))
       throw new Error(
         `No exact inset feature for every geometry ref in ${location.id}`,
@@ -811,8 +830,10 @@ const insetLocationFeatures = Object.fromEntries(
   }),
 );
 if (
-  Object.keys(insetLocationFeatures).length !== playableLocations.length ||
-  new Set(Object.keys(insetLocationFeatures)).size !== playableLocations.length
+  Object.keys(insetLocationFeatures).length !==
+    playableLocations.length + quizLocations.length ||
+  new Set(Object.keys(insetLocationFeatures)).size !==
+    playableLocations.length + quizLocations.length
 )
   throw new Error(
     'Inset location index must have exact playable-location parity',
@@ -833,10 +854,12 @@ const inset = {
       'Inset boundaries are shown for gameplay visualization and do not imply endorsement of any boundary claim.',
   },
   selection: {
-    rule: 'all quiz-eligible catalog locations plus every exact supplemental feature referenced by a Non-UN candidate',
-    catalogLocations: locations.length + nonUnCandidates.length,
+    rule: 'all configured quiz locations plus every exact supplemental feature referenced by a configured location',
+    catalogLocations:
+      locations.length + nonUnCandidates.length + quizLocations.length,
     standardLocations: locations.length,
     nonUnCandidates: nonUnCandidates.length,
+    configuredLocations: quizLocations.length,
     neighborPaddingProjectedUnits: 24,
   },
   sourceFeatureIds: insetFeatures.map(({ id }) => id),
@@ -864,6 +887,8 @@ execFileSync(
     'data/generated/map.json',
     'data/generated/quiz.json',
     'data/generated/non-un-candidates.json',
+    'data/generated/locations.json',
+    'data/generated/quiz-locations.json',
     'data/generated/inset.json',
   ],
   { stdio: 'ignore' },

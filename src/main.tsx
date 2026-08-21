@@ -9,8 +9,7 @@ import {
 import { createRoot } from 'react-dom/client';
 import map from '../data/generated/map.json';
 import inset from '../data/generated/inset.json';
-import catalog from '../data/generated/catalog.json';
-import candidateData from '../data/generated/non-un-candidates.json';
+import locations from '../data/generated/locations.json';
 import {
   deriveCalloutModel,
   deriveCalloutLayout,
@@ -25,7 +24,14 @@ import {
   wrappedViewportBounds,
 } from './footprint';
 import { QuizProvider } from './QuizContext';
-import { playableLocations, quizOptions, worldQuiz } from './quizContracts';
+import {
+  mapLayerForQuiz,
+  mapLayerForLocation,
+  playableLocations,
+  quizOptions,
+  worldQuiz,
+  type MapLayer,
+} from './quizContracts';
 import { QuizPlayer } from './QuizPlayer';
 import { mapLocationForQuizId } from './quizMapBoundary';
 import { getAllHighScores } from './highScores';
@@ -38,11 +44,17 @@ import {
 } from './mapGeometry';
 import './styles.css';
 
-type Location = (typeof catalog)[number] | (typeof candidateData)[number];
-export function MapView({ active }: { active: Location }) {
+type Location = (typeof locations)[number];
+export function MapView({
+  active,
+  layer,
+}: {
+  active: Location;
+  layer: MapLayer;
+}) {
   const [viewportWidth, setViewportWidth] = useState(map.width);
   const [viewportHeight, setViewportHeight] = useState(map.height);
-  const highlightedPaths = highlightedGeometryPaths(active.geometryRefs);
+  const highlightedPaths = layer.activePaths;
   const insetSelectedPaths = selectedInsetGeometryPaths(
     active.id,
     active.geometryRefs,
@@ -151,6 +163,9 @@ export function MapView({ active }: { active: Location }) {
         MAP_OVERLAP_REFERENCE_UNITS,
       ).map((transform) => ({ path, transform })),
     );
+  const activePathCopies = layer.wrapActive
+    ? wrappedPathCopies(highlightedPaths)
+    : highlightedPaths.map((path) => ({ path, transform: 0 }));
   const wrappedInsetPathCopies = (paths: string[]) =>
     paths.flatMap((path) =>
       wrappedPathOffsets(
@@ -185,7 +200,10 @@ export function MapView({ active }: { active: Location }) {
   return (
     <svg
       className="world-map"
-      viewBox={`${renderedMapStart} 0 ${renderedMapWidth} ${map.height}`}
+      viewBox={
+        layer.viewBox ||
+        `${renderedMapStart} 0 ${renderedMapWidth} ${map.height}`
+      }
       role="img"
       aria-label="Flat world map with the selected location highlighted"
     >
@@ -196,7 +214,7 @@ export function MapView({ active }: { active: Location }) {
         className="ocean"
       />
       <g className="countries">
-        {map.sourceFeatureIds.map((id) => {
+        {layer.contextFeatureIds.map((id) => {
           const feature = map.features[id as keyof typeof map.features];
           const copies = wrappedPathCopies(feature.paths);
           return (
@@ -218,27 +236,41 @@ export function MapView({ active }: { active: Location }) {
           );
         })}
       </g>
-      <g className="active-fill" aria-hidden="true">
-        {wrappedPathCopies(highlightedPaths).map(
-          ({ path, transform }, index) => (
-            <path
-              key={`${transform}:${index}`}
-              d={path}
-              transform={`translate(${transform} 0)`}
-            />
-          ),
-        )}
+      {layer.baseLayers.length > 0 && (
+        <g className="map-base-layers" aria-hidden="true">
+          {layer.baseLayers.map((baseLayer) => (
+            <g key={baseLayer.id} data-layer-id={baseLayer.id}>
+              {baseLayer.paths.map((path, index) => (
+                <path key={`${baseLayer.id}:${index}`} d={path} />
+              ))}
+            </g>
+          ))}
+        </g>
+      )}
+      <g
+        className="active-fill"
+        aria-hidden={layer.selectable ? undefined : true}
+      >
+        {activePathCopies.map(({ path, transform }, index) => (
+          <path
+            key={`${transform}:${index}`}
+            d={path}
+            transform={`translate(${transform} 0)`}
+            data-location-id={layer.selectable ? active.id : undefined}
+            role={layer.selectable ? 'button' : undefined}
+            tabIndex={layer.selectable ? 0 : undefined}
+            aria-label={layer.selectable ? active.name : undefined}
+          />
+        ))}
       </g>
       <g className="active-outline" aria-hidden="true">
-        {wrappedPathCopies(highlightedPaths).map(
-          ({ path, transform }, index) => (
-            <path
-              key={`${transform}:${index}`}
-              d={path}
-              transform={`translate(${transform} 0)`}
-            />
-          ),
-        )}
+        {activePathCopies.map(({ path, transform }, index) => (
+          <path
+            key={`${transform}:${index}`}
+            d={path}
+            transform={`translate(${transform} 0)`}
+          />
+        ))}
       </g>
       {callout && displayedCallout && (
         <g className="map-callout" aria-hidden="true">
@@ -365,17 +397,22 @@ function AppDisclaimer() {
 function QuizMenu({ selectedQuizId }: { selectedQuizId?: string }) {
   const { navigate } = useBrowserRoute();
   const [open, setOpen] = useState(false);
+  const [regionalOpen, setRegionalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = 'quiz-menu';
   useEffect(() => {
     if (!open) return;
     const closeOnOutside = (event: PointerEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+        setRegionalOpen(false);
+      }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setOpen(false);
         menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+        setRegionalOpen(false);
       }
     };
     document.addEventListener('pointerdown', closeOnOutside);
@@ -385,6 +422,30 @@ function QuizMenu({ selectedQuizId }: { selectedQuizId?: string }) {
       document.removeEventListener('keydown', closeOnEscape);
     };
   }, [open]);
+  const globalQuizzes = quizOptions.filter(
+    (quiz) => quiz.category !== 'regional',
+  );
+  const regionalQuizzes = quizOptions.filter(
+    (quiz) => quiz.category === 'regional',
+  );
+  const renderQuizLink = (quiz: (typeof quizOptions)[number]) => (
+    <a
+      key={quiz.id}
+      role="menuitem"
+      aria-current={quiz.id === selectedQuizId ? 'page' : undefined}
+      href={`${import.meta.env.BASE_URL}?quiz=${encodeURIComponent(quiz.id)}&select=1`}
+      onClick={(event) => {
+        event.preventDefault();
+        setOpen(false);
+        setRegionalOpen(false);
+        navigate(event.currentTarget.href);
+      }}
+    >
+      {quiz.id === 'non-un'
+        ? 'Non-UN Countries, Independent Territories, and Autonomous Regions'
+        : quiz.name.replace(' UN Countries', '')}
+    </a>
+  );
   return (
     <div className="quiz-menu" ref={menuRef}>
       <button
@@ -410,23 +471,29 @@ function QuizMenu({ selectedQuizId }: { selectedQuizId?: string }) {
       </button>
       {open && (
         <div className="quiz-menu-popover" id={menuId} role="menu">
-          {quizOptions.map((quiz) => (
-            <a
-              key={quiz.id}
-              role="menuitem"
-              aria-current={quiz.id === selectedQuizId ? 'page' : undefined}
-              href={`${import.meta.env.BASE_URL}?quiz=${encodeURIComponent(quiz.id)}&select=1`}
-              onClick={(event) => {
-                event.preventDefault();
-                setOpen(false);
-                navigate(event.currentTarget.href);
-              }}
-            >
-              {quiz.id === 'non-un'
-                ? 'Non-UN Countries, Independent Territories, and Autonomous Regions'
-                : quiz.name.replace(' UN Countries', '')}
-            </a>
-          ))}
+          {globalQuizzes.map(renderQuizLink)}
+          {regionalQuizzes.length > 0 && (
+            <div className="quiz-submenu">
+              <button
+                type="button"
+                role="menuitem"
+                aria-haspopup="menu"
+                aria-expanded={regionalOpen}
+                onClick={() => setRegionalOpen((value) => !value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'ArrowRight') setRegionalOpen(true);
+                }}
+              >
+                Regional quizzes{' '}
+                <span className="quiz-submenu-arrow" aria-hidden="true" />
+              </button>
+              {regionalOpen && (
+                <div className="quiz-submenu-popover" role="menu">
+                  {regionalQuizzes.map(renderQuizLink)}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -520,14 +587,17 @@ const thumbnailViewBoxes: Record<string, string> = {
 
 function QuizThumbnail({ quiz }: { quiz: (typeof quizOptions)[number] }) {
   const locationIds = new Set(quiz.locationIds);
-  const paths = [...catalog, ...candidateData]
+  const paths = locations
     .filter((location) => locationIds.has(location.id))
     .flatMap((location) =>
       location.geometryRefs.flatMap(
         (ref) => map.features[ref as keyof typeof map.features]?.paths ?? [],
       ),
     );
-  const viewBox = thumbnailViewBoxes[quiz.id] ?? thumbnailViewBoxes.world;
+  const viewBox =
+    quiz.map?.viewBox ||
+    thumbnailViewBoxes[quiz.id] ||
+    thumbnailViewBoxes.world;
   return (
     <span
       className={`quiz-option-thumbnail quiz-option-thumbnail-${quiz.id}`}
@@ -576,7 +646,7 @@ export function DiagnosticsMap({
 }: {
   location: (typeof playableLocations)[number];
 }) {
-  return <MapView active={location} />;
+  return <MapView active={location} layer={mapLayerForLocation(location)} />;
 }
 
 export function DiagnosticsPage() {
@@ -700,7 +770,13 @@ function App() {
             setAutoStart(true);
           }}
           renderMap={(active) => (
-            <MapView active={mapLocationForQuizId(active.id)! as Location} />
+            <MapView
+              active={mapLocationForQuizId(active.id)! as Location}
+              layer={mapLayerForQuiz(
+                selectedQuiz,
+                mapLocationForQuizId(active.id)! as Location,
+              )}
+            />
           )}
           renderQuizThumbnail={(quiz) => <QuizThumbnail quiz={quiz} />}
         />

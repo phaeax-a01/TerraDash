@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 const catalog = JSON.parse(fs.readFileSync('data/generated/catalog.json'));
 const quiz = JSON.parse(fs.readFileSync('data/generated/quiz.json'));
+const quizzes = JSON.parse(fs.readFileSync('data/quizzes.json'));
+const locations = JSON.parse(fs.readFileSync('data/generated/locations.json'));
 const map = JSON.parse(fs.readFileSync('data/generated/map.json'));
 const candidates = JSON.parse(
   fs.readFileSync('data/generated/non-un-candidates.json'),
@@ -68,6 +70,32 @@ const insetSource = JSON.parse(
 const ids = new Set(catalog.map((item) => item.id));
 const playable = [...catalog, ...candidates];
 const playableIds = new Set(playable.map((item) => item.id));
+const configured = locations.filter((item) => !playableIds.has(item.id));
+const insetLocations = [...playable, ...configured];
+const locationIds = new Set(locations.map((item) => item.id));
+if (locations.length !== locationIds.size)
+  throw new Error('Generated location registry contains duplicate IDs');
+for (const definition of quizzes) {
+  if (!Array.isArray(definition.locationIds))
+    throw new Error(`Quiz ${definition.id} must declare locationIds`);
+  if (
+    new Set(definition.locationIds).size !== definition.locationIds.length ||
+    definition.locationIds.some((id) => !locationIds.has(id))
+  )
+    throw new Error(`Quiz ${definition.id} has invalid locationIds`);
+  const mapConfig = definition.map;
+  if (!mapConfig) continue;
+  for (const id of mapConfig.baseLayerLocationIds ?? [])
+    if (!locationIds.has(id) || !definition.locationIds.includes(id))
+      throw new Error(
+        `Quiz ${definition.id} has invalid base layer location ${id}`,
+      );
+  for (const id of mapConfig.contextFeatureExclusions ?? [])
+    if (!map.features[id])
+      throw new Error(
+        `Quiz ${definition.id} excludes unknown context feature ${id}`,
+      );
+}
 if (catalog.length !== 195 || ids.size !== 195)
   throw new Error('Expected 195 unique catalog entries');
 if (new Set(catalog.map((item) => item.iso3)).size !== 195)
@@ -129,21 +157,24 @@ for (const candidate of candidates) {
     );
 }
 if (
-  Object.keys(map.locationFeatureIds ?? {}).length !== 277 ||
-  Object.keys(inset.locationFeatureIds ?? {}).length !== 277
+  Object.keys(map.locationFeatureIds ?? {}).length !== playable.length ||
+  Object.keys(inset.locationFeatureIds ?? {}).length !== insetLocations.length
 )
   throw new Error(
-    'Main and inset indexes must cover exactly 277 playable locations',
+    'Main and inset indexes must cover their configured location sets',
   );
 if (
-  new Set(Object.keys(map.locationFeatureIds ?? {})).size !== 277 ||
-  new Set(Object.keys(inset.locationFeatureIds ?? {})).size !== 277 ||
+  new Set(Object.keys(map.locationFeatureIds ?? {})).size !== playable.length ||
+  new Set(Object.keys(inset.locationFeatureIds ?? {})).size !==
+    insetLocations.length ||
   JSON.stringify(Object.keys(map.locationFeatureIds).sort()) !==
-    JSON.stringify(Object.keys(inset.locationFeatureIds).sort())
+    JSON.stringify(playable.map(({ id }) => id).sort()) ||
+  JSON.stringify(Object.keys(inset.locationFeatureIds).sort()) !==
+    JSON.stringify(insetLocations.map(({ id }) => id).sort())
 )
-  throw new Error('Main and inset indexes must have identical playable IDs');
-for (const item of playable) {
-  const mainRefs = map.locationFeatureIds[item.id];
+  throw new Error('Generated location indexes do not match configured IDs');
+for (const item of insetLocations) {
+  const mainRefs = map.locationFeatureIds[item.id] ?? item.geometryRefs;
   const insetRefs = inset.locationFeatureIds[item.id];
   if (!mainRefs?.length || !insetRefs?.length)
     throw new Error(`Missing playable geometry refs for ${item.id}`);
@@ -153,9 +184,8 @@ for (const item of playable) {
   )
     throw new Error(`Unresolvable playable geometry ref for ${item.id}`);
   if (
-    item.id.startsWith('non-un:') &&
-    (JSON.stringify(mainRefs) !== JSON.stringify(item.geometryRefs) ||
-      JSON.stringify(insetRefs) !== JSON.stringify(item.geometryRefs))
+    (item.id.startsWith('non-un:') || !playableIds.has(item.id)) &&
+    JSON.stringify(insetRefs) !== JSON.stringify(item.geometryRefs)
   )
     throw new Error(`Custom geometry ref parity mismatch for ${item.id}`);
 }

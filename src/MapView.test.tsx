@@ -4,11 +4,17 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import catalog from '../data/generated/catalog.json';
 import candidates from '../data/generated/non-un-candidates.json';
+import quizLocations from '../data/generated/quiz-locations.json';
 import {
   highlightedGeometryPaths,
   selectedInsetGeometryPaths,
 } from './mapGeometry';
 import { MapView } from './main';
+import {
+  mapLayerForLocation,
+  mapLayerForQuiz,
+  quizOptions,
+} from './quizContracts';
 
 let root: ReturnType<typeof createRoot> | undefined;
 class TestResizeObserver {
@@ -29,9 +35,58 @@ function renderLocation(id: string) {
   frame.className = 'map-frame';
   document.body.append(frame);
   root = createRoot(frame);
-  act(() => root!.render(<MapView active={active} />));
+  act(() =>
+    root!.render(
+      <MapView active={active} layer={mapLayerForLocation(active)} />,
+    ),
+  );
   return frame;
 }
+
+function renderState(id: string) {
+  const active = quizLocations.find((entry) => entry.id === id)!;
+  const quiz = quizOptions.find((entry) => entry.id === 'us-states')!;
+  const frame = document.createElement('section');
+  frame.className = 'map-frame';
+  document.body.append(frame);
+  root = createRoot(frame);
+  act(() =>
+    root!.render(
+      <MapView active={active} layer={mapLayerForQuiz(quiz, active)} />,
+    ),
+  );
+  return frame;
+}
+
+function expectActiveStatePaths(frame: HTMLElement, id: string) {
+  const active = quizLocations.find((entry) => entry.id === id)!;
+  const rendered = [...frame.querySelectorAll('.active-fill path')];
+  expect(rendered.map((path) => path.getAttribute('d'))).toEqual(
+    highlightedGeometryPaths(active.geometryRefs),
+  );
+  expect(
+    rendered.every((path) => path.getAttribute('data-location-id') === id),
+  ).toBe(true);
+}
+
+describe('mapped quiz layer contract', () => {
+  it('renders configured context, selectable state target, and shared tiny callout', () => {
+    const frame = renderState('US-RI');
+    expect(frame.querySelector('.world-map')?.getAttribute('viewBox')).toBe(
+      '10 35 500 295',
+    );
+    expect(frame.querySelectorAll('.map-base-layers > g')).toHaveLength(50);
+    expectActiveStatePaths(frame, 'US-RI');
+    expect(frame.querySelector('.map-callout')).toBeTruthy();
+    expect(frame.querySelector('.callout-selected')).toBeTruthy();
+  });
+
+  it('keeps the shared large-region callout threshold bypass', () => {
+    const frame = renderState('US-TX');
+    expect(frame.querySelector('.map-callout')).toBeNull();
+    expectActiveStatePaths(frame, 'US-TX');
+  });
+});
 
 describe('MapView small-region callout rendering', () => {
   it('renders every custom target part in both the main map and magnified copy', () => {
@@ -40,7 +95,11 @@ describe('MapView small-region callout rendering', () => {
     frame.className = 'map-frame';
     document.body.append(frame);
     root = createRoot(frame);
-    act(() => root!.render(<MapView active={active} />));
+    act(() =>
+      root!.render(
+        <MapView active={active} layer={mapLayerForLocation(active)} />,
+      ),
+    );
 
     const source = highlightedGeometryPaths(active.geometryRefs);
     const mainPaths = [...frame.querySelectorAll('.active-fill path')].map(
