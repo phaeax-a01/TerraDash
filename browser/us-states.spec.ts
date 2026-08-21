@@ -138,6 +138,42 @@ test('identifies a visible state and advances the US States quiz', async ({
   });
 });
 
+test('renders shared tiny-state callout geometry and attempt colors at wide viewport', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1777, height: 1171 });
+  await page.goto('/TerraDash/diagnostics.html?location=US-RI');
+  const map = page.locator('.world-map');
+  await expect(map.locator('.map-callout')).toBeVisible();
+  await expect(map.locator('.callout-selected')).toBeVisible();
+
+  const colors = await page.evaluate(() => {
+    const player = document.querySelector('.active-player')!;
+    const selected = document.querySelector<SVGElement>(
+      '.callout-selected path',
+    )!;
+    player.classList.add('attempts-remaining-2');
+    const secondAttempt = getComputedStyle(selected).fill;
+    player.classList.remove('attempts-remaining-2');
+    player.classList.add('attempts-remaining-1');
+    const finalAttempt = getComputedStyle(selected).fill;
+    return { secondAttempt, finalAttempt };
+  });
+  expect(colors).toEqual({
+    secondAttempt: 'rgb(250, 204, 21)',
+    finalAttempt: 'rgb(248, 113, 113)',
+  });
+});
+
+test('keeps shared threshold bypass for large state callout at wide viewport', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1777, height: 1171 });
+  await page.goto('/TerraDash/diagnostics.html?location=US-TX');
+  await expect(page.locator('.world-map .map-callout')).toHaveCount(0);
+  await expect(page.locator('.world-map .callout-selected')).toHaveCount(0);
+});
+
 test('keeps the reported wide US States composition inside its layout bands', async ({
   page,
 }, testInfo) => {

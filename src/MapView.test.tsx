@@ -64,6 +64,20 @@ describe('shared US States map composition', () => {
     expect(map.querySelector('.regional-map')).toBeNull();
     expect(map.querySelector('.regional-state-borders')).toBeNull();
   });
+
+  it('uses the shared callout renderer for a tiny state target', () => {
+    const frame = renderState('US-RI');
+    expect(frame.querySelector('.map-callout')).toBeTruthy();
+    expect(frame.querySelector('.callout-selected')).toBeTruthy();
+    expect(frame.querySelector('.callout-source')).toBeTruthy();
+    expect(frame.querySelector('.callout-cutout')).toBeTruthy();
+  });
+
+  it('keeps the shared callout threshold bypass for a large state target', () => {
+    const frame = renderState('US-TX');
+    expect(frame.querySelector('.map-callout')).toBeNull();
+    expect(frame.querySelector('.callout-selected')).toBeNull();
+  });
 });
 
 describe('MapView small-region callout rendering', () => {

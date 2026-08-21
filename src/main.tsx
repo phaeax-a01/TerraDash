@@ -100,16 +100,14 @@ export function MapView({
   const renderedMapWidth = map.width + MAP_OVERLAP_REFERENCE_UNITS * 2;
   const [renderedMapStart] = wrappedViewportBounds(map.width, seamX);
   const scale = viewportWidth / renderedMapWidth;
-  const callout = layer.stateBoundaries
-    ? undefined
-    : deriveCalloutModel(
-        highlightedPaths,
-        scale,
-        map.width,
-        undefined,
-        undefined,
-        seamX,
-      );
+  const callout = deriveCalloutModel(
+    highlightedPaths,
+    scale,
+    map.width,
+    undefined,
+    undefined,
+    seamX,
+  );
   const sourceOffsets = callout
     ? wrappedOffsets(
         callout.sourceCenter[0],
