@@ -1,4 +1,8 @@
 :root {
+  --quiz-card-surface: #111c2e;
+  --quiz-card-surface-translucent: #111c2eee;
+  --quiz-card-surface-interactive: #172840;
+  --quiz-card-thumbnail-fill: #5ec8e5;
   --map-stage-header-height: 4.25rem;
   --map-stage-header-gap: 0.5rem;
   --page-gutter: clamp(1rem, 2vw, 2rem);
@@ -423,7 +427,7 @@ h2 {
   border-radius: 0.65rem;
   color: #dce8f7;
   text-align: left;
-  background: #111c2e;
+  background: var(--quiz-card-surface);
   cursor: pointer;
 }
 .quiz-option-thumbnail {
@@ -440,6 +444,7 @@ h2 {
 }
 .quiz-option-thumbnail svg {
   opacity: 0.9;
+  fill: var(--quiz-card-thumbnail-fill);
 }
 .quiz-option-thumbnail-world svg {
   fill: #3a7ca5;
@@ -489,7 +494,7 @@ h2 {
 .quiz-option:hover,
 .quiz-option:focus-visible {
   border-color: #7dd3fc;
-  background: #172840;
+  background: var(--quiz-card-surface-interactive);
 }
 .quiz-option strong {
   font-size: clamp(0.9rem, 1.2vw, 1.05rem);
@@ -510,7 +515,11 @@ h2 {
   padding: clamp(1rem, 3vw, 2rem);
   border-color: #385778;
   border-radius: 1rem;
-  background: radial-gradient(circle at 50% 0, #1b3554, #111c2e 55%);
+  background: radial-gradient(
+    circle at 50% 0,
+    #1b3554,
+    var(--quiz-card-surface) 55%
+  );
   box-shadow: 0 1rem 3rem #0004;
 }
 .quiz-results .completion-header {
@@ -751,7 +760,7 @@ h2 {
   padding-inline: var(--content-gutter);
   border: 1px solid #263650;
   border-radius: 0.75rem;
-  background: #111c2e;
+  background: var(--quiz-card-surface);
   min-height: var(--map-stage-header-height);
   margin-bottom: var(--map-stage-header-gap);
 }
@@ -820,7 +829,7 @@ h2 {
   padding: 0.45rem;
   border: 1px solid #486384;
   border-radius: 0.65rem;
-  background: #111c2eee;
+  background: var(--quiz-card-surface-translucent);
   box-shadow: 0 0.75rem 2rem #0008;
   backdrop-filter: blur(8px);
 }
@@ -958,16 +967,16 @@ input {
   border-radius: 0.4rem;
   background: #182942;
   scrollbar-width: thin;
-  scrollbar-color: #486384 #111c2e;
+  scrollbar-color: #486384 var(--quiz-card-surface);
 }
 .suggestions::-webkit-scrollbar {
   width: 0.55rem;
 }
 .suggestions::-webkit-scrollbar-track {
-  background: #111c2e;
+  background: var(--quiz-card-surface);
 }
 .suggestions::-webkit-scrollbar-thumb {
-  border: 2px solid #111c2e;
+  border: 2px solid var(--quiz-card-surface);
   border-radius: 999px;
   background: #486384;
 }

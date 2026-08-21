@@ -389,3 +389,46 @@ test('home composition captures wide and mobile surfaces', async ({
     fullPage: true,
   });
 });
+
+test('quiz cards keep a non-black surface in interactive states', async ({
+  page,
+}, testInfo) => {
+  for (const viewport of [
+    { width: 1440, height: 900, name: 'wide' },
+    { width: 768, height: 1024, name: 'tablet' },
+    { width: 375, height: 667, name: 'mobile' },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/TerraDash/');
+    const cards = page.locator('.quiz-option');
+    await expect(cards.first()).toBeVisible();
+
+    const normalBackgrounds = await cards.evaluateAll((elements) =>
+      elements.map((element) => getComputedStyle(element).backgroundColor),
+    );
+    expect(normalBackgrounds.length).toBeGreaterThan(0);
+    expect(normalBackgrounds.every((color) => color !== 'rgb(0, 0, 0)')).toBe(
+      true,
+    );
+
+    await cards.first().hover();
+    await cards.first().focus();
+    const interactiveBackground = await cards
+      .first()
+      .evaluate((element) => getComputedStyle(element).backgroundColor);
+    expect(interactiveBackground).not.toBe('rgb(0, 0, 0)');
+    const thumbnailFills = await page
+      .locator('.quiz-option-thumbnail svg')
+      .evaluateAll((elements) =>
+        elements.map((element) => getComputedStyle(element).fill),
+      );
+    expect(thumbnailFills.length).toBeGreaterThan(0);
+    expect(thumbnailFills.every((color) => color !== 'rgb(0, 0, 0)')).toBe(
+      true,
+    );
+    await page.screenshot({
+      path: testInfo.outputPath(`quiz-cards-${viewport.name}.png`),
+      fullPage: true,
+    });
+  }
+});
