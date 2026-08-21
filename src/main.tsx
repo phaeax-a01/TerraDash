@@ -31,7 +31,6 @@ import { QuizPlayer } from './QuizPlayer';
 import {
   isUsStatesLocation,
   mapLocationForQuizId,
-  mapViewBoxForQuiz,
   US_STATES_VIEW_BOX,
 } from './quizMapBoundary';
 import { getAllHighScores } from './highScores';
@@ -48,6 +47,40 @@ type Location =
   | (typeof catalog)[number]
   | (typeof candidateData)[number]
   | (typeof usStateData)[number];
+
+const US_COUNTRY_GEOMETRY_REF = 'ne:1159321369';
+
+type MapLayer = {
+  contextFeatureIds: readonly string[];
+  activePaths: string[];
+  wrapActive: boolean;
+  viewBox: string;
+  selectable: boolean;
+  stateBoundaries?: boolean;
+};
+
+function mapLayerForLocation(active: Location, quizId?: string): MapLayer {
+  const usStates = quizId === 'us-states' || isUsStatesLocation(active.id);
+  return usStates
+    ? {
+        contextFeatureIds: map.sourceFeatureIds.filter(
+          (id) => id !== US_COUNTRY_GEOMETRY_REF,
+        ),
+        activePaths: highlightedGeometryPaths(active.geometryRefs),
+        wrapActive: false,
+        viewBox: US_STATES_VIEW_BOX,
+        selectable: true,
+        stateBoundaries: true,
+      }
+    : {
+        contextFeatureIds: map.sourceFeatureIds,
+        activePaths: highlightedGeometryPaths(active.geometryRefs),
+        wrapActive: true,
+        viewBox: '',
+        selectable: false,
+      };
+}
+
 export function MapView({
   active,
   quizId,
@@ -55,10 +88,10 @@ export function MapView({
   active: Location;
   quizId?: string;
 }) {
-  const regionalMap = quizId === 'us-states' || isUsStatesLocation(active.id);
+  const layer = mapLayerForLocation(active, quizId);
   const [viewportWidth, setViewportWidth] = useState(map.width);
   const [viewportHeight, setViewportHeight] = useState(map.height);
-  const highlightedPaths = highlightedGeometryPaths(active.geometryRefs);
+  const highlightedPaths = layer.activePaths;
   const insetSelectedPaths = selectedInsetGeometryPaths(
     active.id,
     active.geometryRefs,
@@ -67,7 +100,7 @@ export function MapView({
   const renderedMapWidth = map.width + MAP_OVERLAP_REFERENCE_UNITS * 2;
   const [renderedMapStart] = wrappedViewportBounds(map.width, seamX);
   const scale = viewportWidth / renderedMapWidth;
-  const callout = regionalMap
+  const callout = layer.stateBoundaries
     ? undefined
     : deriveCalloutModel(
         highlightedPaths,
@@ -169,9 +202,9 @@ export function MapView({
         MAP_OVERLAP_REFERENCE_UNITS,
       ).map((transform) => ({ path, transform })),
     );
-  const activeCopies = regionalMap
-    ? highlightedPaths.map((path) => ({ path, transform: 0 }))
-    : wrappedPathCopies(highlightedPaths);
+  const activeCopies = layer.wrapActive
+    ? wrappedPathCopies([...highlightedPaths])
+    : highlightedPaths.map((path) => ({ path, transform: 0 }));
   const wrappedInsetPathCopies = (paths: string[]) =>
     paths.flatMap((path) =>
       wrappedPathOffsets(
@@ -205,9 +238,9 @@ export function MapView({
   }, []);
   return (
     <svg
-      className={`world-map${regionalMap ? ' regional-map' : ''}`}
+      className="world-map"
       viewBox={
-        mapViewBoxForQuiz(quizId, active.id) ??
+        layer.viewBox ||
         `${renderedMapStart} 0 ${renderedMapWidth} ${map.height}`
       }
       role="img"
@@ -219,35 +252,31 @@ export function MapView({
         height={map.height}
         className="ocean"
       />
-      {!regionalMap && (
-        <g className="countries">
-          {map.sourceFeatureIds.map((id) => {
-            const feature = map.features[id as keyof typeof map.features];
-            const copies = wrappedPathCopies(feature.paths);
-            return (
-              <g
-                key={id}
-                aria-hidden="true"
-                className={
-                  active.geometryRefs.includes(id)
-                    ? 'country active'
-                    : 'country'
-                }
-              >
-                {copies.map(({ path, transform }, index) => (
-                  <path
-                    key={`${transform}:${index}`}
-                    d={path}
-                    transform={`translate(${transform} 0)`}
-                  />
-                ))}
-              </g>
-            );
-          })}
-        </g>
-      )}
-      {regionalMap && (
-        <g className="regional-state-borders" aria-hidden="true">
+      <g className="countries">
+        {layer.contextFeatureIds.map((id) => {
+          const feature = map.features[id as keyof typeof map.features];
+          const copies = wrappedPathCopies(feature.paths);
+          return (
+            <g
+              key={id}
+              aria-hidden="true"
+              className={
+                active.geometryRefs.includes(id) ? 'country active' : 'country'
+              }
+            >
+              {copies.map(({ path, transform }, index) => (
+                <path
+                  key={`${transform}:${index}`}
+                  d={path}
+                  transform={`translate(${transform} 0)`}
+                />
+              ))}
+            </g>
+          );
+        })}
+      </g>
+      {layer.stateBoundaries && (
+        <g className="state-boundaries" aria-hidden="true">
           {usStateData.map((state) => (
             <g key={state.id} data-state-id={state.id}>
               {highlightedGeometryPaths(state.geometryRefs).map(
@@ -259,16 +288,19 @@ export function MapView({
           ))}
         </g>
       )}
-      <g className="active-fill" aria-hidden={regionalMap ? undefined : true}>
+      <g
+        className="active-fill"
+        aria-hidden={layer.selectable ? undefined : true}
+      >
         {activeCopies.map(({ path, transform }, index) => (
           <path
             key={`${transform}:${index}`}
             d={path}
             transform={`translate(${transform} 0)`}
-            data-location-id={regionalMap ? active.id : undefined}
-            role={regionalMap ? 'button' : undefined}
-            tabIndex={regionalMap ? 0 : undefined}
-            aria-label={regionalMap ? active.name : undefined}
+            data-location-id={layer.selectable ? active.id : undefined}
+            role={layer.selectable ? 'button' : undefined}
+            tabIndex={layer.selectable ? 0 : undefined}
+            aria-label={layer.selectable ? active.name : undefined}
           />
         ))}
       </g>

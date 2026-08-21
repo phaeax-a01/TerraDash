@@ -112,8 +112,8 @@ test('selects and starts the 50-state regional quiz', async ({ page }) => {
   await expect(page.locator('.active-player .quiz-name')).toHaveText(
     'US States',
   );
-  await expect(page.locator('.regional-map')).toHaveCount(1);
-  await expect(page.locator('.regional-map')).toHaveAttribute(
+  await expect(page.locator('.world-map')).toHaveCount(1);
+  await expect(page.locator('.world-map')).toHaveAttribute(
     'viewBox',
     '10 35 500 295',
   );
