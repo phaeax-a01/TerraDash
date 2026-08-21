@@ -1105,10 +1105,7 @@ input {
   height: auto;
   background: #10233c;
 }
-.regional-map {
-  background: #10233c;
-}
-.regional-state-borders path {
+.state-boundaries path {
   fill: #294866;
   stroke: #7fa6c4;
   stroke-width: 0.45;
@@ -1150,7 +1147,7 @@ input {
 .active-fill path {
   fill: var(--attempt-color, #f59e0b);
 }
-.regional-map .active-fill path {
+.active-fill path[data-location-id] {
   pointer-events: auto;
   cursor: pointer;
 }

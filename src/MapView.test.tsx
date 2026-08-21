@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import catalog from '../data/generated/catalog.json';
 import candidates from '../data/generated/non-un-candidates.json';
+import usStates from '../data/generated/us-states.json';
 import {
   highlightedGeometryPaths,
   selectedInsetGeometryPaths,
@@ -32,6 +33,36 @@ function renderLocation(id: string) {
   act(() => root!.render(<MapView active={active} />));
   return frame;
 }
+
+function renderState(id: string) {
+  const active = usStates.find((entry) => entry.id === id)!;
+  const frame = document.createElement('section');
+  frame.className = 'map-frame';
+  document.body.append(frame);
+  root = createRoot(frame);
+  act(() => root!.render(<MapView active={active} quizId="us-states" />));
+  return frame;
+}
+
+describe('shared US States map composition', () => {
+  it('keeps surrounding geography contextual and state targets selectable', () => {
+    const frame = renderState('US-AK');
+    const map = frame.querySelector('.world-map')!;
+    expect(map).toHaveAttribute('viewBox', '10 35 500 295');
+    expect(map.querySelectorAll('.countries > g')).toHaveLength(241);
+    expect(
+      map.querySelector('.countries > g[aria-hidden="true"]'),
+    ).toBeTruthy();
+    expect(map.querySelector('.countries [role="button"]')).toBeNull();
+    expect(map.querySelector('.countries [data-location-id]')).toBeNull();
+    expect(map.querySelectorAll('.state-boundaries > g')).toHaveLength(50);
+    expect(
+      map.querySelector('.active-fill path[data-location-id="US-AK"]'),
+    ).toHaveAttribute('role', 'button');
+    expect(map.querySelector('.regional-map')).toBeNull();
+    expect(map.querySelector('.regional-state-borders')).toBeNull();
+  });
+});
 
 describe('MapView small-region callout rendering', () => {
   it('renders every custom target part in both the main map and magnified copy', () => {

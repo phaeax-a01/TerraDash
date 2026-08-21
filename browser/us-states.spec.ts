@@ -17,7 +17,7 @@ for (const viewport of [
       ['US-HI', 'Hawaii'],
     ]) {
       await page.goto(`/TerraDash/diagnostics.html?location=${id}`);
-      const map = page.locator('.regional-map');
+      const map = page.locator('.world-map');
       await expect(map).toHaveAttribute('viewBox', '10 35 500 295');
       const state = map
         .locator(`.active-fill > path[data-location-id="${id}"]`)
@@ -93,7 +93,7 @@ test('keeps every active state inside the regional viewport', async ({
   const select = page.locator('.diagnostics-control select');
   for (const id of stateIds) {
     await select.selectOption(id);
-    const map = page.locator('.regional-map');
+    const map = page.locator('.world-map');
     const mapBox = await map.boundingBox();
     const stateBox = await map
       .locator(`.active-fill path[data-location-id="${id}"]`)
@@ -113,7 +113,7 @@ test('identifies a visible state and advances the US States quiz', async ({
 }, testInfo) => {
   await page.setViewportSize({ width: 1777, height: 1171 });
   await page.goto('/TerraDash/?quiz=us-states&start=1');
-  const map = page.locator('.regional-map');
+  const map = page.locator('.world-map');
   const target = map.locator('.active-fill path[data-location-id]').first();
   const targetName = await target.getAttribute('aria-label');
   const mapBox = await map.boundingBox();
@@ -200,9 +200,9 @@ test('keeps the reported wide US States composition inside its layout bands', as
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(1777);
 
-  const map = page.locator('.regional-map');
+  const map = page.locator('.world-map');
   await expect(map).toHaveAttribute('viewBox', '10 35 500 295');
-  await expect(map.locator('.regional-state-borders > g')).toHaveCount(50);
+  await expect(map.locator('.state-boundaries > g')).toHaveCount(50);
   await page.screenshot({
     path: testInfo.outputPath('us-states-layout-1777x1171.png'),
     fullPage: true,
@@ -291,9 +291,9 @@ for (const viewport of [
     });
     await page.goto('/TerraDash/?quiz=us-states&start=1');
     await expect(page.locator('.active-player')).toBeVisible();
-    const map = page.locator('.regional-map');
+    const map = page.locator('.world-map');
     await expect(map).toHaveAttribute('viewBox', '10 35 500 295');
-    await expect(map.locator('.regional-state-borders > g')).toHaveCount(50);
+    await expect(map.locator('.state-boundaries > g')).toHaveCount(50);
     await page.screenshot({
       path: testInfo.outputPath(`us-states-${viewport.name}.png`),
       fullPage: true,
