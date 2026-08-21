@@ -352,10 +352,12 @@ h2 {
 }
 .home-page > p {
   margin-block: 0;
+  text-align: center;
 }
 .home-page > h1 {
   margin-block: 0;
   font-size: clamp(1.8rem, 4vw, 3.6rem);
+  text-align: center;
 }
 .home-guidance {
   display: grid;
@@ -367,6 +369,7 @@ h2 {
   color: #b9c9dc;
   font-size: clamp(0.95rem, 1.4vw, 1.15rem);
   list-style: none;
+  text-align: left;
 }
 .home-guidance li::before {
   content: '•';
