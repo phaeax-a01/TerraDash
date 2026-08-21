@@ -10,6 +10,7 @@ import {
   selectedInsetGeometryPaths,
 } from './mapGeometry';
 import { MapView } from './main';
+import { mapLayerForLocation } from './quizMapBoundary';
 
 let root: ReturnType<typeof createRoot> | undefined;
 class TestResizeObserver {
@@ -30,7 +31,11 @@ function renderLocation(id: string) {
   frame.className = 'map-frame';
   document.body.append(frame);
   root = createRoot(frame);
-  act(() => root!.render(<MapView active={active} />));
+  act(() =>
+    root!.render(
+      <MapView active={active} layer={mapLayerForLocation(active)} />,
+    ),
+  );
   return frame;
 }
 
@@ -40,7 +45,14 @@ function renderState(id: string) {
   frame.className = 'map-frame';
   document.body.append(frame);
   root = createRoot(frame);
-  act(() => root!.render(<MapView active={active} quizId="us-states" />));
+  act(() =>
+    root!.render(
+      <MapView
+        active={active}
+        layer={mapLayerForLocation(active, 'us-states')}
+      />,
+    ),
+  );
   return frame;
 }
 
@@ -55,7 +67,7 @@ describe('shared US States map composition', () => {
     ).toBeTruthy();
     expect(map.querySelector('.countries [role="button"]')).toBeNull();
     expect(map.querySelector('.countries [data-location-id]')).toBeNull();
-    expect(map.querySelectorAll('.state-boundaries > g')).toHaveLength(50);
+    expect(map.querySelectorAll('.map-base-layers > g')).toHaveLength(50);
     expect(
       map
         .querySelector('.active-fill path[data-location-id="US-AK"]')
@@ -87,7 +99,11 @@ describe('MapView small-region callout rendering', () => {
     frame.className = 'map-frame';
     document.body.append(frame);
     root = createRoot(frame);
-    act(() => root!.render(<MapView active={active} />));
+    act(() =>
+      root!.render(
+        <MapView active={active} layer={mapLayerForLocation(active)} />,
+      ),
+    );
 
     const source = highlightedGeometryPaths(active.geometryRefs);
     const mainPaths = [...frame.querySelectorAll('.active-fill path')].map(

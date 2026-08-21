@@ -29,9 +29,9 @@ import { QuizProvider } from './QuizContext';
 import { playableLocations, quizOptions, worldQuiz } from './quizContracts';
 import { QuizPlayer } from './QuizPlayer';
 import {
-  isUsStatesLocation,
+  mapLayerForLocation,
   mapLocationForQuizId,
-  US_STATES_VIEW_BOX,
+  type MapLayer,
 } from './quizMapBoundary';
 import { getAllHighScores } from './highScores';
 import { HighScoreTable } from './HighScoreTable';
@@ -48,47 +48,13 @@ type Location =
   | (typeof candidateData)[number]
   | (typeof usStateData)[number];
 
-const US_COUNTRY_GEOMETRY_REF = 'ne:1159321369';
-
-type MapLayer = {
-  contextFeatureIds: readonly string[];
-  activePaths: string[];
-  wrapActive: boolean;
-  viewBox: string;
-  selectable: boolean;
-  stateBoundaries?: boolean;
-};
-
-function mapLayerForLocation(active: Location, quizId?: string): MapLayer {
-  const usStates = quizId === 'us-states' || isUsStatesLocation(active.id);
-  return usStates
-    ? {
-        contextFeatureIds: map.sourceFeatureIds.filter(
-          (id) => id !== US_COUNTRY_GEOMETRY_REF,
-        ),
-        activePaths: highlightedGeometryPaths(active.geometryRefs),
-        wrapActive: false,
-        viewBox: US_STATES_VIEW_BOX,
-        selectable: true,
-        stateBoundaries: true,
-      }
-    : {
-        contextFeatureIds: map.sourceFeatureIds,
-        activePaths: highlightedGeometryPaths(active.geometryRefs),
-        wrapActive: true,
-        viewBox: '',
-        selectable: false,
-      };
-}
-
 export function MapView({
   active,
-  quizId,
+  layer,
 }: {
   active: Location;
-  quizId?: string;
+  layer: MapLayer;
 }) {
-  const layer = mapLayerForLocation(active, quizId);
   const [viewportWidth, setViewportWidth] = useState(map.width);
   const [viewportHeight, setViewportHeight] = useState(map.height);
   const highlightedPaths = layer.activePaths;
@@ -273,15 +239,13 @@ export function MapView({
           );
         })}
       </g>
-      {layer.stateBoundaries && (
-        <g className="state-boundaries" aria-hidden="true">
-          {usStateData.map((state) => (
-            <g key={state.id} data-state-id={state.id}>
-              {highlightedGeometryPaths(state.geometryRefs).map(
-                (path, index) => (
-                  <path key={`${state.id}:${index}`} d={path} />
-                ),
-              )}
+      {layer.baseLayers.length > 0 && (
+        <g className="map-base-layers" aria-hidden="true">
+          {layer.baseLayers.map((baseLayer) => (
+            <g key={baseLayer.id} data-layer-id={baseLayer.id}>
+              {baseLayer.paths.map((path, index) => (
+                <path key={`${baseLayer.id}:${index}`} d={path} />
+              ))}
             </g>
           ))}
         </g>
@@ -682,7 +646,7 @@ export function DiagnosticsMap({
 }: {
   location: (typeof playableLocations)[number];
 }) {
-  return <MapView active={location} />;
+  return <MapView active={location} layer={mapLayerForLocation(location)} />;
 }
 
 export function DiagnosticsPage() {
@@ -808,7 +772,10 @@ function App() {
           renderMap={(active) => (
             <MapView
               active={mapLocationForQuizId(active.id)! as Location}
-              quizId={selectedQuiz.id}
+              layer={mapLayerForLocation(
+                mapLocationForQuizId(active.id)! as Location,
+                selectedQuiz.id,
+              )}
             />
           )}
           renderQuizThumbnail={(quiz) => <QuizThumbnail quiz={quiz} />}

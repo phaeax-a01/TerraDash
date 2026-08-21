@@ -1105,7 +1105,7 @@ input {
   height: auto;
   background: #10233c;
 }
-.state-boundaries path {
+.map-base-layers path {
   fill: #294866;
   stroke: #7fa6c4;
   stroke-width: 0.45;
