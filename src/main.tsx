@@ -26,21 +26,21 @@ import {
   wrappedViewportBounds,
 } from './footprint';
 import { QuizProvider } from './QuizContext';
-import { playableLocations, quizOptions, worldQuiz } from './quizContracts';
-import { QuizPlayer } from './QuizPlayer';
 import {
+  mapLayerForQuiz,
   mapLayerForLocation,
-  mapLocationForQuizId,
+  mapLayerConfigs,
+  playableLocations,
+  quizOptions,
+  worldQuiz,
   type MapLayer,
-} from './quizMapBoundary';
+} from './quizContracts';
+import { QuizPlayer } from './QuizPlayer';
+import { mapLocationForQuizId } from './quizMapBoundary';
 import { getAllHighScores } from './highScores';
 import { HighScoreTable } from './HighScoreTable';
 import { MapBoxShell } from './MapBoxShell';
-import {
-  highlightedGeometryPaths,
-  selectedInsetGeometryPaths,
-  tinyInsetDot,
-} from './mapGeometry';
+import { selectedInsetGeometryPaths, tinyInsetDot } from './mapGeometry';
 import './styles.css';
 
 type Location =
@@ -585,7 +585,6 @@ const thumbnailViewBoxes: Record<string, string> = {
   'south-america': '420 300 300 360',
   oceania: '1030 330 360 270',
   caribbean: '430 220 260 190',
-  'us-states': US_STATES_VIEW_BOX,
 };
 
 function QuizThumbnail({ quiz }: { quiz: (typeof quizOptions)[number] }) {
@@ -597,7 +596,10 @@ function QuizThumbnail({ quiz }: { quiz: (typeof quizOptions)[number] }) {
         (ref) => map.features[ref as keyof typeof map.features]?.paths ?? [],
       ),
     );
-  const viewBox = thumbnailViewBoxes[quiz.id] ?? thumbnailViewBoxes.world;
+  const viewBox =
+    mapLayerConfigs[quiz.id]?.viewBox ||
+    thumbnailViewBoxes[quiz.id] ||
+    thumbnailViewBoxes.world;
   return (
     <span
       className={`quiz-option-thumbnail quiz-option-thumbnail-${quiz.id}`}
@@ -772,7 +774,7 @@ function App() {
           renderMap={(active) => (
             <MapView
               active={mapLocationForQuizId(active.id)! as Location}
-              layer={mapLayerForLocation(
+              layer={mapLayerForQuiz(
                 mapLocationForQuizId(active.id)! as Location,
                 selectedQuiz.id,
               )}

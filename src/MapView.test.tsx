@@ -10,7 +10,7 @@ import {
   selectedInsetGeometryPaths,
 } from './mapGeometry';
 import { MapView } from './main';
-import { mapLayerForLocation } from './quizMapBoundary';
+import { mapLayerForQuiz } from './quizContracts';
 
 let root: ReturnType<typeof createRoot> | undefined;
 class TestResizeObserver {
@@ -33,7 +33,7 @@ function renderLocation(id: string) {
   root = createRoot(frame);
   act(() =>
     root!.render(
-      <MapView active={active} layer={mapLayerForLocation(active)} />,
+      <MapView active={active} layer={mapLayerForQuiz('world', active)} />,
     ),
   );
   return frame;
@@ -47,10 +47,7 @@ function renderState(id: string) {
   root = createRoot(frame);
   act(() =>
     root!.render(
-      <MapView
-        active={active}
-        layer={mapLayerForLocation(active, 'us-states')}
-      />,
+      <MapView active={active} layer={mapLayerForQuiz('us-states', active)} />,
     ),
   );
   return frame;
@@ -101,7 +98,7 @@ describe('MapView small-region callout rendering', () => {
     root = createRoot(frame);
     act(() =>
       root!.render(
-        <MapView active={active} layer={mapLayerForLocation(active)} />,
+        <MapView active={active} layer={mapLayerForQuiz('world', active)} />,
       ),
     );
 

@@ -3,7 +3,68 @@ import quizData from '../data/generated/quiz.json';
 import quizzesData from '../data/quizzes.json';
 import candidateData from '../data/generated/non-un-candidates.json';
 import usStateData from '../data/generated/us-states.json';
+import map from '../data/generated/map.json';
 import type { CatalogLocation, QuizDefinition } from './quizEngine';
+import { highlightedGeometryPaths } from './mapGeometry';
+
+export type MapLayerConfig = {
+  contextFeatureIds: readonly string[];
+  baseLayers: readonly { id: string; paths: string[] }[];
+  wrapActive: boolean;
+  viewBox: string;
+  selectable: boolean;
+};
+
+export type MapLayer = MapLayerConfig & { activePaths: string[] };
+
+const defaultMapLayer: MapLayerConfig = {
+  contextFeatureIds: map.sourceFeatureIds,
+  baseLayers: [],
+  wrapActive: true,
+  viewBox: '',
+  selectable: false,
+};
+
+export const mapLayerConfigs: Record<string, MapLayerConfig> = {
+  'us-states': {
+    contextFeatureIds: map.sourceFeatureIds.filter(
+      (id) => id !== 'ne:1159321369',
+    ),
+    baseLayers: usStateData.map((state) => ({
+      id: state.id,
+      paths: highlightedGeometryPaths(state.geometryRefs),
+    })),
+    wrapActive: false,
+    viewBox: '10 35 500 295',
+    selectable: true,
+  },
+};
+
+const locationMapLayers: Record<string, MapLayerConfig> = Object.fromEntries(
+  usStateData.map((state) => [state.id, mapLayerConfigs['us-states']]),
+);
+
+export function mapLayerForQuiz(
+  quizId: string,
+  active: { geometryRefs: string[] },
+): MapLayer {
+  const config = mapLayerConfigs[quizId] ?? defaultMapLayer;
+  return {
+    ...config,
+    activePaths: highlightedGeometryPaths(active.geometryRefs),
+  };
+}
+
+export function mapLayerForLocation(active: {
+  id: string;
+  geometryRefs: string[];
+}): MapLayer {
+  const config = locationMapLayers[active.id] ?? defaultMapLayer;
+  return {
+    ...config,
+    activePaths: highlightedGeometryPaths(active.geometryRefs),
+  };
+}
 
 export const defaultCatalog: CatalogLocation[] = catalogData.map(
   ({ id, name }) => ({
