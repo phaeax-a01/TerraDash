@@ -82,6 +82,20 @@ describe('shared US States map composition', () => {
     expect(frame.querySelector('.callout-cutout')).toBeTruthy();
   });
 
+  it('composes selectable-location boundaries into the magnified context', () => {
+    const frame = renderState('US-RI');
+    const context = frame.querySelector('.callout-context');
+    expect(context).toBeTruthy();
+    expect(context?.querySelectorAll(':scope > .country')).toHaveLength(50);
+    expect(
+      context?.querySelector('[data-layer-id="US-MA"] path'),
+    ).toBeTruthy();
+    expect(
+      context?.querySelector('[data-layer-id="US-RI"] path'),
+    ).toBeTruthy();
+    expect(frame.querySelector('.callout-selected path')).toBeTruthy();
+  });
+
   it('keeps the shared callout threshold bypass for a large state target', () => {
     const frame = renderState('US-TX');
     expect(frame.querySelector('.map-callout')).toBeNull();
