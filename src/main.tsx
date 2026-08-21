@@ -52,7 +52,7 @@ const US_COUNTRY_GEOMETRY_REF = 'ne:1159321369';
 
 type MapLayer = {
   contextFeatureIds: readonly string[];
-  activePaths: readonly string[];
+  activePaths: string[];
   wrapActive: boolean;
   viewBox: string;
   selectable: boolean;

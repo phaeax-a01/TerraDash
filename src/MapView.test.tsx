@@ -48,7 +48,7 @@ describe('shared US States map composition', () => {
   it('keeps surrounding geography contextual and state targets selectable', () => {
     const frame = renderState('US-AK');
     const map = frame.querySelector('.world-map')!;
-    expect(map).toHaveAttribute('viewBox', '10 35 500 295');
+    expect(map.getAttribute('viewBox')).toBe('10 35 500 295');
     expect(map.querySelectorAll('.countries > g')).toHaveLength(241);
     expect(
       map.querySelector('.countries > g[aria-hidden="true"]'),
@@ -57,8 +57,10 @@ describe('shared US States map composition', () => {
     expect(map.querySelector('.countries [data-location-id]')).toBeNull();
     expect(map.querySelectorAll('.state-boundaries > g')).toHaveLength(50);
     expect(
-      map.querySelector('.active-fill path[data-location-id="US-AK"]'),
-    ).toHaveAttribute('role', 'button');
+      map
+        .querySelector('.active-fill path[data-location-id="US-AK"]')
+        ?.getAttribute('role'),
+    ).toBe('button');
     expect(map.querySelector('.regional-map')).toBeNull();
     expect(map.querySelector('.regional-state-borders')).toBeNull();
   });
