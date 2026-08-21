@@ -10,7 +10,7 @@ import {
 describe('generated quiz wiring', () => {
   it('exposes the complete generated location contract', () => {
     expect(defaultCatalog).toHaveLength(195);
-    expect(playableLocations).toHaveLength(279);
+    expect(playableLocations).toHaveLength(277);
     expect(defaultQuiz.locationIds).toHaveLength(195);
     expect(new Set(defaultQuiz.locationIds).size).toBe(195);
     expect(
@@ -52,17 +52,23 @@ describe('regional quiz partition', () => {
     expect(regionalIds.every((id) => worldIds.has(id))).toBe(true);
   });
 
-  it('defines 84 candidates with nonempty supplemental exact geometry refs', () => {
-    expect(candidateData).toHaveLength(84);
+  it('defines 82 candidates with nonempty supplemental exact geometry refs', () => {
+    expect(candidateData).toHaveLength(82);
     expect(
       candidateData.every(
         ({ geometryRefs }) =>
           geometryRefs.length > 0 &&
           geometryRefs.every((ref) =>
-            /^(ne:admin1|ne:map-unit|ne:map-subunit):/.test(ref),
+            /^(ne:admin1|ne:map-unit|ne:map-subunit|gb:aze-adm1):/.test(ref),
           ),
       ),
     ).toBe(true);
+    expect(playableLocations.some(({ id }) => id === 'non-un:trentino')).toBe(
+      false,
+    );
+    expect(
+      playableLocations.some(({ id }) => id === 'non-un:bolzano-south-tyrol'),
+    ).toBe(false);
     const nonUnQuiz = quizOptions.find(({ id }) => id === 'non-un');
     expect(nonUnQuiz?.name).toBe(
       'Non-UN Countries, Independent Territories, and Autonomous Regions',
@@ -93,5 +99,27 @@ describe('regional quiz partition', () => {
         (id) => !playableLocations.some((location) => location.id === id),
       ),
     ).toBe(true);
+  });
+
+  it('maps New Caledonia to its exact features, not British Columbia', () => {
+    const newCaledonia = candidateData.find(
+      ({ id }) => id === 'non-un:new-caledonia',
+    );
+    expect(newCaledonia?.geometryRefs).toEqual([
+      'ne:map-unit:1159320641',
+      'ne:map-subunit:1159320641',
+    ]);
+    expect(newCaledonia?.geometryRefs).not.toContain('ne:admin1:1159307717');
+  });
+
+  it('maps Nakhchivan to the full autonomous republic, not its capital city', () => {
+    const nakhchivan = candidateData.find(
+      ({ id }) => id === 'non-un:nakhchivan',
+    );
+    expect(nakhchivan?.geometryRefs).toEqual([
+      'gb:aze-adm1:63332228B45413776644545',
+    ]);
+    expect(nakhchivan!.bounds[2] - nakhchivan!.bounds[0]).toBeGreaterThan(4);
+    expect(nakhchivan!.bounds[3] - nakhchivan!.bounds[1]).toBeGreaterThan(3);
   });
 });

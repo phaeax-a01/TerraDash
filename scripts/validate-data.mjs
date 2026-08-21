@@ -26,6 +26,39 @@ const removedCandidateIds = new Set([
   'non-un:navarre',
   'non-un:valencia',
 ]);
+const newCaledonia = candidates.find(({ id }) => id === 'non-un:new-caledonia');
+const forbiddenBritishColumbiaRef = 'ne:admin1:1159307717';
+if (
+  !newCaledonia ||
+  newCaledonia.geometryRefs.length !== 2 ||
+  !newCaledonia.geometryRefs.includes('ne:map-unit:1159320641') ||
+  !newCaledonia.geometryRefs.includes('ne:map-subunit:1159320641') ||
+  newCaledonia.geometryRefs.includes(forbiddenBritishColumbiaRef)
+)
+  throw new Error(
+    'New Caledonia must use only its exact map-unit and map-subunit geometry; British Columbia must not be selected.',
+  );
+const nakhchivan = candidates.find(({ id }) => id === 'non-un:nakhchivan');
+const kosovo = candidates.find(({ id }) => id === 'non-un:kosovo');
+if (
+  !kosovo ||
+  JSON.stringify(kosovo.geometryRefs) !==
+    JSON.stringify(['ne:map-unit:1159321007', 'ne:map-subunit:1159321007'])
+)
+  throw new Error(
+    'Kosovo must use the exact Natural Earth map-unit/subunit pair, not unrelated admin1 same-label features.',
+  );
+const expectedNakhchivanRefs = ['gb:aze-adm1:63332228B45413776644545'];
+if (
+  !nakhchivan ||
+  JSON.stringify(nakhchivan.geometryRefs) !==
+    JSON.stringify(expectedNakhchivanRefs) ||
+  nakhchivan.bounds[2] - nakhchivan.bounds[0] <= 4 ||
+  nakhchivan.bounds[3] - nakhchivan.bounds[1] <= 3
+)
+  throw new Error(
+    'Nakhchivan must use the pinned geoBoundaries autonomous-republic feature, not the Natural Earth Nakhchivan city feature.',
+  );
 const source = JSON.parse(
   fs.readFileSync('data/source/ne_50m_admin_0_countries.geojson'),
 );
@@ -75,10 +108,10 @@ for (const item of catalog) {
   if (!item.bounds || item.bounds.some((value) => !Number.isFinite(value)))
     throw new Error(`Missing projected bounds for ${item.id}`);
 }
-if (candidates.length !== 84)
-  throw new Error('Expected exactly 84 non-UN candidates');
-if (playable.length !== 279 || playableIds.size !== 279)
-  throw new Error('Expected exactly 279 unique playable locations');
+if (candidates.length !== 82)
+  throw new Error('Expected exactly 82 non-UN candidates');
+if (playable.length !== 277 || playableIds.size !== 277)
+  throw new Error('Expected exactly 277 unique playable locations');
 if ([...removedCandidateIds].some((id) => playableIds.has(id)))
   throw new Error('Removed Spanish candidates remain playable');
 for (const candidate of candidates) {
@@ -88,7 +121,7 @@ for (const candidate of candidates) {
       (id) =>
         !map.features[id] ||
         !map.supplementalFeatureIds.includes(id) ||
-        !/^(ne:admin1|ne:map-unit|ne:map-subunit):/.test(id),
+        !/^(ne:admin1|ne:map-unit|ne:map-subunit|gb:aze-adm1):/.test(id),
     )
   )
     throw new Error(
@@ -96,15 +129,15 @@ for (const candidate of candidates) {
     );
 }
 if (
-  Object.keys(map.locationFeatureIds ?? {}).length !== 279 ||
-  Object.keys(inset.locationFeatureIds ?? {}).length !== 279
+  Object.keys(map.locationFeatureIds ?? {}).length !== 277 ||
+  Object.keys(inset.locationFeatureIds ?? {}).length !== 277
 )
   throw new Error(
-    'Main and inset indexes must cover exactly 279 playable locations',
+    'Main and inset indexes must cover exactly 277 playable locations',
   );
 if (
-  new Set(Object.keys(map.locationFeatureIds ?? {})).size !== 279 ||
-  new Set(Object.keys(inset.locationFeatureIds ?? {})).size !== 279 ||
+  new Set(Object.keys(map.locationFeatureIds ?? {})).size !== 277 ||
+  new Set(Object.keys(inset.locationFeatureIds ?? {})).size !== 277 ||
   JSON.stringify(Object.keys(map.locationFeatureIds).sort()) !==
     JSON.stringify(Object.keys(inset.locationFeatureIds).sort())
 )

@@ -33,6 +33,15 @@ const SUPPLEMENTAL_SOURCES = [
     url: 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/9380cca83db5f9aef52d5e762765100745f84b27/geojson/ne_10m_admin_0_map_subunits.geojson',
     sha256: '76896018b9265072d8063e118e46df765be0ceb54a803b1a2571ebe25b36a071',
   },
+  {
+    id: 'aze-adm1',
+    prefix: 'gb',
+    path: 'data/source/geoBoundaries-AZE-ADM1.geojson',
+    url: 'https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/v6.0.0/releaseData/gbOpen/AZE/ADM1/geoBoundaries-AZE-ADM1.geojson',
+    sha256: 'f021170f3a9ef66974555265ede713af0fe02508393c75c5fa60173e10d48666',
+    license: 'Open Data Commons Open Database License 1.0',
+    attribution: 'geoBoundaries v6.0.0 (source: geoBoundaries, OpenStreetMap)',
+  },
 ];
 const sourceBytes = fs.readFileSync(sourcePath);
 const sourceSha256 = crypto
@@ -353,14 +362,23 @@ const features = source.features.map((feature) => {
 const supplementalFeatures = SUPPLEMENTAL_SOURCES.flatMap((definition) =>
   checkedSourceBytes(definition).features.map((feature) => {
     const p = feature.properties;
-    const sourceId = p.NE_ID ?? p.ne_id ?? p.adm1_code;
-    const id = `ne:${definition.id}:${sourceId}`;
+    const sourceId = p.NE_ID ?? p.ne_id ?? p.adm1_code ?? p.shapeID;
+    const id = `${definition.prefix ?? 'ne'}:${definition.id}:${sourceId}`;
     const { paths } = buildGeometryFeature(feature.geometry, id);
     const points = pathPoints(paths);
     return {
       id,
       source: definition.id,
       geometry: feature.geometry,
+      sourceCodes: [
+        p.iso_3166_2,
+        p.ISO_A2,
+        p.ISO_A2_EH,
+        p.iso_a2,
+        p.SU_A3,
+        p.ADM0_A3,
+        p.adm0_a3,
+      ].filter(Boolean),
       keys: [
         p.iso_3166_2,
         p.ISO_A2,
@@ -373,6 +391,11 @@ const supplementalFeatures = SUPPLEMENTAL_SOURCES.flatMap((definition) =>
         p.NAME,
         p.NAME_LONG,
         p.SUBUNIT,
+        p.shapeID,
+        p.shapeName,
+        p.shapeISO,
+        p.shapeGroup,
+        p.shapeType,
       ].filter(Boolean),
       labels: [
         p.iso_3166_2,
@@ -382,9 +405,13 @@ const supplementalFeatures = SUPPLEMENTAL_SOURCES.flatMap((definition) =>
         p.NAME,
         p.NAME_LONG,
         p.SUBUNIT,
+        p.shapeName,
       ]
         .filter(Boolean)
         .flatMap((value) => String(value).split(/[|;]/)),
+      alternateLabels: String(p.name_alt ?? '')
+        .split(/[|;]/)
+        .filter(Boolean),
       paths,
       anchor:
         p.LABEL_X != null && p.LABEL_Y != null
@@ -424,6 +451,16 @@ const candidateRecords = candidateRows.map((row) =>
   ),
 );
 const NON_UN_COMPONENTS = {
+  'Bouvet Island': ['BV'],
+  'Christmas Island': ['CX'],
+  'Cocos (Keeling) Islands': ['CC'],
+  // Natural Earth has only the AZ-NX city municipality. Use the pinned
+  // geoBoundaries ADM1 republic feature instead of silently using that city.
+  Nakhchivan: ['63332228B45413776644545'],
+  // Natural Earth's British Columbia Admin-1 feature lists "New Caledonia"
+  // as a name_alt value. Use the exact NC source key so that alias matching
+  // cannot attach Canada's province to the New Caledonia candidate.
+  'New Caledonia': ['NC'],
   Andalusia: [
     'ES-AL',
     'ES-GR',
@@ -454,6 +491,9 @@ const NON_UN_COMPONENTS = {
   Galicia: ['ES-C', 'ES-LU', 'ES-OR', 'ES-PO'],
   Valencia: ['ES-A', 'ES-CS', 'ES-V'],
   'Friuli-Venezia Giulia': ['IT-GO', 'IT-PN', 'IT-TS', 'IT-UD'],
+  // Trentino and Bolzano/South Tyrol are intentionally excluded from the
+  // Non-UN quiz because both overlap the retained Trentino-Alto Adige/Südtirol
+  // region; keep their source keys only for the retained aggregate mapping.
   'Trentino-Alto Adige/Südtirol': ['IT-BZ', 'IT-TN'],
   'United States Minor Outlying Islands': [
     'JQI',
@@ -467,17 +507,25 @@ const NON_UN_COMPONENTS = {
     'KQI',
   ],
 };
+const NON_UN_EXACT_REFS = {
+  Kosovo: ['ne:map-unit:1159321007', 'ne:map-subunit:1159321007'],
+};
 const NON_UN_LABEL_ALIASES = {
   'Valle d’Aosta': ['Aosta Valley', 'Val d’Aoste', 'Aoste'],
 };
 const supplementalByKey = new Map();
 for (const feature of supplementalFeatures)
-  for (const key of feature.keys)
+  for (const key of new Set(feature.keys))
     supplementalByKey.set(key, [
       ...(supplementalByKey.get(key) ?? []),
       feature,
     ]);
 function candidateMatches(candidate) {
+  const exactRefs = NON_UN_EXACT_REFS[candidate.entity];
+  if (exactRefs)
+    return supplementalFeatures.filter((feature) =>
+      exactRefs.includes(feature.id),
+    );
   const componentKeys = NON_UN_COMPONENTS[candidate.entity];
   if (componentKeys)
     return componentKeys.flatMap((key) => supplementalByKey.get(key) ?? []);
@@ -493,11 +541,39 @@ function candidateMatches(candidate) {
       ...(NON_UN_LABEL_ALIASES[candidate.entity] ?? []),
     ].map(normalizedLabel),
   );
-  return supplementalFeatures.filter(
+  const matches = supplementalFeatures.filter(
     (feature) =>
       feature.keys.some((key) => codes.includes(key) || key === iso2) ||
       feature.labels.some((label) => labels.has(normalizedLabel(label))),
   );
+  const expectedCountryCodes = new Set(
+    [iso2, ...codes.map((code) => code.split('-')[0])]
+      .filter(Boolean)
+      .map((code) => code.toUpperCase()),
+  );
+  for (const feature of matches) {
+    const codeMatch = feature.sourceCodes.some((code) =>
+      [code, String(code).split('-')[0]]
+        .map((value) => value.toUpperCase())
+        .some((value) => expectedCountryCodes.has(value)),
+    );
+    const normalizedLabelMatch = feature.labels.some((label) =>
+      labels.has(normalizedLabel(label)),
+    );
+    const knownSourceCountryCodes = feature.sourceCodes
+      .map((code) => String(code).split('-')[0].toUpperCase())
+      .filter((code) => !['-99', '-1'].includes(code));
+    if (
+      normalizedLabelMatch &&
+      !codeMatch &&
+      knownSourceCountryCodes.length &&
+      !knownSourceCountryCodes.some((code) => expectedCountryCodes.has(code))
+    )
+      throw new Error(
+        `Ambiguous normalized-label geometry for ${candidate.entity}: ${feature.id} conflicts with declared country codes`,
+      );
+  }
+  return matches;
 }
 const nonUnCandidates = candidateRecords.map((candidate) => {
   const matches = candidateMatches(candidate);
@@ -523,6 +599,13 @@ const nonUnCandidates = candidateRecords.map((candidate) => {
   };
 });
 if (
+  nonUnCandidates.some(
+    (candidate) =>
+      new Set(candidate.geometryRefs).size !== candidate.geometryRefs.length,
+  )
+)
+  throw new Error('Non-UN candidate geometry refs must be unique.');
+if (
   new Set(nonUnCandidates.map((candidate) => candidate.name)).size !==
   nonUnCandidates.length
 )
@@ -535,7 +618,8 @@ if (
         (ref) =>
           !ref.startsWith('ne:admin1:') &&
           !ref.startsWith('ne:map-unit:') &&
-          !ref.startsWith('ne:map-subunit:'),
+          !ref.startsWith('ne:map-subunit:') &&
+          !ref.startsWith('gb:aze-adm1:'),
       ),
   )
 )
@@ -561,10 +645,10 @@ const mainFeatureIds = new Set(
   ),
 );
 if (
-  playableLocations.length !== 279 ||
+  playableLocations.length !== 277 ||
   new Set(playableLocationIds).size !== playableLocations.length
 )
-  throw new Error('Playable catalog must contain exactly 279 unique locations');
+  throw new Error('Playable catalog must contain exactly 277 unique locations');
 const playableLocationFeatureIds = Object.fromEntries(
   playableLocations.map((location) => [location.id, location.geometryRefs]),
 );
