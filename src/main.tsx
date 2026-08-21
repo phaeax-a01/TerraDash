@@ -239,6 +239,19 @@ export function MapView({
           );
         })}
       </g>
+      {regionalMap && (
+        <g className="regional-state-borders" aria-hidden="true">
+          {usStateData.map((state) => (
+            <g key={state.id} data-state-id={state.id}>
+              {highlightedGeometryPaths(state.geometryRefs).map(
+                (path, index) => (
+                  <path key={`${state.id}:${index}`} d={path} />
+                ),
+              )}
+            </g>
+          ))}
+        </g>
+      )}
       <g className="active-fill" aria-hidden={regionalMap ? undefined : true}>
         {wrappedPathCopies(highlightedPaths).map(
           ({ path, transform }, index) => (
