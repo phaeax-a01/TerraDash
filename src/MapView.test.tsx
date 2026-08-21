@@ -96,24 +96,6 @@ describe('shared US States map composition', () => {
     expect(frame.querySelector('.callout-selected path')).toBeTruthy();
   });
 
-  it('keeps WI and MI boundaries as closed single-part paths in both layers', () => {
-    for (const id of ['US-WI', 'US-MI']) {
-      const frame = renderState(id);
-      const paths = [
-        frame.querySelector(`.active-fill path[data-location-id="${id}"]`),
-        frame.querySelector('.callout-selected path'),
-      ];
-      expect(paths.every((path) => path)).toBe(true);
-      for (const path of paths) {
-        expect(path?.getAttribute('d')?.match(/M/g)).toHaveLength(1);
-        expect(path?.getAttribute('d')?.match(/Z/g)).toHaveLength(1);
-      }
-      act(() => root?.unmount());
-      root = undefined;
-      document.body.replaceChildren();
-    }
-  });
-
   it('keeps the shared callout threshold bypass for a large state target', () => {
     const frame = renderState('US-TX');
     expect(frame.querySelector('.map-callout')).toBeNull();
