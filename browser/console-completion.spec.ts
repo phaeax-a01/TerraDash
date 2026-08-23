@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+
+const quizzes = JSON.parse(
+  readFileSync(new URL('../data/quizzes.json', import.meta.url), 'utf8'),
+);
 
 test('completes the active quiz through the browser console command', async ({
   page,
@@ -12,7 +17,11 @@ test('completes the active quiz through the browser console command', async ({
     page.getByRole('heading', { name: 'Run complete' }),
   ).toBeVisible();
   await expect(page.locator('.results-grid')).toContainText(/10:\d{2}/);
-  await expect(page.locator('.results-grid')).toContainText('195');
+  const worldLocationCount = quizzes.find(({ id }) => id === 'world')!
+    .locationIds.length;
+  await expect(page.locator('.results-grid')).toContainText(
+    String(worldLocationCount),
+  );
   await expect(
     page.getByRole('heading', { name: 'High Score Achieved' }),
   ).toBeVisible();
