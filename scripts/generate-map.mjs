@@ -141,9 +141,13 @@ for (const quiz of authoredQuizzes) {
   for (const locationId of quiz.locationIds) {
     const location = authoredLocations.find(({ id }) => id === locationId);
     if (!location)
-      throw new Error(`Regional detail references unknown location ${locationId}`);
+      throw new Error(
+        `Regional detail references unknown location ${locationId}`,
+      );
     if (location.resolution.kind !== 'source-keys')
-      throw new Error(`Regional detail requires source-key resolution for ${locationId}`);
+      throw new Error(
+        `Regional detail requires source-key resolution for ${locationId}`,
+      );
     for (const { source, key } of location.resolution.keys) {
       const definition = SUPPLEMENTAL_SOURCES.find(({ id }) => id === source);
       if (!definition) continue;
