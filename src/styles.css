@@ -55,7 +55,7 @@ main.standalone-page {
   min-height: 100dvh;
   overflow: visible;
 }
-main.app-shell:has(.active-player) {
+main.app-shell:has(.quiz-layout) {
   /* Keep active gameplay sized to the largest viewport. Mobile keyboards
      resize the visual/dynamic viewport; the map composition must not jump. */
   height: var(--active-quiz-height, 100dvh);
