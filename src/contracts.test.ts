@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import reviewed from '../data/reviewed-invariants.json';
 import {
   configuredQuizzes,
+  generatedContext,
   generatedInset,
   generatedLocations,
   generatedManifest,
@@ -104,6 +105,24 @@ describe('typed runtime data boundary', () => {
       }
     }
     expect(generatedInset.locationFeatureIds).toBeDefined();
+    const contextVariant = generatedContext.variants.find(
+      ({ source, tolerance }) => source === 'admin0-10m' && tolerance === 0.12,
+    );
+    expect(contextVariant?.featureIds).toEqual([
+      'ne:1159321369',
+      'ne:1159320707',
+      'ne:1159321091',
+      'ne:1159321055',
+      'ne:1159320931',
+      'ne:1159320827',
+      'ne:1159320815',
+      'ne:1159321253',
+      'ne:1159320527',
+      'ne:1159320517',
+      'ne:1159320431',
+      'ne:1159320415',
+    ]);
+    expect(contextVariant?.features['ne:1159321055']).toBeDefined();
     expect(generatedManifest).toBeDefined();
   });
 

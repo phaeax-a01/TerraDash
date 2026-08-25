@@ -28,6 +28,7 @@ import {
 } from './generator/geometry.mjs';
 import {
   buildInsetArtifact,
+  buildContextArtifact,
   buildManifestArtifact,
   buildMapArtifact,
 } from './generator/artifacts.mjs';
@@ -334,6 +335,138 @@ const locations = resolvedLocations.map(({ location, matches }) => {
   };
 });
 
+const contextSourceFeaturesByKey = new Map();
+for (const feature of insetSource.features) {
+  for (const key of new Set(featureKey(feature))) {
+    const matches = contextSourceFeaturesByKey.get(key) ?? [];
+    matches.push(feature);
+    contextSourceFeaturesByKey.set(key, matches);
+  }
+}
+
+function parseViewBox(value, quizId) {
+  const parts = String(value ?? '')
+    .trim()
+    .split(/\s+/)
+    .map(Number);
+  if (
+    parts.length !== 4 ||
+    !parts.every(Number.isFinite) ||
+    parts[2] <= 0 ||
+    parts[3] <= 0
+  )
+    throw new Error(`Regional context requires a valid viewBox for ${quizId}`);
+  return parts;
+}
+
+function boundsIntersectViewport(featureBounds, viewport, wrapWidth) {
+  const [minX, minY, maxX, maxY] = featureBounds;
+  const [viewMinX, viewMaxX, viewMinY, viewMaxY] = viewport;
+  if (maxY < viewMinY || minY > viewMaxY) return false;
+  for (const offset of [-wrapWidth, 0, wrapWidth]) {
+    if (maxX + offset >= viewMinX && minX + offset <= viewMaxX) return true;
+  }
+  return false;
+}
+
+function retainedContextFeatureIds(quiz) {
+  const mapConfig = quiz.map;
+  const [viewMinX, viewMinY, viewWidth, viewHeight] = parseViewBox(
+    mapConfig?.viewBox,
+    quiz.id,
+  );
+  const viewMaxX = viewMinX + viewWidth;
+  const viewMaxY = viewMinY + viewHeight;
+  const yScale =
+    1 / Math.cos(((mapConfig?.standardParallel ?? 0) * Math.PI) / 180);
+  const projectionCenterY = (viewMinY + viewMaxY) / 2;
+  const projectedY = (value) =>
+    projectionCenterY + (value - projectionCenterY) * yScale;
+  const viewport = [viewMinX, viewMaxX, viewMinY, viewMaxY];
+  const excluded = new Set(mapConfig?.contextFeatureExclusions ?? []);
+  return features
+    .filter(({ id, bounds: featureBounds }) => {
+      if (excluded.has(id)) return false;
+      const projectedYBounds = [
+        projectedY(featureBounds[1]),
+        projectedY(featureBounds[3]),
+      ];
+      const projectedBounds = [
+        featureBounds[0],
+        Math.min(featureBounds[1], ...projectedYBounds),
+        featureBounds[2],
+        Math.max(featureBounds[3], ...projectedYBounds),
+      ];
+      return boundsIntersectViewport(
+        projectedBounds,
+        viewport,
+        mapConfig?.wrapWidth ?? WIDTH,
+      );
+    })
+    .map(({ id }) => id);
+}
+
+const contextVariantInputs = new Map();
+for (const quiz of authoredQuizzes) {
+  const context = quiz.map?.regionalDetail?.context;
+  if (context == null) continue;
+  if (context.source !== 'admin0-10m')
+    throw new Error(`Unsupported regional context source for ${quiz.id}`);
+  if (!Number.isFinite(context.tolerance) || context.tolerance <= 0)
+    throw new Error(`Invalid regional context tolerance for ${quiz.id}`);
+  const variantKey = `${context.source}:${context.tolerance}`;
+  const variant = contextVariantInputs.get(variantKey) ?? {
+    source: context.source,
+    tolerance: context.tolerance,
+    features: new Map(),
+  };
+  for (const baseId of retainedContextFeatureIds(quiz)) {
+    const base = featuresById.get(baseId);
+    if (!base) throw new Error(`Missing retained context feature ${baseId}`);
+    const mappingCandidates = base.keys.flatMap((key) => {
+      const baseMatches = featuresByKey.get(key) ?? [];
+      const contextMatches = contextSourceFeaturesByKey.get(key) ?? [];
+      return baseMatches.length === 1 && contextMatches.length === 1
+        ? contextMatches
+        : [];
+    });
+    const contextMatches = [
+      ...new Map(
+        mappingCandidates.map((feature) => [
+          `ne:${feature.properties.NE_ID}`,
+          feature,
+        ]),
+      ).values(),
+    ];
+    if (contextMatches.length !== 1)
+      throw new Error(
+        `Context source mapping must resolve uniquely: ${baseId}`,
+      );
+    const contextFeature = contextMatches[0];
+    if (`ne:${contextFeature.properties.NE_ID}` !== base.id)
+      throw new Error(`Context source mapping changed for ${base.id}`);
+    const { paths } = buildGeometryFeature(
+      contextFeature.geometry,
+      base.id,
+      'main',
+      context.tolerance,
+    );
+    const points = pathPoints(paths);
+    variant.features.set(base.id, {
+      paths,
+      anchor: base.anchor,
+      bounds: bounds(points),
+    });
+  }
+  contextVariantInputs.set(variantKey, variant);
+}
+const contextVariants = [...contextVariantInputs.values()].map((variant) => ({
+  source: variant.source,
+  tolerance: variant.tolerance,
+  featureIds: [...variant.features.keys()],
+  features: Object.fromEntries(variant.features),
+}));
+
 const referencedSupplementalIds = new Set([
   ...locations.flatMap(({ geometryRefs }) => geometryRefs),
 ]);
@@ -380,6 +513,11 @@ fs.writeFileSync(
   JSON.stringify(locations, null, 2) + '\n',
 );
 fs.writeFileSync(
+  'data/generated/context.json',
+  JSON.stringify(buildContextArtifact({ variants: contextVariants }), null, 2) +
+    '\n',
+);
+fs.writeFileSync(
   'data/generated/manifest.json',
   JSON.stringify(
     buildManifestArtifact({
@@ -392,6 +530,7 @@ fs.writeFileSync(
       insetSourceUrl: INSET_SOURCE_URL,
       insetSource,
       playableLocationFeatureIds,
+      contextVariants,
     }),
     null,
     2,
@@ -513,6 +652,7 @@ execFileSync(
     'data/generated/manifest.json',
     'data/generated/map.json',
     'data/generated/locations.json',
+    'data/generated/context.json',
     'data/generated/inset.json',
   ],
   { stdio: 'ignore' },

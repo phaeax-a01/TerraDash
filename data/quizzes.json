@@ -808,7 +808,11 @@
       "wrapActive": true,
       "selectable": true,
       "regionalDetail": {
-        "mainTolerance": 0.12
+        "mainTolerance": 0.12,
+        "context": {
+          "source": "admin0-10m",
+          "tolerance": 0.12
+        }
       }
     }
   }
