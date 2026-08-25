@@ -219,8 +219,9 @@ describe('map render model', () => {
     });
     for (const id of expected) {
       expect(
-        model.contextPathCopies.find(({ id: renderedId }) => renderedId === id)
-          ?.paths,
+        model.contextPathCopies
+          .find(({ id: renderedId }) => renderedId === id)
+          ?.paths.map(({ path }) => path),
       ).toEqual(variant?.features[id as keyof typeof variant.features]?.paths);
     }
     const fallbackId = generatedMap.sourceFeatureIds.find(
