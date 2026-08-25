@@ -68,7 +68,9 @@ describe('map render model', () => {
         viewBox[1] + viewBox[3],
       ];
       for (const id of quiz.locationIds) {
-        const active = generatedLocations.find((location) => location.id === id);
+        const active = generatedLocations.find(
+          (location) => location.id === id,
+        );
         if (!active) throw new Error(`Missing generated location ${id}`);
         const model = buildMapRenderModel({
           active,
