@@ -53,4 +53,24 @@ describe('generator geometry seams', () => {
       valid: true,
     });
   });
+
+  it('retains boundary detail needed by regional map scales', () => {
+    const geometry = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [0.25, 0.05],
+          [0.5, 0],
+          [0.75, 0],
+          [0, 0],
+        ],
+      ],
+    };
+    const points = pathPoints(
+      buildGeometryFeature(geometry, 'test:detail').paths,
+    );
+
+    expect(points).toContainEqual([721, 359.8]);
+  });
 });
