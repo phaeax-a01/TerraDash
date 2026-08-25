@@ -279,6 +279,23 @@ describe('callout selection and actual-boundary clustering', () => {
     ).toBeGreaterThanOrEqual(viewportMin);
   });
 
+  it('keeps the inset source inside a regional viewBox with a nonzero Y origin', () => {
+    const scale = 1309 / 224;
+    const sourceY = 284.27745;
+    const layout = deriveCalloutLayout(
+      { sourceCenter: [323.245, sourceY], selectedPathIndices: [0] },
+      scale,
+      1440,
+      573 / scale,
+      1309,
+      [198, 422, 216, 314],
+    );
+
+    expect(layout.sourceCenter[1]).toBeCloseTo(sourceY);
+    expect(layout.sourceCenter[1]).toBeGreaterThanOrEqual(216);
+    expect(layout.sourceCenter[1]).toBeLessThanOrEqual(314);
+  });
+
   it.each(['iso:ATG', 'iso:ARM'])('selects one callout for %s', (id) => {
     const model = deriveCalloutModel(
       pathsFor(id),

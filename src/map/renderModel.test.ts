@@ -4,7 +4,8 @@ import {
   generatedLocations,
   generatedMap,
 } from '../contracts/generatedData';
-import { mapLayerForLocation } from '../quizMapBoundary';
+import { quizOptions } from '../contracts/quiz';
+import { mapLayerForLocation, mapLayerForQuiz } from '../quizMapBoundary';
 import { buildMapRenderModel } from './renderModel';
 
 describe('map render model', () => {
@@ -55,5 +56,43 @@ describe('map render model', () => {
     );
     expect(model.insetContextPathCopies.length).toBe(layer.baseLayers.length);
     expect(model.projectedInsetSelectedPaths.length).toBeGreaterThan(0);
+  });
+
+  it('keeps every mapped-quiz callout source inside its configured viewport', () => {
+    for (const quiz of quizOptions.filter((candidate) => candidate.map)) {
+      const viewBox = quiz.map!.viewBox.trim().split(/\s+/).map(Number);
+      const viewportBounds = [
+        viewBox[0],
+        viewBox[0] + viewBox[2],
+        viewBox[1],
+        viewBox[1] + viewBox[3],
+      ];
+      for (const id of quiz.locationIds) {
+        const active = generatedLocations.find((location) => location.id === id);
+        if (!active) throw new Error(`Missing generated location ${id}`);
+        const model = buildMapRenderModel({
+          active,
+          layer: mapLayerForQuiz(quiz, active),
+          map: generatedMap,
+          inset: generatedInset,
+          viewportWidth: 1309,
+          viewportHeight: 573,
+        });
+        if (!model.positionedCallout) continue;
+        const [minX, maxX, minY, maxY] = viewportBounds;
+        expect(model.positionedCallout.sourceCenter[0]).toBeGreaterThanOrEqual(
+          minX,
+        );
+        expect(model.positionedCallout.sourceCenter[0]).toBeLessThanOrEqual(
+          maxX,
+        );
+        expect(model.positionedCallout.sourceCenter[1]).toBeGreaterThanOrEqual(
+          minY,
+        );
+        expect(model.positionedCallout.sourceCenter[1]).toBeLessThanOrEqual(
+          maxY,
+        );
+      }
+    }
   });
 });
