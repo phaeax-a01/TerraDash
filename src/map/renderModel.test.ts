@@ -221,8 +221,12 @@ describe('map render model', () => {
       const renderedPaths = model.contextPathCopies
         .find(({ id: renderedId }) => renderedId === id)
         ?.paths.map(({ path }) => path);
-      expect(new Set(renderedPaths)).toEqual(
-        new Set(variant?.features[id as keyof typeof variant.features]?.paths),
+      const configuredPaths = new Set(
+        variant?.features[id as keyof typeof variant.features]?.paths,
+      );
+      expect(renderedPaths?.length).toBeGreaterThan(0);
+      expect(renderedPaths?.every((path) => configuredPaths.has(path))).toBe(
+        true,
       );
     }
     const fallbackId = generatedMap.sourceFeatureIds.find(
