@@ -34,7 +34,9 @@ for (const viewport of [
 
       if (locationId === 'MX-COL') expect(vertexCount).toBeGreaterThan(20);
       if (viewport.name === 'mobile')
-        await expect(map.locator('.callout-selected path').first()).toBeVisible();
+        await expect(
+          map.locator('.callout-selected path').first(),
+        ).toBeVisible();
 
       await page.screenshot({
         path: testInfo.outputPath(`${slug}-${viewport.name}.png`),
