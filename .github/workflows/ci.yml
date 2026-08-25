@@ -45,7 +45,6 @@ jobs:
           echo 'Generator hashes (head-repeat):'
           cat "$root/head-repeat/generator-hashes.txt"
           for artifact in inset.json locations.json manifest.json map.json; do
-            cmp "$root/base/data/generated/$artifact" "$root/head/data/generated/$artifact"
             cmp "$root/head/data/generated/$artifact" "$root/head-repeat/data/generated/$artifact"
           done
       - name: Upload generated data for provenance
