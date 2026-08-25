@@ -60,7 +60,9 @@ describe('map render model', () => {
 
   it('keeps every mapped-quiz callout source inside its configured viewport', () => {
     for (const quiz of quizOptions.filter((candidate) => candidate.map)) {
-      const viewBox = quiz.map!.viewBox.trim().split(/\s+/).map(Number);
+      const mapConfig = quiz.map;
+      if (!mapConfig) continue;
+      const viewBox = mapConfig.viewBox.trim().split(/\s+/).map(Number);
       const viewportBounds = [
         viewBox[0],
         viewBox[0] + viewBox[2],
