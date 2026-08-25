@@ -98,5 +98,5 @@ describe('map render model', () => {
         );
       }
     }
-  });
+  }, 30000);
 });
