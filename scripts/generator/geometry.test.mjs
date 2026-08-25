@@ -53,4 +53,27 @@ describe('generator geometry seams', () => {
       valid: true,
     });
   });
+
+  it('keeps default simplification while allowing regional detail opt-in', () => {
+    const geometry = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [0.05, 0.05],
+          [0.1, 0],
+          [0, 0],
+        ],
+      ],
+    };
+    const defaultPoints = pathPoints(
+      buildGeometryFeature(geometry, 'test:default').paths,
+    );
+    const regionalPoints = pathPoints(
+      buildGeometryFeature(geometry, 'test:regional', 'main', 0.12).paths,
+    );
+
+    expect(defaultPoints).not.toContainEqual([720.2, 359.8]);
+    expect(regionalPoints).toContainEqual([720.2, 359.8]);
+  });
 });

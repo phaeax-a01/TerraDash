@@ -1,5 +1,7 @@
 import { HEIGHT, WIDTH } from './constants.mjs';
 
+const MAIN_SIMPLIFICATION_TOLERANCE = 0.55;
+
 function sqDistance(point, start, end) {
   const dx = end[0] - start[0];
   const dy = end[1] - start[1];
@@ -185,8 +187,18 @@ function insetPolygonData(geometry, featureId) {
   });
 }
 
-export function buildGeometryFeature(geometry, featureId, mode = 'main') {
-  const paths = geometryPaths(geometry, mode === 'inset' ? 0.05 : 0.55);
+export function buildGeometryFeature(
+  geometry,
+  featureId,
+  mode = 'main',
+  toleranceOverride,
+) {
+  const paths = geometryPaths(
+    geometry,
+    mode === 'inset'
+      ? 0.05
+      : (toleranceOverride ?? MAIN_SIMPLIFICATION_TOLERANCE),
+  );
   return {
     paths,
     polygons:
