@@ -28,6 +28,7 @@ import {
 } from './generator/geometry.mjs';
 import {
   buildInsetArtifact,
+  buildContextArtifact,
   buildManifestArtifact,
   buildMapArtifact,
 } from './generator/artifacts.mjs';
@@ -334,6 +335,67 @@ const locations = resolvedLocations.map(({ location, matches }) => {
   };
 });
 
+const contextSourceFeaturesByKey = new Map();
+for (const feature of insetSource.features) {
+  for (const key of new Set(featureKey(feature))) {
+    const matches = contextSourceFeaturesByKey.get(key) ?? [];
+    matches.push(feature);
+    contextSourceFeaturesByKey.set(key, matches);
+  }
+}
+const contextVariantInputs = new Map();
+for (const quiz of authoredQuizzes) {
+  const context = quiz.map?.regionalDetail?.context;
+  if (context == null) continue;
+  if (context.source !== 'admin0-10m')
+    throw new Error(`Unsupported regional context source for ${quiz.id}`);
+  if (!Number.isFinite(context.tolerance) || context.tolerance <= 0)
+    throw new Error(`Invalid regional context tolerance for ${quiz.id}`);
+  const variantKey = `${context.source}:${context.tolerance}`;
+  const variant = contextVariantInputs.get(variantKey) ?? {
+    source: context.source,
+    tolerance: context.tolerance,
+    features: new Map(),
+  };
+  for (const locationId of context.locationIds ?? []) {
+    const location = authoredLocations.find(({ id }) => id === locationId);
+    if (!location || location.resolution.kind !== 'source-keys')
+      throw new Error(
+        `Regional context requires source-key location ${locationId}`,
+      );
+    for (const { source: locationSource, key } of location.resolution.keys) {
+      if (locationSource !== 'natural-earth-admin0') continue;
+      const baseMatches = featuresByKey.get(key) ?? [];
+      const contextMatches = contextSourceFeaturesByKey.get(key) ?? [];
+      if (baseMatches.length !== 1 || contextMatches.length !== 1)
+        throw new Error(`Context source-key must resolve uniquely: ${key}`);
+      const base = baseMatches[0];
+      const contextFeature = contextMatches[0];
+      if (`ne:${contextFeature.properties.NE_ID}` !== base.id)
+        throw new Error(`Context source mapping changed for ${key}`);
+      const { paths } = buildGeometryFeature(
+        contextFeature.geometry,
+        base.id,
+        'main',
+        context.tolerance,
+      );
+      const points = pathPoints(paths);
+      variant.features.set(base.id, {
+        paths,
+        anchor: base.anchor,
+        bounds: bounds(points),
+      });
+    }
+  }
+  contextVariantInputs.set(variantKey, variant);
+}
+const contextVariants = [...contextVariantInputs.values()].map((variant) => ({
+  source: variant.source,
+  tolerance: variant.tolerance,
+  featureIds: [...variant.features.keys()],
+  features: Object.fromEntries(variant.features),
+}));
+
 const referencedSupplementalIds = new Set([
   ...locations.flatMap(({ geometryRefs }) => geometryRefs),
 ]);
@@ -380,6 +442,11 @@ fs.writeFileSync(
   JSON.stringify(locations, null, 2) + '\n',
 );
 fs.writeFileSync(
+  'data/generated/context.json',
+  JSON.stringify(buildContextArtifact({ variants: contextVariants }), null, 2) +
+    '\n',
+);
+fs.writeFileSync(
   'data/generated/manifest.json',
   JSON.stringify(
     buildManifestArtifact({
@@ -392,6 +459,7 @@ fs.writeFileSync(
       insetSourceUrl: INSET_SOURCE_URL,
       insetSource,
       playableLocationFeatureIds,
+      contextVariants,
     }),
     null,
     2,
@@ -513,6 +581,7 @@ execFileSync(
     'data/generated/manifest.json',
     'data/generated/map.json',
     'data/generated/locations.json',
+    'data/generated/context.json',
     'data/generated/inset.json',
   ],
   { stdio: 'ignore' },

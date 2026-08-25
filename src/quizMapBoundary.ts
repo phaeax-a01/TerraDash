@@ -19,6 +19,11 @@ export type MapLayer = {
   wrapWidth: number;
   seamLongitude: number;
   selectable: boolean;
+  contextDetail?: {
+    source: 'admin0-10m';
+    tolerance: number;
+    locationIds: string[];
+  };
 };
 
 export type RenderLocation = PlayableLocation;
@@ -66,6 +71,7 @@ export function mapLayerForQuiz(
     wrapWidth: config?.wrapWidth ?? defaultMap.wrapWidth,
     seamLongitude: config?.seamLongitude ?? defaultMap.seamLongitude,
     selectable: config?.selectable ?? defaultMap.selectable,
+    contextDetail: config?.regionalDetail?.context,
   };
 }
 

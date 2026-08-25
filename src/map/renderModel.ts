@@ -18,6 +18,7 @@ import {
 } from '../mapGeometry';
 import { createMapProjection } from '../mapProjection';
 import type {
+  GeneratedContext,
   GeneratedInset,
   GeneratedMap,
   GeneratedLocation,
@@ -28,6 +29,7 @@ export function buildMapRenderModel({
   active,
   layer,
   map,
+  context,
   inset,
   viewportWidth,
   viewportHeight,
@@ -35,6 +37,7 @@ export function buildMapRenderModel({
   active: GeneratedLocation;
   layer: MapLayer;
   map: GeneratedMap;
+  context?: GeneratedContext;
   inset: GeneratedInset;
   viewportWidth: number;
   viewportHeight: number;
@@ -179,10 +182,18 @@ export function buildMapRenderModel({
   const activePathCopies = layer.wrapActive
     ? wrappedPathCopies(highlightedPaths)
     : highlightedPaths.map((path) => ({ path, transform: 0 }));
+  const contextVariant = layer.contextDetail
+    ? context?.variants.find(
+        (variant) =>
+          variant.source === layer.contextDetail?.source &&
+          variant.tolerance === layer.contextDetail?.tolerance,
+      )
+    : undefined;
   const contextPathCopies = layer.contextFeatureIds.map((id) => ({
     id,
     paths: wrappedPathCopies(
-      map.features[id as keyof typeof map.features].paths,
+      contextVariant?.features[id as keyof typeof contextVariant.features]
+        ?.paths ?? map.features[id as keyof typeof map.features].paths,
     ),
   }));
   const baseLayerPathCopies = layer.baseLayers.map((baseLayer) => ({

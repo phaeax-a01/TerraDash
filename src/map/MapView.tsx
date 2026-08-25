@@ -2,6 +2,7 @@ import { useMapViewport } from './useMapViewport';
 import {
   generatedInset as inset,
   generatedMap as map,
+  generatedContext as context,
   type GeneratedLocation,
 } from '../contracts/generatedData';
 import { buildMapRenderModel } from './renderModel';
@@ -26,6 +27,7 @@ export function MapView({
     active,
     layer,
     map,
+    context,
     inset,
     viewportWidth,
     viewportHeight,

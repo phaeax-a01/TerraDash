@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  generatedContext,
   generatedInset,
   generatedLocations,
   generatedMap,
@@ -124,5 +125,52 @@ describe('map render model', () => {
         expect(layout.sourceCenter[1]).toBeLessThanOrEqual(maxY);
       }
     }
+  });
+
+  it('selects configured high-detail context and falls back to 50m paths', () => {
+    const mexico = quizOptions.find(({ id }) => id === 'mexican-states');
+    const active = generatedLocations.find(({ id }) => id === 'MX-DIF');
+    if (!mexico || !active) throw new Error('Mexico context fixture is missing');
+    const regional = buildMapRenderModel({
+      active,
+      layer: mapLayerForQuiz(mexico, active),
+      map: generatedMap,
+      context: generatedContext,
+      inset: generatedInset,
+      viewportWidth: 1309,
+      viewportHeight: 573,
+    });
+    const variant = generatedContext.variants.find(
+      ({ source, tolerance }) =>
+        source === 'admin0-10m' && tolerance === 0.12,
+    );
+    expect(variant?.featureIds).toEqual([
+      'ne:1159321055',
+      'ne:1159321369',
+      'ne:1159320815',
+      'ne:1159320431',
+    ]);
+    const mexicoContext = regional.contextPathCopies.find(
+      ({ id }) => id === 'ne:1159321055',
+    );
+    expect(mexicoContext?.paths[0]?.path).toBe(
+      variant?.features['ne:1159321055']?.paths[0],
+    );
+
+    const world = generatedLocations.find(({ id }) => id === 'iso:MEX');
+    if (!world) throw new Error('World Mexico fixture is missing');
+    const fallback = buildMapRenderModel({
+      active: world,
+      layer: mapLayerForLocation(world),
+      map: generatedMap,
+      context: generatedContext,
+      inset: generatedInset,
+      viewportWidth: 1440,
+      viewportHeight: 720,
+    });
+    expect(
+      fallback.contextPathCopies.find(({ id }) => id === 'ne:1159321055')
+        ?.paths[0]?.path,
+    ).toBe(generatedMap.features['ne:1159321055']?.paths[0]);
   });
 });

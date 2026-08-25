@@ -56,6 +56,7 @@ export function buildManifestArtifact({
   insetSourceUrl,
   insetSource,
   playableLocationFeatureIds,
+  contextVariants,
 }) {
   return {
     sourceSha256,
@@ -75,7 +76,19 @@ export function buildManifestArtifact({
         (feature) => `ne:${feature.properties.NE_ID}`,
       ),
     },
+    context: {
+      artifact: 'data/generated/context.json',
+      variants: contextVariants.map(({ source, tolerance, featureIds }) => ({
+        source,
+        tolerance,
+        featureIds,
+      })),
+    },
   };
+}
+
+export function buildContextArtifact({ variants }) {
+  return { generatedAt: 'deterministic', variants };
 }
 
 export function buildInsetArtifact({

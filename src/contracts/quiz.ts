@@ -19,6 +19,11 @@ export type QuizMapInput = {
   selectable?: boolean;
   regionalDetail?: {
     mainTolerance: number;
+    context?: {
+      source: 'admin0-10m';
+      tolerance: number;
+      locationIds: string[];
+    };
   };
 };
 
