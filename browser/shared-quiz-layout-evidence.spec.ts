@@ -46,7 +46,9 @@ for (const viewport of viewports) {
             document.querySelector<HTMLElement>('main.app-shell')!,
           ).getPropertyValue('--active-quiz-height'),
           structure: {
-            layout: layout.className,
+            layout: [...layout.classList]
+              .filter((name) => !name.startsWith('attempts-remaining-'))
+              .join(' '),
             header: header.className,
             stage: map.className,
             frame: frame.className,
