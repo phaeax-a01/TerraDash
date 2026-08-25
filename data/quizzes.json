@@ -678,10 +678,7 @@
       "wrapWidth": 1440,
       "seamLongitude": 0,
       "wrapActive": true,
-      "selectable": true,
-      "regionalDetail": {
-        "mainTolerance": 0.12
-      }
+      "selectable": true
     }
   },
   {
@@ -809,7 +806,10 @@
       "wrapWidth": 1440,
       "seamLongitude": 0,
       "wrapActive": true,
-      "selectable": true
+      "selectable": true,
+      "regionalDetail": {
+        "mainTolerance": 0.12
+      }
     }
   }
 ]
