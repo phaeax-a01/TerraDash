@@ -14,6 +14,14 @@ import { createMapProjection } from '../mapProjection';
 import { mapLayerForLocation, mapLayerForQuiz } from '../quizMapBoundary';
 import { buildMapRenderModel } from './renderModel';
 
+function parseViewBox(value: string): [number, number, number, number] {
+  const parts = value.trim().split(/\s+/).map(Number);
+  if (parts.length !== 4 || !parts.every(Number.isFinite)) {
+    throw new Error(`Invalid viewBox: ${value}`);
+  }
+  return [parts[0]!, parts[1]!, parts[2]!, parts[3]!];
+}
+
 describe('map render model', () => {
   it.each([
     ['wide', 1440, 720],
@@ -70,12 +78,13 @@ describe('map render model', () => {
       if (!mapConfig) continue;
       const viewBoxValue = mapConfig.viewBox;
       if (!viewBoxValue) continue;
-      const viewBox = viewBoxValue.trim().split(/\s+/).map(Number);
+      const [viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight] =
+        parseViewBox(viewBoxValue);
       const viewportBounds: [number, number, number, number] = [
-        viewBox[0],
-        viewBox[0] + viewBox[2],
-        viewBox[1],
-        viewBox[1] + viewBox[3],
+        viewBoxX,
+        viewBoxX + viewBoxWidth,
+        viewBoxY,
+        viewBoxY + viewBoxHeight,
       ];
       const [minX, maxX, minY, maxY] = viewportBounds;
       const scale = 1309 / (maxX - minX);
