@@ -54,23 +54,26 @@ describe('generator geometry seams', () => {
     });
   });
 
-  it('retains boundary detail needed by regional map scales', () => {
+  it('keeps default simplification while allowing regional detail opt-in', () => {
     const geometry = {
       type: 'Polygon',
       coordinates: [
         [
           [0, 0],
-          [0.25, 0.05],
-          [0.5, 0],
-          [0.75, 0],
+          [0.05, 0.05],
+          [0.1, 0],
           [0, 0],
         ],
       ],
     };
-    const points = pathPoints(
-      buildGeometryFeature(geometry, 'test:detail').paths,
+    const defaultPoints = pathPoints(
+      buildGeometryFeature(geometry, 'test:default').paths,
+    );
+    const regionalPoints = pathPoints(
+      buildGeometryFeature(geometry, 'test:regional', 'main', 0.12).paths,
     );
 
-    expect(points).toContainEqual([721, 359.8]);
+    expect(defaultPoints).not.toContainEqual([720.2, 359.8]);
+    expect(regionalPoints).toContainEqual([720.2, 359.8]);
   });
 });

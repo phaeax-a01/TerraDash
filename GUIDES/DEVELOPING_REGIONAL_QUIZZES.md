@@ -86,6 +86,10 @@ The generator derives affected source features from configured location
 resolutions; do not add a country, quiz-ID, component, renderer, or CSS
 predicate.
 
+The generator is the canonical validation boundary for this authored JSON
+option: it rejects non-finite or non-positive tolerances and conflicting
+values for a shared generated feature before emitting artifacts.
+
 Use one precision value for every selectable feature in the regional quiz so
 shared joins and hit areas use the same source and precision contract. Keep
 unreferenced features (such as an unnamed offshore feature) as retained,

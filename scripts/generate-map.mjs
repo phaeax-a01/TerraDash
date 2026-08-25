@@ -192,6 +192,8 @@ const supplementalFeatures = SUPPLEMENTAL_SOURCES.filter(
     const applied = appliedReplacements.byCanonical.get(id);
     const replacement = applied?.replacement;
     const geometry = applied?.geometry ?? feature.geometry;
+    const defaultPaths = buildGeometryFeature(geometry, id).paths;
+    const defaultPoints = pathPoints(defaultPaths);
     const { paths } = buildGeometryFeature(
       geometry,
       id,
@@ -256,7 +258,7 @@ const supplementalFeatures = SUPPLEMENTAL_SOURCES.filter(
       anchor:
         p.LABEL_X != null && p.LABEL_Y != null
           ? project([p.LABEL_X, p.LABEL_Y])
-          : [bounds(points)[0], bounds(points)[1]],
+          : [bounds(defaultPoints)[0], bounds(defaultPoints)[1]],
       bounds: bounds(points),
     };
   }),
