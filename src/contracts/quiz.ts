@@ -22,7 +22,6 @@ export type QuizMapInput = {
     context?: {
       source: 'admin0-10m';
       tolerance: number;
-      locationIds: string[];
     };
   };
 };

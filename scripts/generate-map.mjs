@@ -343,6 +343,69 @@ for (const feature of insetSource.features) {
     contextSourceFeaturesByKey.set(key, matches);
   }
 }
+
+function parseViewBox(value, quizId) {
+  const parts = String(value ?? '')
+    .trim()
+    .split(/\s+/)
+    .map(Number);
+  if (
+    parts.length !== 4 ||
+    !parts.every(Number.isFinite) ||
+    parts[2] <= 0 ||
+    parts[3] <= 0
+  )
+    throw new Error(`Regional context requires a valid viewBox for ${quizId}`);
+  return parts;
+}
+
+function boundsIntersectViewport(featureBounds, viewport, wrapWidth) {
+  const [minX, minY, maxX, maxY] = featureBounds;
+  const [viewMinX, viewMaxX, viewMinY, viewMaxY] = viewport;
+  if (maxY < viewMinY || minY > viewMaxY) return false;
+  for (const offset of [-wrapWidth, 0, wrapWidth]) {
+    if (maxX + offset >= viewMinX && minX + offset <= viewMaxX) return true;
+  }
+  return false;
+}
+
+function retainedContextFeatureIds(quiz) {
+  const mapConfig = quiz.map;
+  const [viewMinX, viewMinY, viewWidth, viewHeight] = parseViewBox(
+    mapConfig?.viewBox,
+    quiz.id,
+  );
+  const viewMaxX = viewMinX + viewWidth;
+  const viewMaxY = viewMinY + viewHeight;
+  const yScale =
+    1 / Math.cos(((mapConfig?.standardParallel ?? 0) * Math.PI) / 180);
+  const projectionCenterY = (viewMinY + viewMaxY) / 2;
+  const projectedY = (value) =>
+    projectionCenterY + (value - projectionCenterY) * yScale;
+  const viewport = [viewMinX, viewMaxX, viewMinY, viewMaxY];
+  const excluded = new Set(mapConfig?.contextFeatureExclusions ?? []);
+  return features
+    .filter(({ id, bounds: featureBounds }) => {
+      if (excluded.has(id)) return false;
+      const projectedYBounds = [
+        projectedY(featureBounds[1]),
+        projectedY(featureBounds[3]),
+      ];
+      const projectedBounds = [
+        featureBounds[0],
+        Math.min(featureBounds[1], ...projectedYBounds),
+        featureBounds[2],
+        Math.max(featureBounds[3], ...projectedYBounds),
+      ];
+      return boundsIntersectViewport(
+        projectedBounds,
+        viewport,
+        mapConfig?.wrapWidth ?? WIDTH,
+      );
+    })
+    .map(({ id }) => id);
+}
+
 const contextVariantInputs = new Map();
 for (const quiz of authoredQuizzes) {
   const context = quiz.map?.regionalDetail?.context;
@@ -357,35 +420,32 @@ for (const quiz of authoredQuizzes) {
     tolerance: context.tolerance,
     features: new Map(),
   };
-  for (const locationId of context.locationIds ?? []) {
-    const location = authoredLocations.find(({ id }) => id === locationId);
-    if (!location || location.resolution.kind !== 'source-keys')
+  for (const baseId of retainedContextFeatureIds(quiz)) {
+    const base = featuresById.get(baseId);
+    if (!base) throw new Error(`Missing retained context feature ${baseId}`);
+    const baseKeys = new Set(base.keys);
+    const contextMatches = insetSource.features.filter((feature) =>
+      featureKey(feature).some((key) => baseKeys.has(key)),
+    );
+    if (contextMatches.length !== 1)
       throw new Error(
-        `Regional context requires source-key location ${locationId}`,
+        `Context source mapping must resolve uniquely: ${baseId}`,
       );
-    for (const { source: locationSource, key } of location.resolution.keys) {
-      if (locationSource !== 'natural-earth-admin0') continue;
-      const baseMatches = featuresByKey.get(key) ?? [];
-      const contextMatches = contextSourceFeaturesByKey.get(key) ?? [];
-      if (baseMatches.length !== 1 || contextMatches.length !== 1)
-        throw new Error(`Context source-key must resolve uniquely: ${key}`);
-      const base = baseMatches[0];
-      const contextFeature = contextMatches[0];
-      if (`ne:${contextFeature.properties.NE_ID}` !== base.id)
-        throw new Error(`Context source mapping changed for ${key}`);
-      const { paths } = buildGeometryFeature(
-        contextFeature.geometry,
-        base.id,
-        'main',
-        context.tolerance,
-      );
-      const points = pathPoints(paths);
-      variant.features.set(base.id, {
-        paths,
-        anchor: base.anchor,
-        bounds: bounds(points),
-      });
-    }
+    const contextFeature = contextMatches[0];
+    if (`ne:${contextFeature.properties.NE_ID}` !== base.id)
+      throw new Error(`Context source mapping changed for ${base.id}`);
+    const { paths } = buildGeometryFeature(
+      contextFeature.geometry,
+      base.id,
+      'main',
+      context.tolerance,
+    );
+    const points = pathPoints(paths);
+    variant.features.set(base.id, {
+      paths,
+      anchor: base.anchor,
+      bounds: bounds(points),
+    });
   }
   contextVariantInputs.set(variantKey, variant);
 }

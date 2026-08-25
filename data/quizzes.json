@@ -811,8 +811,7 @@
         "mainTolerance": 0.12,
         "context": {
           "source": "admin0-10m",
-          "tolerance": 0.12,
-          "locationIds": ["iso:MEX", "iso:USA", "iso:GTM", "iso:BLZ"]
+          "tolerance": 0.12
         }
       }
     }

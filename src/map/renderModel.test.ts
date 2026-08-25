@@ -144,12 +144,7 @@ describe('map render model', () => {
     const variant = generatedContext.variants.find(
       ({ source, tolerance }) => source === 'admin0-10m' && tolerance === 0.12,
     );
-    expect(variant?.featureIds).toEqual([
-      'ne:1159321055',
-      'ne:1159321369',
-      'ne:1159320815',
-      'ne:1159320431',
-    ]);
+    expect(variant?.featureIds.length).toBeGreaterThan(4);
     const mexicoContext = regional.contextPathCopies.find(
       ({ id }) => id === 'ne:1159321055',
     );
@@ -172,5 +167,68 @@ describe('map render model', () => {
       fallback.contextPathCopies.find(({ id }) => id === 'ne:1159321055')
         ?.paths[0]?.path,
     ).toBe(generatedMap.features['ne:1159321055']?.paths[0]);
+  });
+
+  it('covers every retained feature intersecting the configured regional viewport', () => {
+    const mexico = quizOptions.find(({ id }) => id === 'mexican-states');
+    const active = generatedLocations.find(({ id }) => id === 'MX-DIF');
+    if (!mexico || !active || !mexico.map?.regionalDetail?.context)
+      throw new Error('Mexico context fixture is missing');
+    const [viewMinX, viewMinY, viewWidth, viewHeight] = parseViewBox(
+      mexico.map.viewBox!,
+    );
+    const viewMaxX = viewMinX + viewWidth;
+    const viewMaxY = viewMinY + viewHeight;
+    const yScale = 1 / Math.cos((mexico.map.standardParallel! * Math.PI) / 180);
+    const projectionCenterY = (viewMinY + viewMaxY) / 2;
+    const projectedY = (value: number) =>
+      projectionCenterY + (value - projectionCenterY) * yScale;
+    const intersects = (featureId: string) => {
+      const feature =
+        generatedMap.features[featureId as keyof typeof generatedMap.features];
+      if (!feature) throw new Error(`Missing context feature ${featureId}`);
+      const [minX, minY, maxX, maxY] = feature.bounds;
+      const projectedMinY = Math.min(minY, projectedY(minY), projectedY(maxY));
+      const projectedMaxY = Math.max(maxY, projectedY(minY), projectedY(maxY));
+      if (projectedMaxY < viewMinY || projectedMinY > viewMaxY) return false;
+      return [-1440, 0, 1440].some(
+        (offset) => maxX + offset >= viewMinX && minX + offset <= viewMaxX,
+      );
+    };
+    const exclusions = new Set(mexico.map.contextFeatureExclusions ?? []);
+    const expected = generatedMap.sourceFeatureIds.filter(
+      (id) => !exclusions.has(id) && intersects(id),
+    );
+    const variant = generatedContext.variants.find(
+      ({ source, tolerance }) =>
+        source === mexico.map!.regionalDetail!.context!.source &&
+        tolerance === mexico.map!.regionalDetail!.context!.tolerance,
+    );
+    expect(variant).toBeDefined();
+    expect(new Set(variant?.featureIds)).toEqual(new Set(expected));
+    expect(expected.length).toBeGreaterThan(4);
+
+    const model = buildMapRenderModel({
+      active,
+      layer: mapLayerForQuiz(mexico, active),
+      map: generatedMap,
+      context: generatedContext,
+      inset: generatedInset,
+      viewportWidth: 1309,
+      viewportHeight: 573,
+    });
+    for (const id of expected) {
+      expect(
+        model.contextPathCopies.find(({ id: renderedId }) => renderedId === id)
+          ?.paths,
+      ).toEqual(variant?.features[id as keyof typeof variant.features]?.paths);
+    }
+    const fallbackId = generatedMap.sourceFeatureIds.find(
+      (id) => !expected.includes(id),
+    );
+    if (!fallbackId) throw new Error('Expected an out-of-viewport fallback');
+    expect(
+      model.contextPathCopies.find(({ id }) => id === fallbackId)?.paths,
+    ).toEqual(generatedMap.features[fallbackId]?.paths);
   });
 });
