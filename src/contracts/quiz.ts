@@ -17,6 +17,9 @@ export type QuizMapInput = {
   seamLongitude?: number;
   wrapActive?: boolean;
   selectable?: boolean;
+  regionalDetail?: {
+    mainTolerance: number;
+  };
 };
 
 export type CatalogLocation = { id: string; name: string };

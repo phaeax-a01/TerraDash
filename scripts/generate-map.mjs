@@ -61,7 +61,14 @@ if (insetSourceSha256 !== INSET_SOURCE_SHA256)
   );
 const insetSource = JSON.parse(insetSourceBytes);
 const authoredLocations = JSON.parse(fs.readFileSync('data/locations.json'));
+const authoredQuizzes = JSON.parse(fs.readFileSync('data/quizzes.json'));
 const overrides = JSON.parse(fs.readFileSync('data/geometry-overrides.json'));
+
+function canonicalSupplementalId(definition, feature) {
+  const p = feature.properties;
+  const sourceId = p.NE_ID ?? p.ne_id ?? p.adm1_code ?? p.shapeID;
+  return `${definition.prefix ?? 'ne'}:${definition.id}:${sourceId}`;
+}
 
 function checkedSourceBytes(definition) {
   const bytes = fs.readFileSync(definition.path);
@@ -125,16 +132,37 @@ const alternateNamespaces = new Map(
     ),
   ]),
 );
+const regionalToleranceByFeatureId = new Map();
+for (const quiz of authoredQuizzes) {
+  const tolerance = quiz.map?.regionalDetail?.mainTolerance;
+  if (tolerance == null) continue;
+  if (!Number.isFinite(tolerance) || tolerance <= 0)
+    throw new Error(`Invalid regional detail tolerance for ${quiz.id}`);
+  for (const locationId of quiz.locationIds) {
+    const location = authoredLocations.find(({ id }) => id === locationId);
+    if (!location)
+      throw new Error(`Regional detail references unknown location ${locationId}`);
+    if (location.resolution.kind !== 'source-keys')
+      throw new Error(`Regional detail requires source-key resolution for ${locationId}`);
+    for (const { source, key } of location.resolution.keys) {
+      const definition = SUPPLEMENTAL_SOURCES.find(({ id }) => id === source);
+      if (!definition) continue;
+      const matches = alternateNamespaces.get(source)?.index.get(key) ?? [];
+      for (const feature of matches) {
+        const id = canonicalSupplementalId(definition, feature);
+        const prior = regionalToleranceByFeatureId.get(id);
+        if (prior != null && prior !== tolerance)
+          throw new Error(`Conflicting regional detail tolerances for ${id}`);
+        regionalToleranceByFeatureId.set(id, tolerance);
+      }
+    }
+  }
+}
 const canonicalSupplementalFeatures = SUPPLEMENTAL_SOURCES.flatMap(
   (definition) =>
     checkedSupplementalSources.get(definition.id).features.map((feature) => {
-      const sourceId =
-        feature.properties.NE_ID ??
-        feature.properties.ne_id ??
-        feature.properties.adm1_code ??
-        feature.properties.shapeID;
       return {
-        id: `${definition.prefix ?? 'ne'}:${definition.id}:${sourceId}`,
+        id: canonicalSupplementalId(definition, feature),
         geometry: feature.geometry,
       };
     }),
@@ -156,12 +184,16 @@ const supplementalFeatures = SUPPLEMENTAL_SOURCES.filter(
 ).flatMap((definition) =>
   checkedSupplementalSources.get(definition.id).features.map((feature) => {
     const p = feature.properties;
-    const sourceId = p.NE_ID ?? p.ne_id ?? p.adm1_code ?? p.shapeID;
-    const id = `${definition.prefix ?? 'ne'}:${definition.id}:${sourceId}`;
+    const id = canonicalSupplementalId(definition, feature);
     const applied = appliedReplacements.byCanonical.get(id);
     const replacement = applied?.replacement;
     const geometry = applied?.geometry ?? feature.geometry;
-    const { paths } = buildGeometryFeature(geometry, id);
+    const { paths } = buildGeometryFeature(
+      geometry,
+      id,
+      'main',
+      regionalToleranceByFeatureId.get(id),
+    );
     const points = pathPoints(paths);
     return {
       id,
