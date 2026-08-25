@@ -1,5 +1,517 @@
 [
   {
+    "id": "MX-AGU",
+    "name": "Aguascalientes",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-AGU"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314071"],
+    "anchor": [308.57, 270.14],
+    "bounds": [308.57, 270.14, 312.62, 273.32]
+  },
+  {
+    "id": "MX-BCN",
+    "name": "Baja California",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-BCN"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159309265"],
+    "anchor": [246.84, 229.15],
+    "bounds": [246.84, 229.15, 269.55, 248]
+  },
+  {
+    "id": "MX-BCS",
+    "name": "Baja California Sur",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-BCS"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159309245"],
+    "anchor": [256.99, 248],
+    "bounds": [256.99, 248, 282.13, 268.42]
+  },
+  {
+    "id": "MX-CAM",
+    "name": "Campeche",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-CAM"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159313973"],
+    "anchor": [350.06, 276.7],
+    "bounds": [350.06, 276.7, 363.85, 288.79]
+  },
+  {
+    "id": "MX-CHH",
+    "name": "Chihuahua",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-CHH"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314061"],
+    "anchor": [283.39, 232.89],
+    "bounds": [283.39, 232.89, 306.76, 257.52]
+  },
+  {
+    "id": "MX-CHP",
+    "name": "Chiapas",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-CHP"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314103"],
+    "anchor": [343.62, 288.05],
+    "bounds": [343.62, 288.05, 358.42, 301.8]
+  },
+  {
+    "id": "MX-COA",
+    "name": "Coahuila",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-COA"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314059"],
+    "anchor": [304.15, 240.42],
+    "bounds": [304.15, 240.42, 320.77, 261.74]
+  },
+  {
+    "id": "MX-COL",
+    "name": "Colima",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-COL"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159313969"],
+    "anchor": [260.9, 281.85],
+    "bounds": [260.9, 281.85, 306.09, 286.58]
+  },
+  {
+    "id": "MX-DUR",
+    "name": "Durango",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-DUR"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314063"],
+    "anchor": [291.67, 252.89],
+    "bounds": [291.67, 252.89, 310.04, 270.72]
+  },
+  {
+    "id": "MX-GRO",
+    "name": "Guerrero",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-GRO"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314091"],
+    "anchor": [311.32, 284.57],
+    "bounds": [311.32, 284.57, 327.99, 294.73]
+  },
+  {
+    "id": "MX-GUA",
+    "name": "Guanajuato",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-GUA"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314089"],
+    "anchor": [311.6, 272.64],
+    "bounds": [311.6, 272.64, 321.14, 280.36]
+  },
+  {
+    "id": "MX-HID",
+    "name": "Hidalgo",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-HID"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314095"],
+    "anchor": [320.62, 274.4],
+    "bounds": [320.62, 274.4, 327.91, 281.66]
+  },
+  {
+    "id": "MX-JAL",
+    "name": "Jalisco",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-JAL"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314073"],
+    "anchor": [297.21, 268.91],
+    "bounds": [297.21, 268.91, 313.88, 284.13]
+  },
+  {
+    "id": "MX-MEX",
+    "name": "México",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-MEX"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314097"],
+    "anchor": [317.51, 278.76],
+    "bounds": [317.51, 278.76, 325.44, 286.43]
+  },
+  {
+    "id": "MX-MIC",
+    "name": "Michoacán",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-MIC"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314077"],
+    "anchor": [305.17, 278.39],
+    "bounds": [305.17, 278.39, 319.41, 288.32]
+  },
+  {
+    "id": "MX-MOR",
+    "name": "Morelos",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-MOR"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314099"],
+    "anchor": [321.97, 283.43],
+    "bounds": [321.97, 283.43, 325.41, 286.6]
+  },
+  {
+    "id": "MX-NAY",
+    "name": "Nayarit",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-NAY"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159313979"],
+    "anchor": [293.34, 267.85],
+    "bounds": [293.34, 267.85, 304.22, 277.26]
+  },
+  {
+    "id": "MX-NLE",
+    "name": "Nuevo León",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-NLE"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314067"],
+    "anchor": [315.14, 248.91],
+    "bounds": [315.14, 248.91, 326.22, 267.24]
+  },
+  {
+    "id": "MX-OAX",
+    "name": "Oaxaca",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-OAX"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314079"],
+    "anchor": [325.79, 285.32],
+    "bounds": [325.79, 285.32, 344.51, 297.36]
+  },
+  {
+    "id": "MX-PUE",
+    "name": "Puebla",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-PUE"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314081"],
+    "anchor": [323.8, 276.74],
+    "bounds": [323.8, 276.74, 333.07, 288.34]
+  },
+  {
+    "id": "MX-QUE",
+    "name": "Querétaro",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-QUE"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314101"],
+    "anchor": [317.72, 273.42],
+    "bounds": [317.72, 273.42, 323.83, 280.16]
+  },
+  {
+    "id": "MX-ROO",
+    "name": "Quintana Roo",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-ROO"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159313971"],
+    "anchor": [362.52, 273.59],
+    "bounds": [362.52, 273.59, 373.2, 288.44]
+  },
+  {
+    "id": "MX-SIN",
+    "name": "Sinaloa",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-SIN"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314007"],
+    "anchor": [282.36, 251.69],
+    "bounds": [282.36, 251.69, 298.43, 269.96]
+  },
+  {
+    "id": "MX-SLP",
+    "name": "San Luis Potosí",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-SLP"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314069"],
+    "anchor": [310.8, 261.74],
+    "bounds": [310.8, 261.74, 326.57, 275.15]
+  },
+  {
+    "id": "MX-SON",
+    "name": "Sonora",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-SON"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159309263"],
+    "anchor": [259.85, 230],
+    "bounds": [259.85, 230, 285.97, 255.05]
+  },
+  {
+    "id": "MX-TAB",
+    "name": "Tabasco",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-TAB"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314083"],
+    "anchor": [343.45, 285.41],
+    "bounds": [343.45, 285.41, 356.04, 290.99]
+  },
+  {
+    "id": "MX-TAM",
+    "name": "Tamaulipas",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-TAM"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159313993"],
+    "anchor": [319.5, 249.32],
+    "bounds": [319.5, 249.32, 331.44, 271.12]
+  },
+  {
+    "id": "MX-TLA",
+    "name": "Tlaxcala",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-TLA"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314085"],
+    "anchor": [325.16, 281.12],
+    "bounds": [325.16, 281.12, 329.52, 283.55]
+  },
+  {
+    "id": "MX-VER",
+    "name": "Veracruz",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-VER"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159313983"],
+    "anchor": [325.43, 270.33],
+    "bounds": [325.43, 270.33, 345.53, 291.4]
+  },
+  {
+    "id": "MX-YUC",
+    "name": "Yucatán",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-YUC"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314105"],
+    "anchor": [358.48, 273.54],
+    "bounds": [358.48, 273.54, 369.84, 281.4]
+  },
+  {
+    "id": "MX-ZAC",
+    "name": "Zacatecas",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-ZAC"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314065"],
+    "anchor": [302.68, 259.51],
+    "bounds": [302.68, 259.51, 316.69, 275.82]
+  },
+  {
+    "id": "MX-DIF",
+    "name": "Mexico City",
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [
+        {
+          "source": "admin1",
+          "key": "MX-DIF"
+        }
+      ]
+    },
+    "geometryRefs": ["ne:admin1:1159314087"],
+    "anchor": [322.66, 281.72],
+    "bounds": [322.66, 281.72, 323.83, 283.77]
+  },
+  {
     "id": "CA-AB",
     "name": "Alberta",
     "resolution": {
