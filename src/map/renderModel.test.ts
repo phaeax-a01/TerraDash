@@ -5,6 +5,12 @@ import {
   generatedMap,
 } from '../contracts/generatedData';
 import { quizOptions } from '../contracts/quiz';
+import {
+  deriveCalloutLayout,
+  deriveCalloutModel,
+  mapXForLongitude,
+} from '../footprint';
+import { createMapProjection } from '../mapProjection';
 import { mapLayerForLocation, mapLayerForQuiz } from '../quizMapBoundary';
 import { buildMapRenderModel } from './renderModel';
 
@@ -62,41 +68,52 @@ describe('map render model', () => {
     for (const quiz of quizOptions.filter((candidate) => candidate.map)) {
       const mapConfig = quiz.map;
       if (!mapConfig) continue;
-      const viewBox = mapConfig.viewBox.trim().split(/\s+/).map(Number);
+      const viewBoxValue = mapConfig.viewBox;
+      if (!viewBoxValue) continue;
+      const viewBox = viewBoxValue.trim().split(/\s+/).map(Number);
       const viewportBounds = [
         viewBox[0],
         viewBox[0] + viewBox[2],
         viewBox[1],
         viewBox[1] + viewBox[3],
       ];
+      const [minX, maxX, minY, maxY] = viewportBounds;
+      const scale = 1309 / (maxX - minX);
+      const projection = createMapProjection(
+        mapConfig.standardParallel ?? 0,
+        (minY + maxY) / 2,
+      );
       for (const id of quiz.locationIds) {
         const active = generatedLocations.find(
           (location) => location.id === id,
         );
         if (!active) throw new Error(`Missing generated location ${id}`);
-        const model = buildMapRenderModel({
-          active,
-          layer: mapLayerForQuiz(quiz, active),
-          map: generatedMap,
-          inset: generatedInset,
-          viewportWidth: 1309,
-          viewportHeight: 573,
-        });
-        if (!model.positionedCallout) continue;
-        const [minX, maxX, minY, maxY] = viewportBounds;
-        expect(model.positionedCallout.sourceCenter[0]).toBeGreaterThanOrEqual(
-          minX,
+        const layer = mapLayerForQuiz(quiz, active);
+        const callout = deriveCalloutModel(
+          layer.activePaths.map(projection.path),
+          scale,
+          mapConfig.wrapWidth ?? 1440,
+          undefined,
+          undefined,
+          mapXForLongitude(
+            mapConfig.seamLongitude ?? 152,
+            mapConfig.wrapWidth ?? 1440,
+          ),
         );
-        expect(model.positionedCallout.sourceCenter[0]).toBeLessThanOrEqual(
-          maxX,
+        if (!callout) continue;
+        const layout = deriveCalloutLayout(
+          callout,
+          scale,
+          mapConfig.wrapWidth ?? 1440,
+          573 / scale,
+          1309,
+          viewportBounds,
         );
-        expect(model.positionedCallout.sourceCenter[1]).toBeGreaterThanOrEqual(
-          minY,
-        );
-        expect(model.positionedCallout.sourceCenter[1]).toBeLessThanOrEqual(
-          maxY,
-        );
+        expect(layout.sourceCenter[0]).toBeGreaterThanOrEqual(minX);
+        expect(layout.sourceCenter[0]).toBeLessThanOrEqual(maxX);
+        expect(layout.sourceCenter[1]).toBeGreaterThanOrEqual(minY);
+        expect(layout.sourceCenter[1]).toBeLessThanOrEqual(maxY);
       }
     }
-  }, 30000);
+  });
 });
