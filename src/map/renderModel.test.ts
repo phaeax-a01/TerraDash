@@ -229,6 +229,9 @@ describe('map render model', () => {
     if (!fallbackId) throw new Error('Expected an out-of-viewport fallback');
     expect(
       model.contextPathCopies.find(({ id }) => id === fallbackId)?.paths,
-    ).toEqual(generatedMap.features[fallbackId]?.paths);
+    ).toEqual(
+      generatedMap.features[fallbackId as keyof typeof generatedMap.features]
+        ?.paths,
+    );
   });
 });

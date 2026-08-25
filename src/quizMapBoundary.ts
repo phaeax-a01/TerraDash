@@ -22,7 +22,6 @@ export type MapLayer = {
   contextDetail?: {
     source: 'admin0-10m';
     tolerance: number;
-    locationIds: string[];
   };
 };
 
