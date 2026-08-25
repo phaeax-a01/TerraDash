@@ -1,0 +1,107 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+permissions: { contents: read }
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run format
+      - run: npm run lint
+      - run: npm run generate
+      - run: git diff --exit-code -- data/generated
+      - run: npm run validate:data
+      - name: Compare generator artifacts across clean base and head copies
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          root="$(mktemp -d)"
+          git fetch --no-tags origin "$BASE_SHA" "$HEAD_SHA"
+          for copy in base head head-repeat; do
+            mkdir -p "$root/$copy"
+          done
+          git archive "$BASE_SHA" | tar -x -C "$root/base"
+          git archive "$HEAD_SHA" | tar -x -C "$root/head"
+          git archive "$HEAD_SHA" | tar -x -C "$root/head-repeat"
+          for copy in base head head-repeat; do
+            (cd "$root/$copy" && npm ci)
+            (cd "$root/$copy" && TZ=UTC LC_ALL=C npm run generate)
+            (cd "$root/$copy" && sha256sum data/generated/inset.json data/generated/locations.json data/generated/manifest.json data/generated/map.json > generator-hashes.txt)
+          done
+          echo 'Generator hashes (base):'
+          cat "$root/base/generator-hashes.txt"
+          echo 'Generator hashes (head):'
+          cat "$root/head/generator-hashes.txt"
+          echo 'Generator hashes (head-repeat):'
+          cat "$root/head-repeat/generator-hashes.txt"
+          for artifact in inset.json locations.json manifest.json map.json; do
+            cmp "$root/head/data/generated/$artifact" "$root/head-repeat/data/generated/$artifact"
+          done
+      - name: Upload generated data for provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terradash-generated-data-${{ github.sha }}
+          path: data/generated/
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run generate
+      - run: npm exec -- vitest run --config vitest.config.ts
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run browser:test
+      - name: Upload TerraDash browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terradash-browser-evidence-${{ github.sha }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+
+  live-smoke:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      LIVE_BASE_URL: https://vallerance.github.io/TerraDash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test browser/live-deployed.spec.ts
