@@ -2,162 +2,258 @@
   {
     "id": "MX-AGU",
     "name": "Aguascalientes",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-AGU" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-AGU" }]
+    }
   },
   {
     "id": "MX-BCN",
     "name": "Baja California",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-BCN" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-BCN" }]
+    }
   },
   {
     "id": "MX-BCS",
     "name": "Baja California Sur",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-BCS" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-BCS" }]
+    }
   },
   {
     "id": "MX-CAM",
     "name": "Campeche",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-CAM" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-CAM" }]
+    }
   },
   {
     "id": "MX-CHH",
     "name": "Chihuahua",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-CHH" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-CHH" }]
+    }
   },
   {
     "id": "MX-CHP",
     "name": "Chiapas",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-CHP" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-CHP" }]
+    }
   },
   {
     "id": "MX-COA",
     "name": "Coahuila",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-COA" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-COA" }]
+    }
   },
   {
     "id": "MX-COL",
     "name": "Colima",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-COL" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-COL" }]
+    }
   },
   {
     "id": "MX-DUR",
     "name": "Durango",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-DUR" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-DUR" }]
+    }
   },
   {
     "id": "MX-GRO",
     "name": "Guerrero",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-GRO" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-GRO" }]
+    }
   },
   {
     "id": "MX-GUA",
     "name": "Guanajuato",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-GUA" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-GUA" }]
+    }
   },
   {
     "id": "MX-HID",
     "name": "Hidalgo",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-HID" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-HID" }]
+    }
   },
   {
     "id": "MX-JAL",
     "name": "Jalisco",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-JAL" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-JAL" }]
+    }
   },
   {
     "id": "MX-MEX",
     "name": "México",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-MEX" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-MEX" }]
+    }
   },
   {
     "id": "MX-MIC",
     "name": "Michoacán",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-MIC" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-MIC" }]
+    }
   },
   {
     "id": "MX-MOR",
     "name": "Morelos",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-MOR" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-MOR" }]
+    }
   },
   {
     "id": "MX-NAY",
     "name": "Nayarit",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-NAY" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-NAY" }]
+    }
   },
   {
     "id": "MX-NLE",
     "name": "Nuevo León",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-NLE" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-NLE" }]
+    }
   },
   {
     "id": "MX-OAX",
     "name": "Oaxaca",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-OAX" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-OAX" }]
+    }
   },
   {
     "id": "MX-PUE",
     "name": "Puebla",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-PUE" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-PUE" }]
+    }
   },
   {
     "id": "MX-QUE",
     "name": "Querétaro",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-QUE" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-QUE" }]
+    }
   },
   {
     "id": "MX-ROO",
     "name": "Quintana Roo",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-ROO" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-ROO" }]
+    }
   },
   {
     "id": "MX-SIN",
     "name": "Sinaloa",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-SIN" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-SIN" }]
+    }
   },
   {
     "id": "MX-SLP",
     "name": "San Luis Potosí",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-SLP" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-SLP" }]
+    }
   },
   {
     "id": "MX-SON",
     "name": "Sonora",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-SON" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-SON" }]
+    }
   },
   {
     "id": "MX-TAB",
     "name": "Tabasco",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-TAB" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-TAB" }]
+    }
   },
   {
     "id": "MX-TAM",
     "name": "Tamaulipas",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-TAM" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-TAM" }]
+    }
   },
   {
     "id": "MX-TLA",
     "name": "Tlaxcala",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-TLA" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-TLA" }]
+    }
   },
   {
     "id": "MX-VER",
     "name": "Veracruz",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-VER" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-VER" }]
+    }
   },
   {
     "id": "MX-YUC",
     "name": "Yucatán",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-YUC" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-YUC" }]
+    }
   },
   {
     "id": "MX-ZAC",
     "name": "Zacatecas",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-ZAC" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-ZAC" }]
+    }
   },
   {
     "id": "MX-DIF",
     "name": "Mexico City",
-    "resolution": { "kind": "source-keys", "keys": [{ "source": "admin1", "key": "MX-DIF" }] }
+    "resolution": {
+      "kind": "source-keys",
+      "keys": [{ "source": "admin1", "key": "MX-DIF" }]
+    }
   },
   {
     "id": "CA-AB",

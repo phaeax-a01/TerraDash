@@ -394,6 +394,7 @@ const supplementalInsetFeatures = playableSupplementalFeatures
     const points = pathPoints(paths);
     return {
       id: feature.id,
+      source: feature.source,
       paths,
       polygons,
       anchor: feature.anchor,
