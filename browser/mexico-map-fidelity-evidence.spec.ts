@@ -1,16 +1,19 @@
 import { expect, test } from '@playwright/test';
 
 const cases = [
-  ['MX-COL', 'colima'],
-  ['MX-BCS', 'baja-california-sur'],
-  ['MX-ROO', 'quintana-roo'],
+  ['MX-COL', 'colima', '198 216 224 98', true],
+  ['MX-DIF', 'mexico-city', '198 216 224 98', true],
+  ['MX-BCS', 'baja-california-sur', '198 216 224 98', false],
+  ['MX-ROO', 'quintana-roo', '198 216 224 98', false],
+  ['US-RI', 'rhode-island', '-100 35 671.9444444444445 295', true],
+  ['CA-PE', 'prince-edward-island', '-75 -75 820 360', true],
 ] as const;
 
 for (const viewport of [
   { name: 'wide', width: 1905, height: 952 },
   { name: 'mobile', width: 390, height: 844 },
 ]) {
-  for (const [locationId, slug] of cases) {
+  for (const [locationId, slug, viewBox, expectCallout] of cases) {
     test(`captures ${locationId} fidelity at ${viewport.name}`, async ({
       page,
     }, testInfo) => {
@@ -18,7 +21,7 @@ for (const viewport of [
       await page.goto(`/TerraDash/diagnostics.html?location=${locationId}`);
 
       const map = page.locator('.world-map');
-      await expect(map).toHaveAttribute('viewBox', '198 216 224 98');
+      await expect(map).toHaveAttribute('viewBox', viewBox);
       const selected = map.locator(
         `.active-fill path[data-location-id="${locationId}"]`,
       );
@@ -33,7 +36,7 @@ for (const viewport of [
       expect(vertexCount, `${locationId} main vertices`).toBeGreaterThan(0);
 
       if (locationId === 'MX-COL') expect(vertexCount).toBeGreaterThan(20);
-      if (viewport.name === 'mobile')
+      if (expectCallout)
         await expect(
           map.locator('.callout-selected path').first(),
         ).toBeVisible();
