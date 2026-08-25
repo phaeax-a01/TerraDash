@@ -71,7 +71,7 @@ describe('map render model', () => {
       const viewBoxValue = mapConfig.viewBox;
       if (!viewBoxValue) continue;
       const viewBox = viewBoxValue.trim().split(/\s+/).map(Number);
-      const viewportBounds = [
+      const viewportBounds: [number, number, number, number] = [
         viewBox[0],
         viewBox[0] + viewBox[2],
         viewBox[1],
