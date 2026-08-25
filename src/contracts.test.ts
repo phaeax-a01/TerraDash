@@ -106,8 +106,7 @@ describe('typed runtime data boundary', () => {
     }
     expect(generatedInset.locationFeatureIds).toBeDefined();
     const contextVariant = generatedContext.variants.find(
-      ({ source, tolerance }) =>
-        source === 'admin0-10m' && tolerance === 0.12,
+      ({ source, tolerance }) => source === 'admin0-10m' && tolerance === 0.12,
     );
     expect(contextVariant?.featureIds).toEqual([
       'ne:1159321055',

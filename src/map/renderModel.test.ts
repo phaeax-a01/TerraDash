@@ -130,7 +130,8 @@ describe('map render model', () => {
   it('selects configured high-detail context and falls back to 50m paths', () => {
     const mexico = quizOptions.find(({ id }) => id === 'mexican-states');
     const active = generatedLocations.find(({ id }) => id === 'MX-DIF');
-    if (!mexico || !active) throw new Error('Mexico context fixture is missing');
+    if (!mexico || !active)
+      throw new Error('Mexico context fixture is missing');
     const regional = buildMapRenderModel({
       active,
       layer: mapLayerForQuiz(mexico, active),
@@ -141,8 +142,7 @@ describe('map render model', () => {
       viewportHeight: 573,
     });
     const variant = generatedContext.variants.find(
-      ({ source, tolerance }) =>
-        source === 'admin0-10m' && tolerance === 0.12,
+      ({ source, tolerance }) => source === 'admin0-10m' && tolerance === 0.12,
     );
     expect(variant?.featureIds).toEqual([
       'ne:1159321055',
