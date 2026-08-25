@@ -171,8 +171,8 @@ export function deriveCalloutLayout(
     Math.min(maxY, sourceY + (preferredCandidate[1] - sourceY) * distanceScale),
   );
   const boundedSourceY = Math.max(
-    sourceRadius,
-    Math.min(mapHeight - sourceRadius, sourceY),
+    viewportMinY + sourceRadius,
+    Math.min(viewportMaxY - sourceRadius, sourceY),
   );
   return {
     center: [centerX, centerY],
