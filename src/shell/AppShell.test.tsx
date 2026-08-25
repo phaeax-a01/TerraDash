@@ -5,13 +5,27 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { QuizProvider } from '../QuizContext';
 import { QuizPage } from '../pages/QuizPage';
 import { QuizDetailsDialog } from '../quizSelection/QuizDetailsDialog';
-import { playableLocations, quizOptions, worldQuiz } from '../quizContracts';
-import type { QuizOption } from '../quizContracts';
+import { playableLocations, quizOptions, worldQuiz } from '../contracts/quiz';
+import type { QuizOption } from '../contracts/quiz';
 import { AppShell } from './AppShell';
 
 const options: QuizOption[] = [
-  { id: 'world', name: 'World UN Countries', locationIds: [] },
-  { id: 'asia', name: 'Asia UN Countries', locationIds: [] },
+  {
+    id: 'world',
+    name: 'World UN Countries',
+    description: 'World',
+    menuLabel: 'World',
+    thumbnailViewBox: '0 0 1440 720',
+    locationIds: [],
+  },
+  {
+    id: 'asia',
+    name: 'Asia UN Countries',
+    description: 'Asia',
+    menuLabel: 'Asia',
+    thumbnailViewBox: '0 0 1440 720',
+    locationIds: [],
+  },
 ];
 let root: ReturnType<typeof createRoot> | undefined;
 

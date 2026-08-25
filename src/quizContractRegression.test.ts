@@ -3,14 +3,18 @@ import locations from '../data/generated/locations.json';
 import reviewed from '../data/reviewed-invariants.json';
 import mainSource from './main.tsx?raw';
 import boundarySource from './quizMapBoundary.ts?raw';
+import quizHomeSource from './quiz/QuizHome.tsx?raw';
+import quizDetailsSource from './quizSelection/QuizDetailsDialog.tsx?raw';
+import appChromeSource from './shell/AppChrome.tsx?raw';
+import thumbnailSource from './shell/QuizThumbnail.tsx?raw';
 import map from '../data/generated/map.json';
 import {
   defaultCatalog,
   defaultQuiz,
   playableLocations,
   quizOptions,
-  mapLayerForQuiz,
-} from './quizContracts';
+} from './contracts/quiz';
+import { mapLayerForQuiz } from './quizMapBoundary';
 
 const candidateData = locations.filter(({ id }) => id.startsWith('non-un:'));
 
@@ -30,6 +34,46 @@ describe('generated quiz wiring', () => {
   });
 });
 
+describe('canonical quiz presentation contract', () => {
+  it('keeps copy, menu labels, and thumbnail viewBoxes declarative', () => {
+    expect(quizOptions.length).toBeGreaterThan(0);
+    for (const quiz of quizOptions) {
+      expect(quiz.description).toBeTruthy();
+      expect(quiz.menuLabel).toBeTruthy();
+      expect(quiz.thumbnailViewBox).toBeTruthy();
+    }
+    const expectedViewBoxes: Record<string, string> = {
+      world: '0 0 1440 720',
+      africa: '600 140 380 430',
+      asia: '780 80 500 380',
+      europe: '600 70 330 260',
+      'north-america': '250 80 500 360',
+      'south-america': '420 300 300 360',
+      oceania: '1030 330 360 270',
+      caribbean: '430 220 300 190',
+      'non-un': '0 0 1440 720',
+      'us-states': '0 0 1440 720',
+    };
+    for (const [id, viewBox] of Object.entries(expectedViewBoxes))
+      expect(quizOptions.find((quiz) => quiz.id === id)?.thumbnailViewBox).toBe(
+        viewBox,
+      );
+  });
+
+  it('keeps presentation consumers free of quiz-ID compatibility predicates', () => {
+    for (const source of [
+      quizHomeSource,
+      quizDetailsSource,
+      appChromeSource,
+      thumbnailSource,
+    ]) {
+      expect(source).not.toMatch(/quiz\.id\s*===\s*['\"]/);
+      expect(source).not.toMatch(/thumbnailViewBoxes/);
+      expect(source).not.toMatch(/UN Countries\)?\s*\)/);
+    }
+  });
+});
+
 describe('regional quiz partition', () => {
   it('defines the requested UN Countries and non-UN quizzes', () => {
     expect(quizOptions.slice(0, 8).map(({ name }) => name)).toEqual([
@@ -42,7 +86,7 @@ describe('regional quiz partition', () => {
       'Oceania UN Countries',
       'Caribbean UN Countries',
     ]);
-    expect(quizOptions).toHaveLength(10);
+    expect(quizOptions.some(({ id }) => id === 'non-un')).toBe(true);
     expect(
       quizOptions
         .slice(0, 8)
@@ -131,6 +175,9 @@ describe('regional quiz partition', () => {
     const synthetic = {
       id: 'synthetic-mapped',
       name: 'Synthetic mapped quiz',
+      description: 'Synthetic mapped quiz',
+      menuLabel: 'Synthetic mapped quiz',
+      thumbnailViewBox: '1 2 3 4',
       locationIds: ['iso:AFG'],
       map: {
         contextFeatureExclusions: [],
@@ -143,7 +190,7 @@ describe('regional quiz partition', () => {
         wrapActive: false,
         selectable: true,
       },
-    } as (typeof quizOptions)[number];
+    } satisfies (typeof quizOptions)[number];
     const layer = mapLayerForQuiz(synthetic, playableLocations[0]);
     expect(layer.viewBox).toBe('1 2 3 4');
     expect(layer.preserveAspectRatio).toBe('xMinYMin meet');
@@ -167,7 +214,8 @@ describe('regional quiz partition', () => {
   it('partitions the existing world dataset exactly once regionally', () => {
     const worldIds = new Set(defaultQuiz.locationIds);
     const regionalIds = quizOptions
-      .slice(1, 8)
+      .filter(({ category }) => category === undefined)
+      .filter(({ id }) => id !== 'world' && id !== 'non-un')
       .flatMap(({ locationIds }) => locationIds);
     expect(regionalIds).toHaveLength(worldIds.size);
     expect(new Set(regionalIds).size).toBe(worldIds.size);
