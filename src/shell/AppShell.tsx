@@ -3,7 +3,7 @@ import type { QuizOption } from '../contracts/quiz';
 import type { NavigationOptions } from '../routing/browserHistory';
 import { parseRoute, type AppRoute } from '../routing/routes';
 import { useBrowserRoute } from '../routing/useBrowserRoute';
-import { AppDisclaimer, AppFooter, AppHeader } from './AppChrome';
+import { AppPageFrame } from './AppPageFrame';
 
 type PageRenderers = {
   quizOptions: readonly QuizOption[];
@@ -46,8 +46,7 @@ function QuizShell({
       `${route.pathname}?quiz=${encodeURIComponent(quizId)}&start=1${route.hash}`,
     );
   return (
-    <main className="app-shell">
-      <AppHeader selectedQuizId={selectedQuiz.id} />
+    <AppPageFrame selectedQuizId={selectedQuiz.id}>
       {renderQuiz({
         quizId: selectedQuiz.id,
         providerKey: route.quizId,
@@ -60,10 +59,7 @@ function QuizShell({
         onCloseQuizDialog: () => setPendingQuizId(undefined),
         onStartSelectedQuiz: commitQuiz,
       })}
-      <AppFooter>
-        <AppDisclaimer />
-      </AppFooter>
-    </main>
+    </AppPageFrame>
   );
 }
 
