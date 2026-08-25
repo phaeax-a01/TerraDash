@@ -102,6 +102,15 @@ export function QuizGameplay({
   const attemptStateClass = `attempts-remaining-${attemptsRemaining}`;
 
   useEffect(() => {
+    const shell = document.querySelector<HTMLElement>('main.app-shell');
+    if (!shell) return;
+    shell.style.setProperty('--active-quiz-height', `${window.innerHeight}px`);
+    return () => {
+      shell.style.removeProperty('--active-quiz-height');
+    };
+  }, []);
+
+  useEffect(() => {
     const previousObject = window.terraDash;
     const consoleObject = previousObject ?? {};
     const previousCommand = consoleObject.completeQuiz;
@@ -203,14 +212,22 @@ export function QuizGameplay({
   );
 
   useEffect(() => {
-    if (state.phase === 'active') {
-      manualPlacement.current = false;
-      setText('');
-      setSelectedId(undefined);
-      setActiveSuggestion(0);
-      answerRef.current?.focus();
-    }
+    if (state.phase !== 'active') return;
+    manualPlacement.current = false;
+    setText('');
+    setSelectedId(undefined);
+    setActiveSuggestion(0);
+    answerRef.current?.focus();
   }, [state.currentIndex, state.phase]);
+
+  useEffect(() => {
+    if (
+      state.phase === 'active' &&
+      (state.lastEvent.type === 'started' ||
+        state.lastEvent.type === 'accepted')
+    )
+      answerRef.current?.focus();
+  }, [state.lastEvent, state.phase]);
 
   function submit() {
     if (submitting.current || state.phase !== 'active') return;
