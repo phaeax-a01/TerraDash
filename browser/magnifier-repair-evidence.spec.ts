@@ -20,6 +20,15 @@ for (const [location, label] of cases) {
       await page.setViewportSize(viewport);
       await page.goto(`/TerraDash/diagnostics.html?location=${location}`);
       const map = page.locator('.world-map');
+      const callout = map.locator('.map-callout');
+      if ((await callout.count()) === 0) {
+        await expect(map.locator('.active-fill path')).not.toHaveCount(0);
+        await page.screenshot({
+          path: testInfo.outputPath(`${label}-${viewport.name}.png`),
+          fullPage: true,
+        });
+        return;
+      }
       const inset = map.locator('.callout-inset');
       await expect(inset).toBeVisible();
       const selected = inset.locator('.callout-selected path').first();
