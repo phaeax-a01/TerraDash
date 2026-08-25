@@ -423,10 +423,21 @@ for (const quiz of authoredQuizzes) {
   for (const baseId of retainedContextFeatureIds(quiz)) {
     const base = featuresById.get(baseId);
     if (!base) throw new Error(`Missing retained context feature ${baseId}`);
-    const baseKeys = new Set(base.keys);
-    const contextMatches = insetSource.features.filter((feature) =>
-      featureKey(feature).some((key) => baseKeys.has(key)),
-    );
+    const mappingCandidates = base.keys.flatMap((key) => {
+      const baseMatches = featuresByKey.get(key) ?? [];
+      const contextMatches = contextSourceFeaturesByKey.get(key) ?? [];
+      return baseMatches.length === 1 && contextMatches.length === 1
+        ? contextMatches
+        : [];
+    });
+    const contextMatches = [
+      ...new Map(
+        mappingCandidates.map((feature) => [
+          `ne:${feature.properties.NE_ID}`,
+          feature,
+        ]),
+      ).values(),
+    ];
     if (contextMatches.length !== 1)
       throw new Error(
         `Context source mapping must resolve uniquely: ${baseId}`,
