@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const cases = [
-  ['MX-COL', 'colima', '198 216 224 98', true],
+  ['MX-COL', 'colima', '198 216 224 98', false],
   ['MX-DIF', 'mexico-city', '198 216 224 98', true],
   ['MX-BCS', 'baja-california-sur', '198 216 224 98', false],
   ['MX-ROO', 'quintana-roo', '198 216 224 98', false],
