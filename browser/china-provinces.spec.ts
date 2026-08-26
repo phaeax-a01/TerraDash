@@ -21,7 +21,7 @@ for (const viewport of [
       31,
     );
     await expect(
-      map.locator('.map-base-layers [data-layer-id="CN-BJ"]'),
+      map.locator('.map-base-layers [data-layer-id="CN-GX"]'),
     ).toBeVisible();
     await expect(
       map.locator('.map-base-layers [data-layer-id="CN-XZ"]'),
@@ -43,3 +43,46 @@ for (const viewport of [
     });
   });
 }
+
+test('keeps Beijing playable while excluded Guangxi remains non-targetable', async ({
+  page,
+}) => {
+  await page.goto('/TerraDash/diagnostics.html?location=CN-BJ');
+  const target = page.locator('.active-fill path[data-location-id="CN-BJ"]');
+  await expect(target.first()).toHaveAttribute('aria-label', 'Beijing');
+  await expect(target.first()).toHaveAttribute('role', 'button');
+
+  await page.goto('/TerraDash/');
+  const quizzes = page.getByRole('navigation', { name: 'Quizzes' });
+  await quizzes.getByRole('button', { name: /Quizzes/ }).click();
+  await page.getByRole('menuitem', { name: 'Regional quizzes' }).click();
+  await page
+    .locator('.quiz-submenu-popover')
+    .getByRole('menuitem', { name: 'China Provinces', exact: true })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'China Provinces' });
+  await expect(dialog).toBeVisible();
+  await page.evaluate(() => {
+    let calls = 0;
+    Math.random = () => {
+      calls += 1;
+      return calls === 25 ? 0 : 1 - Number.EPSILON;
+    };
+  });
+  await dialog
+    .getByRole('button', { name: 'Start China Provinces Quiz' })
+    .click();
+  await expect(page.locator('.quiz-name')).toHaveText('China Provinces');
+  await expect(page.locator('.quiz-prompt-group')).toBeVisible();
+  await expect(
+    page.locator('.active-fill path[data-location-id="CN-BJ"]'),
+  ).toHaveAttribute('aria-label', 'Beijing');
+  const answer = page.getByRole('combobox', { name: 'Location name' });
+  await answer.fill('Bei');
+  await expect(page.getByRole('option', { name: 'Beijing' })).toBeVisible();
+  await expect(page.getByRole('option', { name: 'Guangxi' })).toHaveCount(0);
+  await page.getByRole('option', { name: 'Beijing' }).click();
+  await page.getByRole('button', { name: 'Submit answer' }).click();
+  await expect(page.locator('.status-correct strong')).toHaveText('1/1');
+  await expect(page.locator('.status-remaining strong')).toHaveText('25');
+});
