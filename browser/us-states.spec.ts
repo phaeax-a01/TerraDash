@@ -145,6 +145,7 @@ const stateIds = [
   'US-CO',
   'US-CT',
   'US-DE',
+  'US-DC',
   'US-FL',
   'US-GA',
   'US-HI',
@@ -235,7 +236,7 @@ test('identifies a visible state and advances the US States quiz', async ({
   await page.getByRole('combobox', { name: 'Location name' }).fill(targetName!);
   await page.getByRole('button', { name: 'Submit answer' }).click();
   await expect(page.locator('.status-correct strong')).toHaveText('1/1');
-  await expect(page.locator('.status-remaining strong')).toHaveText('49');
+  await expect(page.locator('.status-remaining strong')).toHaveText('50');
   await page.screenshot({
     path: testInfo.outputPath('us-states-visible-target-1777x1171.png'),
     fullPage: true,
@@ -418,7 +419,7 @@ test('keeps the reported wide US States composition inside its layout bands', as
   const map = page.locator('.world-map');
   await expect(map).toHaveAttribute('viewBox', '-100 35 671.9444444444445 295');
   await expect(map).toHaveAttribute('preserveAspectRatio', 'xMidYMid meet');
-  await expect(map.locator('.map-base-layers > g')).toHaveCount(50);
+  await expect(map.locator('.map-base-layers > g')).toHaveCount(51);
   await page.screenshot({
     path: testInfo.outputPath('us-states-layout-1777x1171.png'),
     fullPage: true,
@@ -513,7 +514,7 @@ for (const viewport of [
       '-100 35 671.9444444444445 295',
     );
     await expect(map).toHaveAttribute('preserveAspectRatio', 'xMidYMid meet');
-    await expect(map.locator('.map-base-layers > g')).toHaveCount(50);
+    await expect(map.locator('.map-base-layers > g')).toHaveCount(51);
     await page.screenshot({
       path: testInfo.outputPath(`us-states-${viewport.name}.png`),
       fullPage: true,

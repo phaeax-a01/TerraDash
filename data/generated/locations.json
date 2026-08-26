@@ -4376,6 +4376,17 @@
     "bounds": [417.23, 200.74, 419.77, 206.19]
   },
   {
+    "id": "US-DC",
+    "name": "District of Columbia",
+    "resolution": {
+      "kind": "exact-refs",
+      "refs": ["ne:admin1:1159315327"]
+    },
+    "geometryRefs": ["ne:admin1:1159315327"],
+    "anchor": [411.83, 204.02],
+    "bounds": [411.83, 204.02, 411.91, 204.79]
+  },
+  {
     "id": "US-FL",
     "name": "Florida",
     "resolution": {
