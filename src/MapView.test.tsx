@@ -82,7 +82,7 @@ describe('mapped quiz layer contract', () => {
     expect(
       frame.querySelector('.map-projection')?.getAttribute('transform'),
     ).toContain('scale(1 1.269');
-    expect(frame.querySelectorAll('.map-base-layers > g')).toHaveLength(50);
+    expect(frame.querySelectorAll('.map-base-layers > g')).toHaveLength(51);
     expectActiveStatePaths(frame, 'US-RI');
     const geography = frame.querySelector('.map-projection');
     const callout = frame.querySelector('.map-callout');
@@ -95,7 +95,7 @@ describe('mapped quiz layer contract', () => {
     ).toBe(geography?.getAttribute('transform'));
     expect(frame.querySelector('.callout-selected')).toBeTruthy();
     expect(frame.querySelectorAll('.callout-context > .country')).toHaveLength(
-      50,
+      51,
     );
     expect(
       frame.querySelector('.callout-context [data-layer-id="US-MA"] path'),

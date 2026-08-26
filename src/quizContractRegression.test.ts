@@ -59,6 +59,18 @@ describe('generated quiz wiring', () => {
     );
     expect(layer.baseLayers).toHaveLength(31);
   });
+
+  it('models the US quiz as exactly 51 identities including the canonical DC feature', () => {
+    const us = quizOptions.find(({ id }) => id === 'us-states')!;
+    const dc = playableLocationsById.get('US-DC')!;
+
+    expect(us.locationIds).toHaveLength(51);
+    expect(us.locationIds).toContain('US-DC');
+    expect(dc.name).toBe('District of Columbia');
+    expect(dc.geometryRefs).toEqual(['ne:admin1:1159315327']);
+    expect(us.map?.baseLayerLocationIds).toHaveLength(51);
+    expect(us.map?.baseLayerLocationIds).toContain('US-DC');
+  });
 });
 
 describe('canonical quiz presentation contract', () => {
