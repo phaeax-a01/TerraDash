@@ -18,8 +18,13 @@ export function DiagnosticsPage({
   onQuizChange: (quizId: string) => void;
   onLocationChange: (locationId: string) => void;
 }) {
+  const requestedQuiz = quizOptions.find((quiz) => quiz.id === quizId);
   const selectedQuiz =
-    quizOptions.find((quiz) => quiz.id === quizId) ?? worldQuiz;
+    requestedQuiz?.locationIds.includes(locationId ?? '') || !locationId
+      ? (requestedQuiz ?? worldQuiz)
+      : (quizOptions.find((quiz) => quiz.locationIds.includes(locationId)) ??
+        requestedQuiz ??
+        worldQuiz);
   const initialLocationId = selectedQuiz.locationIds.includes(locationId ?? '')
     ? locationId
     : selectedQuiz.locationIds[0];
