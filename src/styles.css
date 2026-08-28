@@ -1169,6 +1169,7 @@ input {
   gap: 0.45rem;
   width: max-content;
   max-width: 100%;
+  margin-right: clamp(1.5rem, 5vw, 3rem);
 }
 .diagnostics-controls select {
   min-width: 0;
@@ -1197,6 +1198,7 @@ input {
   .diagnostics-controls {
     width: 100%;
     flex-wrap: wrap;
+    margin-right: 0;
   }
   .diagnostics-controls label {
     flex: 1 1 8rem;
