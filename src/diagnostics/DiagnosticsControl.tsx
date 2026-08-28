@@ -34,7 +34,7 @@ export function DiagnosticsControl({
           ))}
         </select>
       </label>
-      <label htmlFor="diagnostic-location">
+      <label className="diagnostics-control" htmlFor="diagnostic-location">
         <span className="visually-hidden">Location</span>
         <select
           id="diagnostic-location"
