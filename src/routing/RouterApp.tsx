@@ -9,6 +9,9 @@ export function RouterApp() {
   return (
     <AppShell
       quizOptions={quizOptions}
+      quizLocationIds={Object.fromEntries(
+        quizOptions.map((quiz) => [quiz.id, quiz.locationIds]),
+      )}
       locationIds={playableLocations.map((location) => location.id)}
       defaultQuizId={worldQuiz.id}
       renderQuiz={(input) => <QuizPage {...input} />}

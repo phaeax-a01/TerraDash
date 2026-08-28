@@ -3,6 +3,7 @@ import { parseRoute, serializeRoute } from './routes';
 
 const options = {
   quizIds: ['world', 'asia'],
+  quizLocationIds: { world: ['iso:AAA'], asia: ['iso:BBB'] },
   locationIds: ['iso:AAA', 'iso:BBB'],
   defaultQuizId: 'world',
 };
@@ -48,5 +49,15 @@ describe('route contract', () => {
     expect(
       parseRoute('/TerraDash/?page=diagnostics&location=iso%3ABBB', options),
     ).toMatchObject({ page: 'diagnostics', locationId: 'iso:BBB' });
+  });
+
+  it('infers the quiz for legacy diagnostics location-only links', () => {
+    expect(
+      parseRoute('/TerraDash/diagnostics.html?location=iso%3ABBB', options),
+    ).toMatchObject({
+      page: 'diagnostics',
+      quizId: 'asia',
+      locationId: 'iso:BBB',
+    });
   });
 });
