@@ -55,22 +55,12 @@ export function QuizPlayer({
   useEffect(() => {
     if (!autoStart || state.phase !== 'idle') return;
     onAutoStartHandled?.();
-    dispatch({ type: 'start', now: now() });
-  }, [autoStart, dispatch, now, onAutoStartHandled, state.phase]);
-
-  useEffect(() => {
-    if (
-      !diagnostics?.initialLocationId ||
-      state.phase !== 'active' ||
-      state.lastEvent.type !== 'started'
-    )
-      return;
     dispatch({
-      type: 'select-debug',
-      locationId: diagnostics.initialLocationId,
+      type: 'start',
       now: now(),
+      locationId: diagnostics?.initialLocationId,
     });
-  }, [diagnostics, dispatch, now, state.lastEvent.type, state.phase]);
+  }, [autoStart, dispatch, now, onAutoStartHandled, state.phase]);
 
   if (state.phase === 'idle') {
     return (

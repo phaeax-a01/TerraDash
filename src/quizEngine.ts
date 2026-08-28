@@ -45,7 +45,7 @@ export type RejectionReason =
   | 'non-monotonic-time'
   | 'unknown-location';
 export type QuizAction =
-  | { type: 'start'; now: number }
+  | { type: 'start'; now: number; locationId?: string }
   | { type: 'read-elapsed'; now: number }
   | { type: 'complete-debug'; now: number }
   | { type: 'select-debug'; locationId: string; now: number }
@@ -261,6 +261,11 @@ export function reduceQuiz(
     if (state.phase === 'completed') return reject(state, 'already-completed');
     if (!config.quiz.locationIds.length) return reject(state, 'empty-quiz');
     const order = shuffleIds(config.quiz.locationIds, config.rng);
+    if (action.locationId) {
+      const selectedIndex = order.indexOf(action.locationId);
+      if (selectedIndex < 0) return reject(state, 'unknown-location');
+      [order[0], order[selectedIndex]] = [order[selectedIndex], order[0]];
+    }
     return {
       state: {
         ...createIdleState(),
