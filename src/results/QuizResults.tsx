@@ -16,16 +16,18 @@ import { FeedbackIcon, type FeedbackTone } from '../quiz/FeedbackIcon';
 export function QuizResults({
   quizId,
   quizName,
+  diagnostics = false,
 }: {
   quizId: string;
   quizName: string;
+  diagnostics?: boolean;
 }) {
   const { state, dispatch } = useQuiz();
   const [highScores, setHighScores] = useState<HighScoreEntry[]>(() =>
-    getHighScores(quizId),
+    diagnostics ? [] : getHighScores(quizId),
   );
   const [newHighScoreId, setNewHighScoreId] = useState<string | undefined>();
-  const [username, setUsername] = useState(getPlayerName);
+  const [username, setUsername] = useState(diagnostics ? '' : getPlayerName);
   const recordedResult = useRef<number | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<FeedbackTone>('');
   const [feedbackAnimationKey, setFeedbackAnimationKey] = useState(0);
@@ -56,7 +58,7 @@ export function QuizResults({
   }, [state.lastEvent]);
 
   useEffect(() => {
-    if (!state.results || state.completedAt === null) return;
+    if (diagnostics || !state.results || state.completedAt === null) return;
     if (recordedResult.current === state.completedAt) return;
     recordedResult.current = state.completedAt;
     const recorded = recordHighScore(
@@ -69,7 +71,7 @@ export function QuizResults({
     setHighScores(recorded.scores);
     setNewHighScoreId(recorded.qualifies ? recorded.entry.id : undefined);
     setUsername(recorded.entry.username);
-  }, [quizId, state.completedAt, state.results]);
+  }, [diagnostics, quizId, state.completedAt, state.results]);
 
   const results = state.results!;
   const mood = resultMoodForScore(results.finalScore);
@@ -122,7 +124,7 @@ export function QuizResults({
           <dd>{results.missed}</dd>
         </div>
       </dl>
-      {newHighScoreId && (
+      {!diagnostics && newHighScoreId && (
         <section
           className="high-score-achieved"
           aria-labelledby="high-score-achieved-title"
@@ -152,10 +154,15 @@ export function QuizResults({
           )}
         </section>
       )}
-      <section className="high-score-panel" aria-labelledby="quiz-high-scores">
-        <h2 id="quiz-high-scores">High Scores</h2>
-        <HighScoreTable scores={highScores} caption="Quiz high scores" />
-      </section>
+      {!diagnostics && (
+        <section
+          className="high-score-panel"
+          aria-labelledby="quiz-high-scores"
+        >
+          <h2 id="quiz-high-scores">High Scores</h2>
+          <HighScoreTable scores={highScores} caption="Quiz high scores" />
+        </section>
+      )}
       <button
         className="primary-action"
         type="button"

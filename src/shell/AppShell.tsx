@@ -7,6 +7,7 @@ import { AppPageFrame } from './AppPageFrame';
 
 type PageRenderers = {
   quizOptions: readonly QuizOption[];
+  quizLocationIds?: Readonly<Record<string, readonly string[]>>;
   locationIds: readonly string[];
   defaultQuizId: string;
   renderQuiz: (input: {
@@ -65,6 +66,7 @@ function QuizShell({
 
 export function AppShell({
   quizOptions,
+  quizLocationIds,
   locationIds,
   defaultQuizId,
   renderQuiz,
@@ -74,6 +76,7 @@ export function AppShell({
   const navigation = useBrowserRoute();
   const route = parseRoute(navigation.route, {
     quizIds: quizOptions.map((quiz) => quiz.id),
+    quizLocationIds: quizLocationIds ?? {},
     locationIds,
     defaultQuizId,
   });

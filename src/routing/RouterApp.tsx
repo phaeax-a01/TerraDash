@@ -9,16 +9,28 @@ export function RouterApp() {
   return (
     <AppShell
       quizOptions={quizOptions}
+      quizLocationIds={Object.fromEntries(
+        quizOptions.map((quiz) => [quiz.id, quiz.locationIds]),
+      )}
       locationIds={playableLocations.map((location) => location.id)}
       defaultQuizId={worldQuiz.id}
       renderQuiz={(input) => <QuizPage {...input} />}
       highScores={<HighScoresPage />}
       diagnostics={(route: AppRoute, navigate) => (
         <DiagnosticsPage
-          locationId={route.locationId!}
+          key={route.quizId}
+          quizId={route.quizId}
+          quizExplicit={route.quizExplicit}
+          locationId={route.locationId}
+          onQuizChange={(quizId) =>
+            navigate(
+              `${route.pathname}?page=diagnostics&quiz=${encodeURIComponent(quizId)}${route.hash}`,
+              { replace: true },
+            )
+          }
           onLocationChange={(locationId) =>
             navigate(
-              `${route.pathname}?location=${encodeURIComponent(locationId)}${route.hash}`,
+              `${route.pathname}?page=diagnostics&quiz=${encodeURIComponent(route.quizId)}&location=${encodeURIComponent(locationId)}${route.hash}`,
               { replace: true },
             )
           }

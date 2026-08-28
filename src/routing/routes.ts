@@ -5,6 +5,7 @@ export type AppRoute = {
   hash: string;
   page: RoutePage;
   quizId: string;
+  quizExplicit: boolean;
   select: boolean;
   start: boolean;
   locationId?: string;
@@ -12,6 +13,7 @@ export type AppRoute = {
 
 export type RouteOptions = {
   quizIds: readonly string[];
+  quizLocationIds?: Readonly<Record<string, readonly string[]>>;
   locationIds: readonly string[];
   defaultQuizId: string;
 };
@@ -28,9 +30,6 @@ export function parseRoute(
 ): AppRoute {
   const url = toUrl(input);
   const requestedQuiz = url.searchParams.get('quiz');
-  const quizId = options.quizIds.includes(requestedQuiz ?? '')
-    ? requestedQuiz!
-    : options.defaultQuizId;
   const requestedLocation = url.searchParams.get('location');
   const locationId = options.locationIds.includes(requestedLocation ?? '')
     ? requestedLocation!
@@ -38,6 +37,16 @@ export function parseRoute(
   const diagnostics =
     url.pathname.endsWith('/diagnostics.html') ||
     url.searchParams.get('page') === 'diagnostics';
+  const quizWithLocation =
+    diagnostics && requestedLocation
+      ? options.quizIds.find((id) =>
+          options.quizLocationIds?.[id]?.includes(requestedLocation),
+        )
+      : undefined;
+  const quizExplicit = options.quizIds.includes(requestedQuiz ?? '');
+  const quizId = quizExplicit
+    ? requestedQuiz!
+    : (quizWithLocation ?? options.defaultQuizId);
   const page: RoutePage = diagnostics
     ? 'diagnostics'
     : url.searchParams.get('page') === 'high-scores'
@@ -48,6 +57,7 @@ export function parseRoute(
     hash: url.hash,
     page,
     quizId,
+    quizExplicit,
     select: url.searchParams.get('select') === '1',
     start: url.searchParams.get('start') === '1',
     locationId,

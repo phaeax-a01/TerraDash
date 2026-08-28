@@ -5,6 +5,7 @@ import type { QuizOption } from './contracts/quiz';
 import { QuizGameplay, QuizGameplayConsole } from './quiz/QuizGameplay';
 import { QuizHome } from './quiz/QuizHome';
 import { QuizResults } from './results/QuizResults';
+import { DiagnosticsControl } from './diagnostics/DiagnosticsControl';
 
 type QuizPlayerProps = {
   catalog: readonly CatalogLocation[];
@@ -22,6 +23,12 @@ type QuizPlayerProps = {
   autoStart?: boolean;
   onAutoStartHandled?: () => void;
   renderQuizThumbnail?: (quiz: QuizOption) => ReactNode;
+  diagnostics?: {
+    initialLocationId?: string;
+    onQuizChange: (quizId: string) => void;
+    onLocationChange: (locationId: string) => void;
+    onEndQuiz: () => void;
+  };
 };
 
 const monotonicNow = () => performance.now();
@@ -41,13 +48,18 @@ export function QuizPlayer({
   autoStart = false,
   onAutoStartHandled,
   renderQuizThumbnail,
+  diagnostics,
 }: QuizPlayerProps) {
   const { state, dispatch } = useQuiz();
 
   useEffect(() => {
     if (!autoStart || state.phase !== 'idle') return;
     onAutoStartHandled?.();
-    dispatch({ type: 'start', now: now() });
+    dispatch({
+      type: 'start',
+      now: now(),
+      locationId: diagnostics?.initialLocationId,
+    });
   }, [autoStart, dispatch, now, onAutoStartHandled, state.phase]);
 
   if (state.phase === 'idle') {
@@ -69,7 +81,11 @@ export function QuizPlayer({
     return (
       <>
         <QuizGameplayConsole />
-        <QuizResults quizId={quizId} quizName={quizName} />
+        <QuizResults
+          quizId={quizId}
+          quizName={quizName}
+          diagnostics={Boolean(diagnostics)}
+        />
       </>
     );
   }
@@ -80,6 +96,26 @@ export function QuizPlayer({
       renderMap={renderMap}
       now={now}
       quizName={quizName}
+      diagnostics={Boolean(diagnostics)}
+      headerOverlay={
+        diagnostics ? (
+          <DiagnosticsControl
+            quizId={quizId}
+            quizOptions={quizOptions}
+            locationId={state.order[state.currentIndex] ?? ''}
+            locationIds={state.order}
+            onQuizChange={diagnostics.onQuizChange}
+            onLocationChange={(locationId) => {
+              dispatch({ type: 'select-debug', locationId, now: now() });
+              diagnostics.onLocationChange(locationId);
+            }}
+            onEndQuiz={() => {
+              dispatch({ type: 'complete-debug', now: now() + 600_000 });
+              diagnostics.onEndQuiz();
+            }}
+          />
+        ) : undefined
+      }
     />
   );
 }

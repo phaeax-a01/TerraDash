@@ -38,6 +38,8 @@ type QuizGameplayProps = {
   renderMap: (location: CatalogLocation) => ReactNode;
   now?: () => number;
   quizName?: string;
+  headerOverlay?: ReactNode;
+  diagnostics?: boolean;
 };
 
 const monotonicNow = () => performance.now();
@@ -47,6 +49,8 @@ export function QuizGameplay({
   renderMap,
   now = monotonicNow,
   quizName = 'World UN Countries',
+  headerOverlay,
+  diagnostics = false,
 }: QuizGameplayProps) {
   const { state, dispatch, locationIds } = useQuiz();
   const [text, setText] = useState('');
@@ -212,6 +216,14 @@ export function QuizGameplay({
   }, [state.currentIndex, state.phase]);
 
   useEffect(() => {
+    if (state.lastEvent.type !== 'selected') return;
+    setText('');
+    setSelectedId(undefined);
+    setActiveSuggestion(0);
+    answerRef.current?.focus();
+  }, [state.lastEvent]);
+
+  useEffect(() => {
     if (
       state.phase === 'active' &&
       (state.lastEvent.type === 'started' ||
@@ -333,7 +345,9 @@ export function QuizGameplay({
 
   return (
     <QuizLayout
-      className={attemptStateClass}
+      className={[diagnostics ? 'diagnostics-player' : '', attemptStateClass]
+        .filter(Boolean)
+        .join(' ')}
       preserveViewportHeight
       ariaLabelledBy="quiz-title"
       stageRef={stageRef}
@@ -391,6 +405,7 @@ export function QuizGameplay({
         </>
       }
       content={currentLocation ? renderMap(currentLocation) : undefined}
+      headerOverlay={headerOverlay}
       stageOverlay={
         currentLocation ? (
           <div
