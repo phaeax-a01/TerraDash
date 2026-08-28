@@ -15,10 +15,18 @@ export function RouterApp() {
       highScores={<HighScoresPage />}
       diagnostics={(route: AppRoute, navigate) => (
         <DiagnosticsPage
-          locationId={route.locationId!}
+          key={route.quizId}
+          quizId={route.quizId}
+          locationId={route.locationId}
+          onQuizChange={(quizId) =>
+            navigate(
+              `${route.pathname}?page=diagnostics&quiz=${encodeURIComponent(quizId)}${route.hash}`,
+              { replace: true },
+            )
+          }
           onLocationChange={(locationId) =>
             navigate(
-              `${route.pathname}?location=${encodeURIComponent(locationId)}${route.hash}`,
+              `${route.pathname}?page=diagnostics&quiz=${encodeURIComponent(route.quizId)}&location=${encodeURIComponent(locationId)}${route.hash}`,
               { replace: true },
             )
           }

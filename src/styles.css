@@ -660,6 +660,9 @@ h2 {
   max-width: 40%;
   pointer-events: auto;
 }
+.map-header-overlay:has(.diagnostics-controls) {
+  justify-content: center;
+}
 .quiz-prompt-group {
   display: flex;
   flex: 1 1 auto;
@@ -1144,6 +1147,44 @@ input {
   background: #1c314d;
   border: 1px solid #4b6b8e;
   border-radius: 0.4rem;
+}
+.diagnostics-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: max-content;
+  max-width: 100%;
+}
+.diagnostics-controls select,
+.diagnostics-controls button {
+  min-width: 0;
+  max-width: 14rem;
+  padding: 0.35rem 0.5rem;
+  color: #e8eef8;
+  background: #1c314d;
+  border: 1px solid #4b6b8e;
+  border-radius: 0.4rem;
+}
+.diagnostics-controls button {
+  cursor: pointer;
+}
+@media (max-width: 620px) {
+  .diagnostics-controls {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .diagnostics-controls label {
+    flex: 1 1 8rem;
+    min-width: 0;
+  }
+  .diagnostics-controls select {
+    width: 100%;
+    max-width: none;
+  }
+  .diagnostics-controls button {
+    flex: 1 1 100%;
+  }
 }
 .ocean {
   fill: #10233c;

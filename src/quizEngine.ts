@@ -30,7 +30,7 @@ export type QuizState = {
 };
 export type QuizEvent =
   | {
-      type: 'idle' | 'started' | 'elapsed' | 'reset';
+      type: 'idle' | 'started' | 'elapsed' | 'selected' | 'reset';
     }
   | { type: 'accepted'; result: 'wrong' | 'correct' | 'missed' }
   | { type: 'completed'; result: 'correct' | 'missed' }
@@ -48,6 +48,7 @@ export type QuizAction =
   | { type: 'start'; now: number }
   | { type: 'read-elapsed'; now: number }
   | { type: 'complete-debug'; now: number }
+  | { type: 'select-debug'; locationId: string; now: number }
   | { type: 'submit'; now: number; selectedId?: string; text?: string }
   | { type: 'reset' };
 export type EngineConfig = {
@@ -282,6 +283,27 @@ export function reduceQuiz(
   );
   if (timeError) return reject(state, timeError);
   const elapsedMs = action.now - (state.startedAt ?? action.now);
+  if (action.type === 'select-debug') {
+    if (!config.quiz.locationIds.includes(action.locationId))
+      return reject(state, 'unknown-location');
+    const selectedIndex = state.order.indexOf(action.locationId);
+    if (selectedIndex < 0) return reject(state, 'unknown-location');
+    const order = [...state.order];
+    [order[state.currentIndex], order[selectedIndex]] = [
+      order[selectedIndex],
+      order[state.currentIndex],
+    ];
+    return {
+      state: {
+        ...state,
+        order,
+        attempts: 0,
+        elapsedMs,
+        lastEvent: { type: 'selected' },
+      },
+      event: { type: 'selected' },
+    };
+  }
   if (action.type === 'complete-debug') {
     const outcomes = { ...state.outcomes };
     for (let index = state.currentIndex; index < state.order.length; index += 1)
