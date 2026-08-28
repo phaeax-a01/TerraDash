@@ -56,3 +56,33 @@ test('diagnostics uses the shared quiz player and scopes its controls', async ({
   );
   expect(storedScores).toBe('{"sentinel":true}');
 });
+
+test('diagnostics quiz switching never renders the quiz home transition', async ({
+  page,
+}) => {
+  await page.goto('/TerraDash/diagnostics.html?quiz=non-un');
+  await expect(page.locator('#diagnostic-quiz')).toHaveValue('non-un');
+  await page.evaluate(() => {
+    let homeSeen = Boolean(document.querySelector('.home-page'));
+    const observer = new MutationObserver(() => {
+      homeSeen ||= Boolean(document.querySelector('.home-page'));
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.setTimeout(() => observer.disconnect(), 1000);
+    Object.defineProperty(window, '__diagnosticsHomeSeen', {
+      configurable: true,
+      get: () => homeSeen,
+    });
+  });
+
+  await page.locator('#diagnostic-quiz').selectOption('us-states');
+  await expect(page.locator('#diagnostic-quiz')).toHaveValue('us-states');
+  await expect(page.locator('.active-player')).toBeVisible();
+  expect(
+    await page.evaluate(
+      () =>
+        (window as Window & { __diagnosticsHomeSeen?: boolean })
+          .__diagnosticsHomeSeen,
+    ),
+  ).toBe(false);
+});
