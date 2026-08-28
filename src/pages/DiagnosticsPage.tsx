@@ -9,22 +9,25 @@ import { AppPageFrame } from '../shell/AppPageFrame';
 
 export function DiagnosticsPage({
   quizId,
+  quizExplicit,
   locationId,
   onQuizChange,
   onLocationChange,
 }: {
   quizId: string;
+  quizExplicit: boolean;
   locationId?: string;
   onQuizChange: (quizId: string) => void;
   onLocationChange: (locationId: string) => void;
 }) {
   const requestedQuiz = quizOptions.find((quiz) => quiz.id === quizId);
-  const selectedQuiz =
-    requestedQuiz?.locationIds.includes(locationId ?? '') || !locationId
-      ? (requestedQuiz ?? worldQuiz)
-      : (quizOptions.find((quiz) => quiz.locationIds.includes(locationId)) ??
-        requestedQuiz ??
-        worldQuiz);
+  const selectedQuiz = quizExplicit
+    ? (requestedQuiz ?? worldQuiz)
+    : (quizOptions.find((quiz) =>
+        quiz.locationIds.includes(locationId ?? ''),
+      ) ??
+      requestedQuiz ??
+      worldQuiz);
   const initialLocationId = selectedQuiz.locationIds.includes(locationId ?? '')
     ? locationId
     : selectedQuiz.locationIds[0];

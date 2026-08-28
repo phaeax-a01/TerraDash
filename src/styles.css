@@ -848,6 +848,12 @@ h2 {
   box-shadow: 0 0.75rem 2rem #0008;
   backdrop-filter: blur(8px);
 }
+.diagnostics-player .answer-panel {
+  pointer-events: none;
+}
+.diagnostics-player .answer-panel > * {
+  pointer-events: auto;
+}
 .panel-move-handle {
   position: absolute;
   top: -1.4rem;

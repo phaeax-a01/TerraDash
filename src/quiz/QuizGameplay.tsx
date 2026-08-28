@@ -39,6 +39,7 @@ type QuizGameplayProps = {
   now?: () => number;
   quizName?: string;
   headerOverlay?: ReactNode;
+  diagnostics?: boolean;
 };
 
 const monotonicNow = () => performance.now();
@@ -49,6 +50,7 @@ export function QuizGameplay({
   now = monotonicNow,
   quizName = 'World UN Countries',
   headerOverlay,
+  diagnostics = false,
 }: QuizGameplayProps) {
   const { state, dispatch, locationIds } = useQuiz();
   const [text, setText] = useState('');
@@ -343,7 +345,9 @@ export function QuizGameplay({
 
   return (
     <QuizLayout
-      className={attemptStateClass}
+      className={[diagnostics ? 'diagnostics-player' : '', attemptStateClass]
+        .filter(Boolean)
+        .join(' ')}
       preserveViewportHeight
       ariaLabelledBy="quiz-title"
       stageRef={stageRef}

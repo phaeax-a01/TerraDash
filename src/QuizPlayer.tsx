@@ -106,6 +106,7 @@ export function QuizPlayer({
       renderMap={renderMap}
       now={now}
       quizName={quizName}
+      diagnostics={Boolean(diagnostics)}
       headerOverlay={
         diagnostics ? (
           <DiagnosticsControl

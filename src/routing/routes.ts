@@ -5,6 +5,7 @@ export type AppRoute = {
   hash: string;
   page: RoutePage;
   quizId: string;
+  quizExplicit: boolean;
   select: boolean;
   start: boolean;
   locationId?: string;
@@ -42,7 +43,8 @@ export function parseRoute(
           options.quizLocationIds?.[id]?.includes(requestedLocation),
         )
       : undefined;
-  const quizId = options.quizIds.includes(requestedQuiz ?? '')
+  const quizExplicit = options.quizIds.includes(requestedQuiz ?? '');
+  const quizId = quizExplicit
     ? requestedQuiz!
     : (quizWithLocation ?? options.defaultQuizId);
   const page: RoutePage = diagnostics
@@ -55,6 +57,7 @@ export function parseRoute(
     hash: url.hash,
     page,
     quizId,
+    quizExplicit,
     select: url.searchParams.get('select') === '1',
     start: url.searchParams.get('start') === '1',
     locationId,

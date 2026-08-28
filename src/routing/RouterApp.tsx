@@ -20,6 +20,7 @@ export function RouterApp() {
         <DiagnosticsPage
           key={route.quizId}
           quizId={route.quizId}
+          quizExplicit={route.quizExplicit}
           locationId={route.locationId}
           onQuizChange={(quizId) =>
             navigate(
