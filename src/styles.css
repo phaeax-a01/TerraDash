@@ -1212,6 +1212,46 @@ input {
     flex: 1 1 100%;
   }
 }
+@media (min-width: 621px) and (max-width: 900px) {
+  .quiz-header:has(.diagnostics-controls) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 1rem;
+    row-gap: 0.55rem;
+    min-height: 0;
+    padding-block: 0.55rem;
+  }
+  .quiz-header:has(.diagnostics-controls) > .quiz-prompt-group {
+    grid-column: 1;
+    grid-row: 1;
+    width: auto;
+  }
+  .quiz-header:has(.diagnostics-controls) > .quiz-status-bar {
+    grid-column: 2;
+    grid-row: 1;
+    width: auto;
+  }
+  .quiz-header:has(.diagnostics-controls) > .map-header-overlay {
+    position: static;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    max-width: none;
+    padding: 0;
+  }
+  .quiz-header:has(.diagnostics-controls) .diagnostics-controls {
+    width: 100%;
+    margin-right: 0;
+  }
+  .quiz-header:has(.diagnostics-controls) .diagnostics-controls > label {
+    flex: 1 1 0;
+  }
+  .quiz-header:has(.diagnostics-controls) .diagnostics-controls select {
+    width: 100%;
+  }
+}
 .ocean {
   fill: #10233c;
 }
