@@ -45,9 +45,13 @@ export function DiagnosticsPanel({
       statusHidden
       headerOverlay={
         <DiagnosticsControl
+          quizId="diagnostics"
+          quizOptions={[]}
           locationId={locationId}
-          locations={playableLocations}
+          locationIds={playableLocations.map(({ id }) => id)}
+          onQuizChange={() => undefined}
           onLocationChange={onLocationChange}
+          onEndQuiz={() => undefined}
         />
       }
       preserveViewportHeight
