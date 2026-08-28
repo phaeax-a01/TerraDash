@@ -66,6 +66,7 @@ function QuizShell({
 
 export function AppShell({
   quizOptions,
+  quizLocationIds,
   locationIds,
   defaultQuizId,
   renderQuiz,
