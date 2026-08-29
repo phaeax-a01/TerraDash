@@ -6,7 +6,7 @@
   --map-stage-header-height: 4.25rem;
   --map-stage-header-gap: 0.5rem;
   --page-gutter: clamp(1rem, 2vw, 2rem);
-  --content-gutter: clamp(0.65rem, 1.2vw, 1rem);
+  --content-gutter: clamp(0.8rem, 2vw, 1rem);
   --home-content-gap: clamp(0.8rem, 1.8vw, 1.35rem);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   color: #e8eef7;
@@ -631,7 +631,7 @@ h2 {
   align-items: flex-start;
 }
 .quiz-header h1 {
-  font-size: clamp(1rem, 1.35vw, 1.15rem);
+  font-size: clamp(0.9rem, 1.35vw, 1.15rem);
   margin: 0;
 }
 .quiz-header .eyebrow {
@@ -1205,6 +1205,7 @@ input {
     left: var(--content-gutter);
     width: auto;
     max-width: none;
+    min-height: 5.25rem;
     padding: 0;
   }
   .diagnostics-controls {
@@ -1229,20 +1230,41 @@ input {
 }
 @media (min-width: 621px) and (max-width: 900px) {
   .quiz-header:has(.diagnostics-controls) {
-    padding-bottom: 3.25rem;
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 1fr) minmax(0, 4fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    align-items: start;
+    min-height: 14rem;
+    padding-block: 0.65rem;
+    padding-bottom: 0;
+  }
+  .quiz-header:has(.diagnostics-controls) > .quiz-prompt-group {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    width: auto;
+  }
+  .quiz-header:has(.diagnostics-controls) > .quiz-status-bar {
+    grid-column: 3;
+    grid-row: 1;
+    width: auto;
   }
   .quiz-header:has(.diagnostics-controls) > .map-header-overlay {
-    top: auto;
-    right: var(--content-gutter);
-    bottom: 0.55rem;
-    left: var(--content-gutter);
+    top: 5.75rem;
+    right: 0;
+    bottom: 5.75rem;
+    left: 0;
     width: auto;
-    max-width: none;
     padding: 0;
+  }
+  .quiz-header:has(.diagnostics-controls) > .map-header-overlay > * {
+    width: 35%;
+    max-width: none;
   }
   .quiz-header:has(.diagnostics-controls) .diagnostics-controls {
     width: 100%;
     margin-right: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   }
   .quiz-header:has(.diagnostics-controls) .diagnostics-controls > label {
     flex: 1 1 0;
