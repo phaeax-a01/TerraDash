@@ -1195,6 +1195,18 @@ input {
   background: #bae6fd;
 }
 @media (max-width: 620px) {
+  .quiz-header:has(.diagnostics-controls) {
+    padding-bottom: 5.25rem;
+  }
+  .quiz-header:has(.diagnostics-controls) > .map-header-overlay {
+    top: auto;
+    right: var(--content-gutter);
+    bottom: 0.65rem;
+    left: var(--content-gutter);
+    width: auto;
+    max-width: none;
+    padding: 0;
+  }
   .diagnostics-controls {
     width: 100%;
     flex-wrap: wrap;
