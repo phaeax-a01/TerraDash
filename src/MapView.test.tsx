@@ -71,6 +71,69 @@ function expectActiveStatePaths(frame: HTMLElement, id: string) {
 }
 
 describe('mapped quiz layer contract', () => {
+  it('keeps static geometry identity across active changes and equivalent layers', () => {
+    const first = quizLocations.find((entry) => entry.id === 'US-RI')!;
+    const second = quizLocations.find((entry) => entry.id === 'US-MA')!;
+    const quiz = quizOptions.find((entry) => entry.id === 'us-states')!;
+    const firstLayer = mapLayerForQuiz(quiz, first);
+    let staticBuilds = 0;
+    const observeStaticBuild = () => {
+      staticBuilds += 1;
+    };
+    const frame = document.createElement('section');
+    frame.className = 'map-frame';
+    document.body.append(frame);
+    root = createRoot(frame);
+    act(() =>
+      root!.render(
+        <MapView
+          active={first}
+          layer={firstLayer}
+          onStaticModelBuild={observeStaticBuild}
+        />,
+      ),
+    );
+    expect(staticBuilds).toBe(1);
+    const staticPath = frame.querySelector('.countries path')!;
+    const basePath = frame.querySelector('.map-base-layers path')!;
+    const equivalentLayer = mapLayerForQuiz(quiz, second);
+    expect(equivalentLayer).not.toBe(firstLayer);
+    act(() =>
+      root!.render(
+        <MapView
+          active={second}
+          layer={equivalentLayer}
+          onStaticModelBuild={observeStaticBuild}
+        />,
+      ),
+    );
+    expect(staticBuilds).toBe(1);
+    expect(frame.querySelector('.countries path')).toBe(staticPath);
+    expect(frame.querySelector('.map-base-layers path')).toBe(basePath);
+    expect(frame.querySelector('.active-fill path')?.getAttribute('d')).toBe(
+      highlightedGeometryPaths(second.geometryRefs)[0],
+    );
+    const changedContract = {
+      ...equivalentLayer,
+      geometryContractId: equivalentLayer.geometryContractId + ':changed',
+    };
+    act(() =>
+      root!.render(
+        <MapView
+          active={second}
+          layer={changedContract}
+          onStaticModelBuild={observeStaticBuild}
+        />,
+      ),
+    );
+    expect(staticBuilds).toBe(2);
+    expect(frame.querySelector('.countries path')).toBe(staticPath);
+    expect(frame.querySelector('.map-base-layers path')).toBe(basePath);
+    expect(
+      frame.querySelector('.world-map')?.getAttribute('data-map-contract-id'),
+    ).toBe(changedContract.geometryContractId);
+  });
+
   it('renders configured context, selectable state target, and shared tiny callout', () => {
     const frame = renderState('US-RI');
     expect(frame.querySelector('.world-map')?.getAttribute('viewBox')).toBe(
