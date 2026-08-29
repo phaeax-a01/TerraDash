@@ -1223,6 +1223,9 @@ input {
   .diagnostics-controls button {
     flex: 1 1 100%;
   }
+  .diagnostics-player .map-stage {
+    --map-width: 100% !important;
+  }
 }
 @media (min-width: 621px) and (max-width: 900px) {
   .quiz-header:has(.diagnostics-controls) {
