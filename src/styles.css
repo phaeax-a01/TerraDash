@@ -664,6 +664,10 @@ h2 {
   align-items: center;
   justify-content: center;
 }
+.map-header-overlay:has(.diagnostics-controls) > .diagnostics-controls {
+  width: fit-content;
+  max-width: 100%;
+}
 .quiz-prompt-group {
   display: flex;
   flex: 1 1 auto;
@@ -1195,6 +1199,9 @@ input {
   background: #bae6fd;
 }
 @media (max-width: 620px) {
+  .map-header-overlay:has(.diagnostics-controls) > .diagnostics-controls {
+    width: 100%;
+  }
   .quiz-header:has(.diagnostics-controls) {
     padding-bottom: 5.25rem;
   }
