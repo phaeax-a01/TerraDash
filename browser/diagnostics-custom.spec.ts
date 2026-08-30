@@ -88,6 +88,7 @@ test('diagnostics quiz switching never renders the quiz home transition', async 
 });
 
 for (const viewport of [
+  { name: 'reported-exact', width: 1705, height: 591 },
   { name: 'reported-narrow', width: 769, height: 280 },
   { name: 'reported-wide', width: 1677, height: 486 },
   { name: 'containment-tablet', width: 649, height: 463 },
