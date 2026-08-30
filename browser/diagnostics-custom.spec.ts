@@ -86,3 +86,72 @@ test('diagnostics quiz switching never renders the quiz home transition', async 
     ),
   ).toBe(false);
 });
+
+for (const viewport of [
+  { name: 'reported-narrow', width: 769, height: 280 },
+  { name: 'reported-wide', width: 1677, height: 486 },
+  { name: 'containment-tablet', width: 649, height: 463 },
+  { name: 'mobile', width: 375, height: 667 },
+]) {
+  test(`diagnostics controls remain contained and centered at ${viewport.name}`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize(viewport);
+    await page.goto('/TerraDash/diagnostics.html?quiz=non-un');
+    await expect(page.locator('.diagnostics-controls')).toBeVisible();
+    const bounds = await page.evaluate(() => {
+      const header = document.querySelector<HTMLElement>('.quiz-header')!;
+      const controls = document.querySelector<HTMLElement>(
+        '.diagnostics-controls',
+      )!;
+      const quiz = controls.querySelector<HTMLElement>('#diagnostic-quiz')!;
+      const location = controls.querySelector<HTMLElement>(
+        '#diagnostic-location',
+      )!;
+      const endQuiz = controls.querySelector<HTMLElement>('button')!;
+      const prompt = document.querySelector<HTMLElement>('.quiz-prompt')!;
+      const status = document.querySelector<HTMLElement>('.quiz-status-bar')!;
+      const h = header.getBoundingClientRect();
+      const c = controls.getBoundingClientRect();
+      const center = (rect: DOMRect) => (rect.top + rect.bottom) / 2;
+      const intersects = (a: DOMRect, b: DOMRect) =>
+        a.left < b.right &&
+        a.right > b.left &&
+        a.top < b.bottom &&
+        a.bottom > b.top;
+      return {
+        controlsInsideHeader: c.left >= h.left && c.right <= h.right,
+        controlsVerticallyInsideHeader: c.top >= h.top && c.bottom <= h.bottom,
+        elementCenters: {
+          quiz: center(quiz.getBoundingClientRect()),
+          location: center(location.getBoundingClientRect()),
+          endQuiz: center(endQuiz.getBoundingClientRect()),
+        },
+        promptControlIntersection: intersects(
+          prompt.getBoundingClientRect(),
+          c,
+        ),
+        statusControlIntersection: intersects(
+          status.getBoundingClientRect(),
+          c,
+        ),
+        horizontalOverflow:
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
+      };
+    });
+    expect(bounds.controlsInsideHeader).toBe(true);
+    expect(bounds.controlsVerticallyInsideHeader).toBe(true);
+    expect(bounds.horizontalOverflow).toBe(true);
+    expect(bounds.promptControlIntersection).toBe(false);
+    expect(bounds.statusControlIntersection).toBe(false);
+    const centers = Object.values(bounds.elementCenters);
+    expect(Math.max(...centers) - Math.min(...centers)).toBeLessThanOrEqual(
+      0.5,
+    );
+    await page.screenshot({
+      path: testInfo.outputPath(`diagnostics-controls-${viewport.name}.png`),
+      fullPage: true,
+    });
+  });
+}
