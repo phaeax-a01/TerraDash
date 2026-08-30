@@ -1193,6 +1193,11 @@ input {
   background: #7dd3fc;
   cursor: pointer;
 }
+.diagnostics-controls > label > select,
+.diagnostics-controls > select,
+.diagnostics-controls > button {
+  align-self: center;
+}
 .diagnostics-controls button:hover {
   border-color: #bae6fd;
   background: #bae6fd;
